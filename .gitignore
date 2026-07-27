@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+backend/express-server/node_modules/
+
+# Environments
+tf-env/
+venv/
+env/
+.env
+.env.local
+
+# Build outputs
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+
+# IDEs
+.idea/
+.vscode/
+
+# Project Specific
+.artifacts/
+.aiexclude
+project/pdd-web/node_modules/
+project/pdd-web/.next/
+project/pdd-web/tf-env/

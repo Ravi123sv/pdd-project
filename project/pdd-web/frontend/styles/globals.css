@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #F8FAFC;
+  --foreground: #0F172A;
+  --primary: #2563EB;
+  --primary-foreground: #FFFFFF;
+  --accent: #3B82F6;
+  --accent-foreground: #FFFFFF;
+  --secondary: #10B981;
+  --warning: #F59E0B;
+  --error: #E11D48;
+}
+
+.dark {
+  --background: #0F172A;
+  --foreground: #F8FAFC;
+  --primary: #3B82F6;
+  --primary-foreground: #FFFFFF;
+  --accent: #60A5FA;
+  --accent-foreground: #1E293B;
+  --secondary: #10B981;
+  --warning: #FBBF24;
+  --error: #FB7185;
+}
+
+body {
+  @apply bg-[#F8FAFC] text-[#0F172A] dark:bg-[#0F172A] dark:text-[#F8FAFC] antialiased;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm;
+  }
+  
+  .neuro-button {
+    @apply px-6 py-3 rounded-xl font-bold transition-all active:scale-95 disabled:opacity-50;
+  }
+  
+  .neuro-input {
+    @apply w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary outline-none transition-all;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 dark:bg-slate-700 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-400 dark:bg-slate-600;
+}
