@@ -28,14 +28,14 @@ jobs:
         uses: actions/configure-pages@v4
       - name: Install dependencies
         run: npm install
-        working-directory: project/pdd-web/frontend
+        working-directory: projects/pdd website/frontend
       - name: Build with Next.js
         run: npx next build
-        working-directory: project/pdd-web/frontend
+        working-directory: projects/pdd website/frontend
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: project/pdd-web/frontend/out
+          path: projects/pdd website/frontend/out
 
   deploy:
     environment:
