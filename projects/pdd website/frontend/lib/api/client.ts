@@ -1,6 +1,18 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+// Environment-aware API resolution
+const getApiBaseUrl = () => {
+  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
+
+  if (typeof window !== 'undefined') {
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    // If local, use localhost. If cloud, fallback to a production URL or relative path
+    return isLocal ? 'http://localhost:5000/api' : '/api';
+  }
+  return 'http://localhost:5000/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 const GO_BASE_URL = process.env.NEXT_PUBLIC_GO_API_URL || 'http://localhost:8081/api';
 
 export const apiClient = axios.create({
