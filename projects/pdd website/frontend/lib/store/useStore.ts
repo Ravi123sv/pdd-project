@@ -26,9 +26,10 @@ interface AppState {
   setNetworkStatus: (status: 'Connected' | 'Offline', latency?: number) => void;
   setActivePatient: (patient: any) => void;
   logout: () => void;
+  checkSession: () => void;
 }
 
-export const useStore = create<AppState>((set) => ({
+export const useStore = create<AppState>((set, get) => ({
   isAuthenticated: false,
   user: null,
   currentNavIndex: 0,
@@ -37,13 +38,34 @@ export const useStore = create<AppState>((set) => ({
   latencyMs: 0,
   activePatient: null,
 
-  setAuth: (isAuthenticated, user) => set({ isAuthenticated, user }),
+  setAuth: (isAuthenticated, user) => {
+      console.log("[STORE] Updating Auth State:", isAuthenticated, user?.email);
+      set({ isAuthenticated, user });
+  },
+
   setNavIndex: (index) => set({ currentNavIndex: index }),
   setHardwareStatus: (status) => set({ isHardwareConnected: status }),
   setNetworkStatus: (status, latency = 0) => set({ networkStatus: status, latencyMs: latency }),
   setActivePatient: (patient) => set({ activePatient: patient }),
 
+  checkSession: () => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('user_session');
+      if (saved) {
+          try {
+              const { user } = JSON.parse(saved);
+              console.log("[STORE] Restoring Session for:", user.email);
+              set({ isAuthenticated: true, user });
+          } catch (e) {
+              console.error("[STORE] Failed to restore session", e);
+              localStorage.removeItem('user_session');
+          }
+      }
+    }
+  },
+
   logout: () => {
+    console.log("[STORE] Logging out...");
     if (typeof window !== 'undefined') {
       localStorage.removeItem('user_session');
     }
