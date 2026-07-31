@@ -28,7 +28,10 @@ export default function ArchivePage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSession, setSelectedSession] = useState<any>(null);
+  const [baselineSession, setBaselineSession] = useState<any>(null);
   const [summarizing, setSummarizing] = useState(false);
+  const [comparing, setComparing] = useState(false);
+  const [comparisonResult, setComparisonResult] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchSessions = async () => {
@@ -69,6 +72,33 @@ export default function ArchivePage() {
       console.error("AI Summary Error:", e);
     } finally {
       setSummarizing(false);
+    }
+  };
+
+  const runBaselineComparison = async () => {
+    if (!selectedSession || !baselineSession) return;
+    setComparing(true);
+    setComparisonResult(null);
+    try {
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const prompt = `Perform a Neural Signature Comparison between two clinical sessions.
+        Baseline Session: ${baselineSession.testType}, Quality: ${baselineSession.quality}%, Date: ${new Date(baselineSession.startTime).toLocaleDateString()}
+        Current Session: ${selectedSession.testType}, Quality: ${selectedSession.quality}%, Date: ${new Date(selectedSession.startTime).toLocaleDateString()}
+
+        Compare the findings:
+        Baseline Findings: ${baselineSession.findings || 'Normal'}
+        Current Findings: ${selectedSession.findings || 'Normal'}
+
+        Identify longitudinal shifts or signs of deterioration. Use highly technical clinical terminology.
+        Prepend with [PREDICTIVE NEURAL ANALYSIS].`;
+
+        const result = await model.generateContent(prompt);
+        setComparisonResult(result.response.text());
+    } catch (e) {
+        console.error(e);
+        setComparisonResult("Predictive Core Timeout. Re-syncing baseline buffers...");
+    } finally {
+        setComparing(false);
     }
   };
 
@@ -221,6 +251,52 @@ export default function ArchivePage() {
                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">No AI analysis requested yet.</p>
                             </div>
                          )}
+                      </div>
+
+                      {/* NEW: Baseline Comparison Section */}
+                      <div className="pt-10 border-t border-border space-y-8">
+                         <div className="flex items-center justify-between">
+                            <div>
+                               <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Longitudinal Analysis</h5>
+                               <h4 className="text-lg font-black text-foreground">Neural Signature Comparison</h4>
+                            </div>
+                            <button
+                                onClick={runBaselineComparison}
+                                disabled={comparing || !baselineSession}
+                                className="neuro-button bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-[10px] px-8 disabled:opacity-30"
+                            >
+                                {comparing ? <Loader2 className="h-4 w-4 animate-spin" /> : "Run Delta Analysis"}
+                            </button>
+                         </div>
+
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-4">
+                               <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-4">Select Baseline Node</p>
+                               <select
+                                 onChange={(e) => setBaselineSession(sessions.find(s => s._id === e.target.value))}
+                                 className="w-full h-16 bg-slate-50 dark:bg-slate-800 border-2 border-border/50 rounded-2xl px-6 text-xs font-bold outline-none focus:border-primary transition-all appearance-none"
+                               >
+                                  <option value="">Choose Historical Session...</option>
+                                  {sessions.filter(s => s._id !== selectedSession._id).map(s => (
+                                      <option key={s._id} value={s._id}>{new Date(s.startTime).toLocaleDateString()} - {s.testType} ({s.quality}%)</option>
+                                  ))}
+                               </select>
+                            </div>
+
+                            <AnimatePresence>
+                               {comparisonResult && (
+                                  <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="p-6 bg-amber-50 dark:bg-amber-950/20 border-2 border-amber-200 dark:border-amber-800 rounded-[2rem]">
+                                     <div className="flex items-center gap-3 mb-3 text-amber-600">
+                                        <ShieldCheck className="h-5 w-5" />
+                                        <span className="text-[9px] font-black uppercase tracking-widest">Predictive Output</span>
+                                     </div>
+                                     <p className="text-xs font-bold leading-relaxed text-slate-700 dark:text-slate-200 italic">
+                                        {comparisonResult}
+                                     </p>
+                                  </motion.div>
+                               )}
+                            </AnimatePresence>
+                         </div>
                       </div>
                    </div>
                 </motion.div>

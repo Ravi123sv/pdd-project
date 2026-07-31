@@ -67,6 +67,11 @@ io.on('connection', (socket) => {
     io.to(data.channel).emit('receive_message', data);
   });
 
+  socket.on('broadcast_signal', (data) => {
+    // High-frequency telemetry broadcast to a specific clinical unit
+    socket.to(data.channel).emit('receive_signal', data);
+  });
+
   socket.on('trigger_red_alert', (data) => {
     console.log(`EMERGENCY: RED ALERT from ${data.sender} in unit ${data.channel}`);
     io.emit('receive_message', {

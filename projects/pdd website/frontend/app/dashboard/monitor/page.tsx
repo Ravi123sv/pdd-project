@@ -35,6 +35,7 @@ export default function MonitorPage() {
   const [isPaused, setIsPaused] = useState(false);
   const [isLive, setIsLive] = useState(false);
   const [showRaw, setShowRaw] = useState(true);
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
   const [heartRate, setHeartRate] = useState(0);
   const [sqi, setSqi] = useState(0);
@@ -48,6 +49,20 @@ export default function MonitorPage() {
   const labels = isEEG
     ? ['Fp1', 'Fp2', 'C3', 'C4', 'P3', 'P4', 'O1', 'O2']
     : ['I', 'II', 'III', 'aVR', 'aVL', 'aVF', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6'];
+
+  // Broadcast Logic
+  useEffect(() => {
+    if (isLive && isBroadcasting && !isPaused && channels.filtered[0].length > 0) {
+        const interval = setInterval(() => {
+            socketService.broadcastSignal(user?.hospitalId || 'UNIT-DEFAULT', {
+                patientId: activePatient?.id,
+                values: channels.filtered.map(c => c[c.length - 1]),
+                timestamp: new Date().toISOString()
+            });
+        }, 100); // 20Hz broadcast rate for sync
+        return () => clearInterval(interval);
+    }
+  }, [isLive, isBroadcasting, isPaused, channels, user, activePatient]);
 
   const startAcquisition = () => {
     if (!activePatient) return;
@@ -98,6 +113,18 @@ export default function MonitorPage() {
           </div>
 
           <div className="flex items-center space-x-3">
+            {isLive && (
+                <button
+                    onClick={() => setIsBroadcasting(!isBroadcasting)}
+                    className={cn(
+                        "neuro-button flex items-center space-x-2 px-4 transition-all",
+                        isBroadcasting ? "bg-blue-500 text-white shadow-lg shadow-blue-200" : "bg-slate-100 dark:bg-slate-800 text-slate-400"
+                    )}
+                >
+                    <Globe className={cn("h-4 w-4", isBroadcasting && "animate-pulse")} />
+                    <span className="text-[9px] font-black uppercase tracking-widest">{isBroadcasting ? "Live Broadcast" : "Local Only"}</span>
+                </button>
+            )}
             {!isLive ? (
               <button
                 onClick={startAcquisition}

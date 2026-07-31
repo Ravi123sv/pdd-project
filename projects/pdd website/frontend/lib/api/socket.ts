@@ -47,6 +47,16 @@ class SocketService {
     this.socket?.emit('send_message', { channel, sender, text });
   }
 
+  broadcastSignal(channel: string, payload: any) {
+      if (!this.socket) this.connect();
+      this.socket?.emit('broadcast_signal', { channel, ...payload });
+  }
+
+  onSignalSync(callback: (data: any) => void) {
+      if (!this.socket) this.connect();
+      this.socket?.on('receive_signal', callback);
+  }
+
   triggerRedAlert(channel: string, sender: string, text: string) {
     if (!this.socket) this.connect();
     this.socket?.emit('trigger_red_alert', { channel, sender, text });
