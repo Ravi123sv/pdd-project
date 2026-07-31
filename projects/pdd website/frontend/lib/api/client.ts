@@ -65,7 +65,7 @@ apiClient.interceptors.response.use(
 // Specific API Mappings matching Flutter services
 export const api = {
   auth: {
-    loginWithKey: (clinicalKey: string) => apiClient.post('/auth/login-key', { clinicalKey }),
+    loginWithKey: (clinicalKey: string, email: string) => apiClient.post('/auth/login-key', { clinicalKey, email }),
     getProfile: (uid: string) => apiClient.get(`/auth/profile/${uid}`),
     getTeam: (hospitalId: string) => apiClient.get(`/auth/hospital-team/${hospitalId}`),
   },

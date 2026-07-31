@@ -96,7 +96,7 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      const response = await api.auth.loginWithKey(clinicalKey);
+      const response = await api.auth.loginWithKey(clinicalKey, googleUser?.email!);
       const { user, token } = response.data;
 
       const userData = {

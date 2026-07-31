@@ -72,14 +72,19 @@ export default function MonitorPage() {
     try {
       // @ts-ignore
       const btDevice = await navigator.bluetooth.requestDevice({
-        filters: [{ services: ['heart_rate'] }]
+        acceptAllDevices: true,
+        optionalServices: ['heart_rate', 'battery_service']
       });
+
+      const server = await btDevice.gatt.connect();
       setDevice(btDevice);
       setIsLive(true);
       setHardwareStatus(true);
+
+      console.log("Hardware Handshake Success: ", btDevice.name);
     } catch (e) {
       console.warn("Bluetooth connection failed", e);
-      alert("Web Bluetooth not supported or user cancelled.");
+      alert("Hardware Link Failed: Ensure Bluetooth is enabled and sensor is in pairing mode.");
     }
   };
 
