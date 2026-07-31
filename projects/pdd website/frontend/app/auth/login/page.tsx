@@ -16,7 +16,9 @@ import {
   ShieldCheck,
   Globe,
   Settings,
-  FileText
+  FileText,
+  Stethoscope,
+  Building2
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -43,7 +45,6 @@ export default function LoginPage() {
   const [googleUser, setGoogleUser] = useState<FirebaseUser | null>(null);
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
 
-  // Fix Logo Path globally
   const logoPath = "https://ravi123sv.github.io/pdd-project/assets/icon/app_icon.svg";
 
   const handleGoogleLogin = async () => {
@@ -55,19 +56,15 @@ export default function LoginPage() {
 
       if (loginMode === 'individual') {
           try {
-              // Call Backend to send OTP via Resend
               await api.otp.send(result.user.email!, result.user.displayName || 'Practitioner');
               setStep(2);
           } catch (otpErr: any) {
-              console.error("OTP Send Error:", otpErr);
               setError("SYSTEM: UNABLE TO DELIVER OTP. Ensure Resend API Key is active.");
           }
       } else {
-          // Hospital path - goes to Clinical Key entry
           setStep(2);
       }
     } catch (err: any) {
-      console.error("Google Login Error:", err);
       setError("Google Authentication Failed. Ensure domain is authorized in Firebase.");
     } finally {
       setLoading(false);
@@ -152,67 +149,125 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen w-full bg-[#F8FAFC] dark:bg-[#0F172A] overflow-hidden">
       {/* Left side UI - Clinical Branding */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-16 bg-[#2563EB] relative overflow-hidden text-white">
+      <div className={cn(
+        "hidden lg:flex lg:w-1/2 flex-col justify-between p-16 transition-colors duration-700 relative overflow-hidden text-white",
+        loginMode === 'hospital' ? 'bg-[#2563EB]' : 'bg-[#059669]'
+      )}>
         <div className="relative z-10">
           <div className="flex items-center space-x-5">
              <div className="h-16 w-16 bg-white rounded-[2rem] p-4 shadow-2xl flex items-center justify-center">
                 <img src={logoPath} className="h-full w-full object-contain" alt="Logo" />
              </div>
              <div>
-                <h1 className="text-3xl font-black tracking-tighter">NEUROSIGNAL</h1>
-                <p className="text-[11px] font-bold opacity-60 tracking-[0.4em] mt-1 uppercase">Enterprise v2.5</p>
+                <h1 className="text-3xl font-black tracking-tighter uppercase">NeuroSignal</h1>
+                <p className="text-[10px] font-black opacity-60 tracking-[0.4em] mt-1 uppercase">
+                    {loginMode === 'hospital' ? 'Enterprise Node v2.5' : 'Professional Node v2.5'}
+                </p>
              </div>
           </div>
         </div>
 
         <div className="relative z-10">
-           <h2 className="text-7xl font-black mb-10 leading-[0.95] tracking-tight">Clinical <br />Intelligence <br />at Scale.</h2>
-           <p className="text-xl text-white/70 font-medium leading-relaxed max-w-lg">
-             Access your unified workstation with multi-tenant security. Monitor, analyze, and diagnose with AI-driven precision.
-           </p>
+           <AnimatePresence mode="wait">
+             {loginMode === 'hospital' ? (
+                <motion.div key="h-text" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+                   <h2 className="text-7xl font-black mb-10 leading-[0.95] tracking-tight">Institutional <br />Intelligence <br />Hub.</h2>
+                   <p className="text-xl text-white/70 font-medium leading-relaxed max-w-lg">
+                     Centralized multi-unit workstation with shared diagnostic databases and team authorization protocols.
+                   </p>
+                </motion.div>
+             ) : (
+                <motion.div key="i-text" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+                   <h2 className="text-7xl font-black mb-10 leading-[0.95] tracking-tight">Private <br />Clinical <br />Workstation.</h2>
+                   <p className="text-xl text-white/70 font-medium leading-relaxed max-w-lg">
+                     Direct practitioner access for individual session history, secure AI analysis, and private vault storage.
+                   </p>
+                </motion.div>
+             )}
+           </AnimatePresence>
         </div>
 
+        {/* Dynamic Background Pattern */}
+        <div className="absolute inset-0 opacity-10 pointer-events-none"
+          style={{ backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`, backgroundSize: '40px 40px' }}
+        />
         <div className="absolute -bottom-20 -right-20 w-[600px] h-[600px] bg-white/10 rounded-full blur-[120px]" />
       </div>
 
       {/* Right side form - Access Gateway */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 md:p-16 bg-[#F8FAFC] dark:bg-[#0F172A] relative">
         <div className="w-full max-w-[480px] space-y-12">
-          <div className="space-y-4">
+          <div className="space-y-4 text-center lg:text-left">
             <div className="flex items-center justify-between">
                <h3 className="text-5xl font-black text-[#0F172A] dark:text-white tracking-tight">Login</h3>
-               <Link href="/" className="h-10 w-10 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-400 hover:text-primary transition-colors lg:hidden">
+               <Link href="/" className="h-10 w-10 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center lg:hidden">
                   <img src={logoPath} className="h-5 w-5 opacity-40" alt="L" />
                </Link>
             </div>
-            <p className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.2em]">Clinical Access Gateway</p>
+            <p className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.2em]">Select Authorization Protocol</p>
           </div>
 
           <div className="space-y-8">
              {/* Toggle between Hospital and Individual */}
-             <div className="flex p-1.5 bg-slate-100 dark:bg-slate-900 rounded-[2rem]">
+             <div className="flex p-2 bg-slate-100 dark:bg-slate-900 rounded-[2.5rem] relative">
+                <div
+                  className={cn(
+                    "absolute top-2 bottom-2 w-[calc(50%-8px)] rounded-[2rem] transition-all duration-500 ease-spring shadow-lg",
+                    loginMode === 'hospital' ? "left-2 bg-[#2563EB]" : "left-[calc(50%+4px)] bg-[#059669]"
+                  )}
+                />
                 <button
                   onClick={() => {setLoginMode('hospital'); setStep(1); setGoogleUser(null); setError(null);}}
-                  className={cn("flex-1 py-4 rounded-[1.5rem] text-[11px] font-black transition-all", loginMode === 'hospital' ? "bg-white dark:bg-slate-800 text-primary shadow-xl" : "text-slate-500")}
+                  className={cn(
+                    "flex-1 py-4 rounded-[2rem] text-[11px] font-black transition-colors duration-300 relative z-10 flex items-center justify-center gap-2",
+                    loginMode === 'hospital' ? "text-white" : "text-slate-500"
+                  )}
                 >
-                  HOSPITAL KEY
+                  <Building2 className="h-4 w-4" /> HOSPITAL KEY
                 </button>
                 <button
                   onClick={() => {setLoginMode('individual'); setStep(1); setGoogleUser(null); setError(null);}}
-                  className={cn("flex-1 py-4 rounded-[1.5rem] text-[11px] font-black transition-all", loginMode === 'individual' ? "bg-white dark:bg-slate-800 text-primary shadow-xl" : "text-slate-500")}
+                  className={cn(
+                    "flex-1 py-4 rounded-[2rem] text-[11px] font-black transition-colors duration-300 relative z-10 flex items-center justify-center gap-2",
+                    loginMode === 'individual' ? "text-white" : "text-slate-500"
+                  )}
                 >
-                  PROFESSIONAL ID
+                  <Stethoscope className="h-4 w-4" /> PROFESSIONAL ID
                 </button>
              </div>
 
              <AnimatePresence mode="wait">
                 {step === 1 ? (
-                  <motion.div key="step1" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
-                     <button onClick={handleGoogleLogin} disabled={loading} className="w-full h-20 bg-white dark:bg-slate-800 border-2 border-border/50 rounded-3xl flex items-center justify-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all font-bold group disabled:opacity-50">
+                  <motion.div
+                    key="step1"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="space-y-6"
+                  >
+                     <div className="space-y-2 mb-6">
+                        <p className={cn(
+                            "text-sm font-bold uppercase tracking-widest text-center",
+                            loginMode === 'hospital' ? 'text-primary' : 'text-emerald-600'
+                        )}>
+                            {loginMode === 'hospital' ? 'Institutional Node Access' : 'Practitioner Verification'}
+                        </p>
+                        <p className="text-xs text-slate-400 text-center px-4">
+                            {loginMode === 'hospital'
+                                ? 'Access shared unit data via institutional credentials.'
+                                : 'Secure workstation access for individual clinical sessions.'}
+                        </p>
+                     </div>
+
+                     <button
+                       onClick={handleGoogleLogin}
+                       disabled={loading}
+                       className="w-full h-20 bg-white dark:bg-slate-800 border-2 border-border/50 rounded-3xl flex items-center justify-center gap-4 hover:border-primary/50 transition-all font-bold group disabled:opacity-50"
+                     >
                         {loading ? <Loader2 className="h-6 w-6 animate-spin text-primary" /> : (
                            <>
                              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="h-6 w-6 group-hover:scale-110 transition-transform" />
-                             <span className="text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-white">Verify via Google ID</span>
+                             <span className="text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-white">Verify Identity via Google</span>
                            </>
                         )}
                      </button>
@@ -235,20 +290,33 @@ export default function LoginPage() {
                         <Link href="/subscriptions" className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline flex items-center gap-2">
                            <Globe className="h-3 w-3" /> Explore Clinical Licenses
                         </Link>
-                        <Link href="/verify-hospital" className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-foreground flex items-center gap-2">
-                           <Hospital className="h-3 w-3" /> Institutional Onboarding Hub
-                        </Link>
+                        {loginMode === 'hospital' && (
+                            <Link href="/verify-hospital" className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-foreground flex items-center gap-2">
+                               <Hospital className="h-3 w-3" /> Institutional Onboarding Hub
+                            </Link>
+                        )}
                      </div>
                   </motion.div>
                 ) : (
-                  <motion.div key="step2" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+                  <motion.div key="step2" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="space-y-8">
                      {/* Google ID Badge */}
-                     <div className="p-5 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 rounded-[2rem] flex items-center gap-4">
-                        <div className="h-10 w-10 bg-emerald-500 rounded-full flex items-center justify-center text-white shrink-0">
+                     <div className={cn(
+                        "p-5 border rounded-[2rem] flex items-center gap-4",
+                        loginMode === 'hospital'
+                            ? "bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800"
+                            : "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800"
+                     )}>
+                        <div className={cn(
+                            "h-10 w-10 rounded-full flex items-center justify-center text-white shrink-0",
+                            loginMode === 'hospital' ? 'bg-[#2563EB]' : 'bg-[#059669]'
+                        )}>
                            <ShieldCheck className="h-5 w-5" />
                         </div>
                         <div className="min-w-0">
-                           <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">ID Verified</p>
+                           <p className={cn(
+                                "text-[9px] font-black uppercase tracking-widest",
+                                loginMode === 'hospital' ? 'text-blue-600' : 'text-emerald-600'
+                           )}>Identity Verified</p>
                            <p className="text-xs font-bold text-slate-700 dark:text-white truncate">{googleUser?.email}</p>
                         </div>
                         <button onClick={() => setStep(1)} className="ml-auto text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-primary transition-colors">Reset</button>
@@ -257,7 +325,7 @@ export default function LoginPage() {
                      {loginMode === 'hospital' ? (
                         <div className="space-y-6">
                            <div className="space-y-2">
-                              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Clinical Key (NS-XXXXXX)</label>
+                              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Authorized Clinical Key (NS-XXXXXX)</label>
                               <div className="relative">
                                  <Key className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                                  <input
@@ -276,12 +344,12 @@ export default function LoginPage() {
                      ) : (
                         <div className="space-y-8 text-center">
                            <div className="space-y-6">
-                              <div className="h-14 w-14 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto text-primary">
+                              <div className="h-14 w-14 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto text-emerald-600">
                                  <Mail className="h-7 w-7" />
                               </div>
                               <div className="space-y-2">
-                                 <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Clinical Verification Required</p>
-                                 <p className="text-xs font-medium text-slate-400 px-8">We've dispatched a unique 6-digit access code to your verified practitioner mail.</p>
+                                 <p className="text-[11px] font-black uppercase tracking-[0.2em] text-emerald-600">6-Digit Access Code Dispatched</p>
+                                 <p className="text-xs font-medium text-slate-400 px-8">We've sent a one-time workstation code to your verified practitioner mail.</p>
                               </div>
                               <div className="flex gap-3 justify-center">
                                  {otp.map((digit, i) => (
@@ -292,15 +360,15 @@ export default function LoginPage() {
                                      maxLength={1}
                                      value={digit}
                                      onChange={(e) => handleOtpChange(i, e.target.value)}
-                                     className="h-16 w-12 bg-white dark:bg-slate-900 border-2 border-border/50 rounded-2xl flex items-center justify-center font-black text-xl text-center focus:border-primary outline-none transition-colors"
+                                     className="h-16 w-12 bg-white dark:bg-slate-900 border-2 border-border/50 rounded-2xl flex items-center justify-center font-black text-xl text-center focus:border-emerald-500 outline-none transition-colors"
                                    />
                                  ))}
                               </div>
                            </div>
-                           <button onClick={handleIndividualVerify} disabled={loading} className="w-full h-20 bg-primary text-white rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl shadow-primary/30 flex items-center justify-center gap-4 active:scale-95 transition-all">
-                              {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <>Enter Private Workstation <ArrowRight className="h-5 w-5" /></>}
+                           <button onClick={handleIndividualVerify} disabled={loading} className="w-full h-20 bg-[#059669] text-white rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl shadow-emerald-200 dark:shadow-none flex items-center justify-center gap-4 active:scale-95 transition-all">
+                              {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <>Access Private Workstation <ArrowRight className="h-5 w-5" /></>}
                            </button>
-                           <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Resend code in 45s</p>
+                           <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Request code resend in 45s</p>
                         </div>
                      )}
                      {error && (
