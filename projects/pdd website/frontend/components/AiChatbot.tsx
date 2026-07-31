@@ -40,17 +40,15 @@ export default function AiChatbot() {
     try {
       const model = genAI.getGenerativeModel({
         model: "gemini-1.5-flash",
-        systemInstruction: "You are the 'NeuroSignal Clinical Consultant', a specialist module of the NeuroSignal medical workstation. Never mention you are an AI or Google product. Use highly technical medical terminology. Prepend diagnostic responses with '[CLINICAL ADVISORY: This module provides signal interpretation assistance only. Final diagnosis must be verified by a licensed specialist.]'. Only discuss physiological signals and system troubleshooting."
       });
 
-      const chat = model.startChat({
-        history: messages.map(m => ({
-          role: m.role,
-          parts: [{ text: m.content }]
-        })),
-      });
+      // Simple generation instead of chat state if history is causing issues
+      const prompt = `System: You are the 'NeuroSignal Clinical Consultant'. Never mention AI or Google. Use technical medical terminology.
+      Context: User is a licensed clinician at a workstation.
+      History: ${messages.map(m => `${m.role}: ${m.content}`).join('\n')}
+      User: ${userMsg}`;
 
-      const result = await chat.sendMessage(userMsg);
+      const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
 
