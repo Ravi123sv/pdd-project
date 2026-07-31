@@ -45,8 +45,18 @@ export default function LoginPage() {
   const [clinicalKey, setClinicalKey] = useState("");
   const [googleUser, setGoogleUser] = useState<FirebaseUser | null>(null);
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const logoPath = "https://ravi123sv.github.io/pdd-project/assets/icon/app_icon.svg";
+
+  const handleLoginSuccess = (userData: any, token: string) => {
+      setShowSuccess(true);
+      setTimeout(() => {
+          localStorage.setItem("user_session", JSON.stringify({ user: userData, token }));
+          setAuth(true, userData);
+          router.push("/dashboard");
+      }, 1500);
+  };
 
   // 1. Initial Session Check
   useEffect(() => {
@@ -125,9 +135,7 @@ export default function LoginPage() {
         hospitalName: user.hospitalName,
       };
 
-      localStorage.setItem("user_session", JSON.stringify({ user: userData, token }));
-      setAuth(true, userData);
-      router.push("/dashboard");
+      handleLoginSuccess(userData, token);
     } catch (err: any) {
       console.error("[LOGIN] Backend Error:", err.response?.data);
       setError(err.response?.data?.message || "ACCESS DENIED: KEY NOT RECOGNIZED BY CLINICAL HUB.");
@@ -158,9 +166,8 @@ export default function LoginPage() {
         userType: 'individual' as const,
       };
 
-      localStorage.setItem("user_session", JSON.stringify({ user: userData, token: await googleUser?.getIdToken() }));
-      setAuth(true, userData);
-      router.push("/dashboard");
+      const token = await googleUser?.getIdToken();
+      handleLoginSuccess(userData, token || "mock-token");
     } catch (err: any) {
       console.error("[LOGIN] OTP Verification Failed:", err);
       setError("VERIFICATION FAILED: CODE EXPIRED OR INVALID.");
@@ -386,6 +393,26 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+      <AnimatePresence>
+          {showSuccess && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[200] bg-primary flex flex-col items-center justify-center text-white"
+              >
+                  <motion.div
+                    initial={{ scale: 0.8, rotate: -10 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    className="h-24 w-24 bg-white/20 rounded-[2.5rem] flex items-center justify-center mb-8"
+                  >
+                      <Check className="h-12 w-12" />
+                  </motion.div>
+                  <h2 className="text-3xl font-black tracking-tight uppercase">Link Established</h2>
+                  <p className="text-white/60 text-sm font-bold uppercase tracking-widest mt-2">Entering Clinical Workspace...</p>
+              </motion.div>
+          )}
+      </AnimatePresence>
     </div>
   );
 }

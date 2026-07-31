@@ -68,6 +68,7 @@ export const api = {
     loginWithKey: (clinicalKey: string, email: string) => apiClient.post('/auth/login-key', { clinicalKey, email }),
     getProfile: (uid: string) => apiClient.get(`/auth/profile/${uid}`),
     getTeam: (hospitalId: string) => apiClient.get(`/auth/hospital-team/${hospitalId}`),
+    authorizeStaff: (hospitalId: string, email: string, role: string) => apiClient.post('/auth/authorize-staff', { hospitalId, email, role }),
   },
   assets: {
     getAll: (hospitalId: string) => apiClient.get(`/assets/${hospitalId}`),

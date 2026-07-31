@@ -94,8 +94,51 @@ router.get('/profile/:uid', async (req, res) => {
 
 router.get('/hospital-team/:hospitalId', async (req, res) => {
     try {
-        const team = await User.find({ hospitalId: req.params.hospitalId });
-        res.json(team);
+        const hospital = await Hospital.findOne({ hospitalId: req.params.hospitalId });
+        if (!hospital) return res.status(404).json({ message: 'Hospital not found' });
+
+        const users = await User.find({ hospitalId: req.params.hospitalId });
+
+        const members = users.map(u => ({
+            _id: u._id,
+            email: u.email,
+            name: u.name,
+            role: u.role,
+            status: 'active'
+        }));
+
+        hospital.authorizedEmails.forEach(a => {
+            if (!members.find(m => m.email === a.email)) {
+                members.push({
+                    _id: `pending-${a._id}`,
+                    email: a.email,
+                    name: 'Pending Access',
+                    role: a.role,
+                    status: 'authorized'
+                });
+            }
+        });
+
+        res.json(members);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+router.post('/authorize-staff', async (req, res) => {
+    const { hospitalId, email, role } = req.body;
+    try {
+        const hospital = await Hospital.findOne({ hospitalId });
+        if (!hospital) return res.status(404).json({ message: 'Hospital hub not found' });
+
+        if (hospital.authorizedEmails.some(a => a.email === email)) {
+            return res.status(400).json({ message: 'Practitioner already authorized' });
+        }
+
+        hospital.authorizedEmails.push({ email: email.toLowerCase(), role });
+        await hospital.save();
+
+        res.json({ success: true, message: `Access granted to ${email}` });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }

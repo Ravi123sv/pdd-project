@@ -47,20 +47,24 @@ export default function TeamManagementPage() {
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user?.hospitalId || !inviteEmail) return;
+
     setLoading(true);
-    // In a real app, this would call an API to send an invite email
-    setTimeout(() => {
-        setTeam(prev => [...prev, {
-            _id: Math.random().toString(),
-            name: "Pending Invite",
-            email: inviteEmail,
-            role: inviteRole,
-            status: 'invited'
-        }]);
+    try {
+        await api.auth.authorizeStaff(user.hospitalId, inviteEmail, inviteRole);
+
+        // Refresh Team List
+        const res = await api.auth.getTeam(user.hospitalId);
+        setTeam(res.data);
+
         setInviteEmail("");
         setShowInvite(false);
+    } catch (err: any) {
+        console.error("Authorization Error:", err);
+        alert(err.response?.data?.message || "Failed to authorize staff member.");
+    } finally {
         setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
