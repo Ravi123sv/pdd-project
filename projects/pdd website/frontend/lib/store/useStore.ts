@@ -18,6 +18,11 @@ interface AppState {
   networkStatus: 'Connected' | 'Offline';
   latencyMs: number;
   activePatient: any | null;
+  settings: {
+      backendUrl: string;
+      aiEnabled: boolean;
+      encryptionEnabled: boolean;
+  };
 
   // Actions
   setAuth: (isAuthenticated: boolean, user: UserProfile | null) => void;
@@ -25,6 +30,7 @@ interface AppState {
   setHardwareStatus: (status: boolean) => void;
   setNetworkStatus: (status: 'Connected' | 'Offline', latency?: number) => void;
   setActivePatient: (patient: any) => void;
+  setSettings: (settings: Partial<AppState['settings']>) => void;
   logout: () => void;
   checkSession: () => void;
 }
@@ -37,6 +43,11 @@ export const useStore = create<AppState>((set, get) => ({
   networkStatus: 'Connected',
   latencyMs: 0,
   activePatient: null,
+  settings: {
+      backendUrl: 'http://localhost:5000/api',
+      aiEnabled: true,
+      encryptionEnabled: true,
+  },
 
   setAuth: (isAuthenticated, user) => {
       console.log("[STORE] Updating Auth State:", isAuthenticated, user?.email);
@@ -47,6 +58,7 @@ export const useStore = create<AppState>((set, get) => ({
   setHardwareStatus: (status) => set({ isHardwareConnected: status }),
   setNetworkStatus: (status, latency = 0) => set({ networkStatus: status, latencyMs: latency }),
   setActivePatient: (patient) => set({ activePatient: patient }),
+  setSettings: (newSettings) => set((state) => ({ settings: { ...state.settings, ...newSettings } })),
 
   checkSession: () => {
     if (typeof window !== 'undefined') {
