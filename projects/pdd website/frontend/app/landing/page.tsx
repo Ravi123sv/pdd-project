@@ -72,9 +72,13 @@ export default function LandingPage() {
                 <span>Launch Workstation</span>
                 <ArrowRight className="h-4 w-4" />
               </button>
-              <button className="h-16 px-10 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white rounded-2xl font-black text-xs uppercase tracking-[0.3em] flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">
+              <a
+                href="/docs/technical_manual.md"
+                target="_blank"
+                className="h-16 px-10 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white rounded-2xl font-black text-xs uppercase tracking-[0.3em] flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 transition-all no-underline"
+              >
                 View Documentation
-              </button>
+              </a>
             </div>
           </motion.div>
 

@@ -58,10 +58,10 @@ export default function DashboardLayout({
   return (
     <div className="flex h-screen bg-[#F8FAFC] dark:bg-[#0F172A] overflow-hidden relative">
 
-      {/* Desktop Resizable Sidebar */}
+      {/* Desktop Resizable Sidebar - Notch Safe */}
       <div
         style={{ width: sidebarWidth }}
-        className="hidden md:flex flex-col relative shrink-0 transition-[width] duration-75"
+        className="hidden md:flex flex-col relative shrink-0 transition-[width] duration-75 safe-sidebar border-r border-border"
       >
         <Sidebar isCollapsed={sidebarWidth < 120} setCollapsed={() => {}} />
 
@@ -74,8 +74,8 @@ export default function DashboardLayout({
         </div>
       </div>
 
-      {/* Mobile Header Overlay */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white dark:bg-slate-900 border-b border-border z-[60] flex items-center justify-between px-6">
+      {/* Mobile Header Overlay - Notch Safe */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white dark:bg-slate-900 border-b border-border z-[60] flex items-center justify-between px-6 safe-header">
          <div className="flex items-center space-x-3">
             <img src="/assets/icon/app_icon.svg" className="h-8 w-8" alt="Logo" />
             <span className="text-xs font-black tracking-widest uppercase">NeuroSignal</span>
@@ -88,7 +88,7 @@ export default function DashboardLayout({
          </button>
       </div>
 
-      {/* Mobile Side Drawer */}
+      {/* Mobile Side Drawer - Notch Safe Content */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <>
@@ -103,7 +103,7 @@ export default function DashboardLayout({
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
-              className="md:hidden fixed top-0 left-0 bottom-0 w-[80%] bg-white dark:bg-slate-900 z-[80] shadow-2xl p-8"
+              className="md:hidden fixed top-0 left-0 bottom-0 w-[85%] bg-white dark:bg-slate-900 z-[80] shadow-2xl p-8 safe-sidebar"
             >
                <Sidebar isCollapsed={false} setCollapsed={() => {}} />
             </motion.div>
