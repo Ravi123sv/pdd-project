@@ -6,20 +6,15 @@ import { useStore } from "../lib/store/useStore";
 import {
   LayoutDashboard,
   Activity,
-  History,
   Users,
   Shield,
   LogOut,
   User,
-  ChevronLeft,
-  ChevronRight,
-  Monitor,
   FolderArchive,
   CloudUpload,
   FileDown,
   BrainCircuit,
-  Settings2,
-  Bug
+  Settings2
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -63,24 +58,23 @@ export default function Sidebar({ isCollapsed, setCollapsed }: SidebarProps) {
 
   return (
     <aside className={cn(
-      "bg-white dark:bg-slate-900 border-r border-border flex flex-col transition-all duration-300 ease-in-out h-screen",
-      isCollapsed ? "w-20" : "w-64"
+      "bg-white dark:bg-slate-900 flex flex-col h-full overflow-hidden",
+      isCollapsed ? "items-center" : ""
     )}>
       {/* Header */}
-      <div className="h-20 flex items-center px-6 justify-between border-b border-border/50 shrink-0">
-        {!isCollapsed && (
+      <div className="h-20 flex items-center px-6 border-b border-border/50 shrink-0">
+        {!isCollapsed ? (
           <div className="flex items-center space-x-3">
             <img src="/assets/icon/app_icon.svg" alt="NeuroSignal Logo" className="h-8 w-8" />
-            <div>
+            <div className="min-w-0">
               <p className="text-[10px] font-black tracking-tighter text-foreground leading-none">NEUROSIGNAL</p>
-              <p className="text-[8px] font-bold text-slate-400 mt-1 uppercase">
+              <p className="text-[8px] font-bold text-slate-400 mt-1 uppercase truncate">
                 {user?.userType === 'hospital' ? 'ENTERPRISE 2.5' : 'PROFESSIONAL'}
               </p>
             </div>
           </div>
-        )}
-        {isCollapsed && (
-          <img src="/assets/icon/app_icon.svg" alt="NeuroSignal Logo" className="h-8 w-8 mx-auto" />
+        ) : (
+          <img src="/assets/icon/app_icon.svg" alt="Logo" className="h-8 w-8" />
         )}
       </div>
 
@@ -100,7 +94,6 @@ export default function Sidebar({ isCollapsed, setCollapsed }: SidebarProps) {
                   {section}
                 </p>
               )}
-              {isCollapsed && <div className="h-px bg-border/50 mx-2 mb-4" />}
 
               {sectionItems.map(item => {
                 const isActive = pathname === item.href;
@@ -108,11 +101,13 @@ export default function Sidebar({ isCollapsed, setCollapsed }: SidebarProps) {
                   <Link
                     key={item.href}
                     href={item.href}
+                    title={isCollapsed ? item.label : ""}
                     className={cn(
                       "w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all group",
                       isActive
                         ? "bg-primary/10 text-primary font-bold shadow-sm"
-                        : "text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
+                        : "text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200",
+                      isCollapsed && "justify-center px-0"
                     )}
                   >
                     <item.icon className={cn("h-5 w-5 shrink-0", isActive ? "text-primary" : "text-slate-400 group-hover:text-slate-600")} />
@@ -129,8 +124,8 @@ export default function Sidebar({ isCollapsed, setCollapsed }: SidebarProps) {
       <div className="p-4 border-t border-border/50 shrink-0">
         {!isCollapsed && (
           <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-3 flex items-center space-x-3 mb-4">
-            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold shrink-0">
-              {user?.name?.[0].toUpperCase()}
+            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-black uppercase shrink-0">
+              {user?.name?.[0]}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold text-foreground truncate">{user?.name}</p>
@@ -142,7 +137,7 @@ export default function Sidebar({ isCollapsed, setCollapsed }: SidebarProps) {
           onClick={logout}
           className={cn(
             "w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all font-bold",
-            isCollapsed && "justify-center"
+            isCollapsed && "justify-center px-0"
           )}
         >
           <LogOut className="h-5 w-5 shrink-0" />
