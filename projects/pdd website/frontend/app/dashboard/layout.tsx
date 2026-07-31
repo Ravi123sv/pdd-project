@@ -6,6 +6,7 @@ import { useStore } from "../../lib/store/useStore";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import AiChatbot from "../../components/AiChatbot";
+import InstallPrompt from "../../components/InstallPrompt";
 import { Menu, X, LayoutDashboard, Activity, Users, Settings2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -128,6 +129,7 @@ export default function DashboardLayout({
       </div>
 
       <AiChatbot />
+      <InstallPrompt />
     </div>
   );
 }
