@@ -4,6 +4,7 @@ const Patient = require('../models/Patient');
 const Asset = require('../models/Asset');
 const Hospital = require('../models/Hospital');
 const User = require('../models/User');
+const Session = require('../models/Session');
 
 router.post('/', async (req, res) => {
   const { hospitalId } = req.body;
@@ -16,6 +17,7 @@ router.post('/', async (req, res) => {
     await Asset.deleteMany({ hospitalId });
     await Hospital.deleteMany({ hospitalId });
     await User.deleteMany({ hospitalId });
+    await Session.deleteMany({ hospitalId });
 
     // Seed Hospital Base
     const hospital = new Hospital({
@@ -36,14 +38,50 @@ router.post('/', async (req, res) => {
       { patientId: 'MRN-1002', name: 'Jane Smith', age: 32, department: 'Neurology', hospitalId },
       { patientId: 'MRN-1003', name: 'Robert Brown', age: 58, department: 'ICU', hospitalId }
     ];
-    await Patient.insertMany(patients);
+    const createdPatients = await Patient.insertMany(patients);
+
+    // Seed Users
+    const technician = new User({
+        email: 'tech@hospital.org',
+        name: 'John Tech',
+        role: 'technician',
+        hospitalId,
+        clinicalKey: 'NS-884920'
+    });
+    await technician.save();
+
+    // Seed Sessions
+    const sessions = [
+        {
+            patient: createdPatients[0]._id,
+            technician: technician._id,
+            hospitalId,
+            testType: 'ECG',
+            quality: 98,
+            findings: 'Normal sinus rhythm. Slight artifact in lead V1.',
+            durationSeconds: 120,
+            startTime: new Date(Date.now() - 86400000), // Yesterday
+            status: 'completed'
+        },
+        {
+            patient: createdPatients[1]._id,
+            technician: technician._id,
+            hospitalId,
+            testType: 'EEG',
+            quality: 92,
+            findings: 'Alpha wave dominance in occipital leads. No seizure activity noted.',
+            durationSeconds: 300,
+            startTime: new Date(Date.now() - 172800000), // 2 days ago
+            status: 'completed'
+        }
+    ];
+    await Session.insertMany(sessions);
 
     // Seed Assets
     const assets = [
       { name: 'ECG Lead Set (12)', status: 'ACTIVE', type: 'success', icon: 'cable', hospitalId },
       { name: 'EEG Cap (M)', status: 'IN USE', type: 'primary', icon: 'psychology', hospitalId },
       { name: 'Conductive Gel', status: 'LOW STOCK', type: 'warning', icon: 'opacity', hospitalId },
-      { name: 'Mobile Station B2', status: 'CHARGING', type: 'primary', icon: 'battery_charging_full', hospitalId }
     ];
     await Asset.insertMany(assets);
 

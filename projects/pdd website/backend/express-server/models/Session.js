@@ -3,10 +3,12 @@ const mongoose = require('mongoose');
 const SessionSchema = new mongoose.Schema({
   patient: { type: mongoose.Schema.Types.ObjectId, ref: 'Patient', required: true },
   technician: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  hospitalId: { type: String, required: true },
   testType: { type: String, enum: ['ECG', 'EEG', 'EMG'], required: true },
   quality: { type: Number }, // SQI
   diagnosis: { type: String },
   findings: { type: String },
+  aiSummary: { type: String },
   durationSeconds: { type: Number },
   startTime: { type: Date, required: true },
   endTime: { type: Date },

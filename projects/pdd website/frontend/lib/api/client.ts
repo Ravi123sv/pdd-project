@@ -86,5 +86,9 @@ export const api = {
   otp: {
     send: (email: string, name: string) => apiClient.post('/otp/send', { email, name }),
     verify: (email: string, otp: string) => apiClient.post('/otp/verify', { email, otp }),
+  },
+  sessions: {
+    getAll: (hospitalId: string) => apiClient.get(`/sessions/${hospitalId}`),
+    update: (id: string, data: any) => apiClient.put(`/sessions/${id}`, data),
   }
 };
