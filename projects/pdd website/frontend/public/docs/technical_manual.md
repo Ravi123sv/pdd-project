@@ -1,4 +1,4 @@
-# NeuroSignal Clinical Workstation Technical Manual
+`# NeuroSignal Clinical Workstation Technical Manual
 
 ## Overview
 NeuroSignal Enterprise v2.5 is a high-fidelity neural waveform analysis platform.
