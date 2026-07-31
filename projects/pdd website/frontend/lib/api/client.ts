@@ -81,5 +81,9 @@ export const api = {
   signals: {
     stream: (data: any) => goClient.post('/go/stream', data),
     analyze: (data: any) => apiClient.post('/signals/analyze', data),
+  },
+  otp: {
+    send: (email: string, name: string) => apiClient.post('/otp/send', { email, name }),
+    verify: (email: string, otp: string) => apiClient.post('/otp/verify', { email, otp }),
   }
 };

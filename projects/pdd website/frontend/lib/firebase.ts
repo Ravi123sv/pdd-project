@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
@@ -20,4 +20,12 @@ export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+
+// Helper for Email Link Auth
+export const actionCodeSettings = {
+  url: typeof window !== 'undefined' ? `${window.location.origin}/auth/verify` : 'https://ravi123sv.github.io/pdd-project/auth/verify',
+  handleCodeInApp: true,
+};
+
+export { sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink };
 export default app;

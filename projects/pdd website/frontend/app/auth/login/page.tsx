@@ -40,6 +40,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [clinicalKey, setClinicalKey] = useState("");
   const [googleUser, setGoogleUser] = useState<FirebaseUser | null>(null);
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
@@ -49,15 +50,20 @@ export default function LoginPage() {
       setGoogleUser(result.user);
 
       if (loginMode === 'individual') {
-          // Individual goes straight through after OTP (mocked for now)
-          setStep(2); // In individual mode, step 2 would be OTP
+          // Send OTP after Google for individual
+          try {
+              await api.otp.send(result.user.email!, result.user.displayName || 'Practitioner');
+              setStep(2);
+          } catch (otpErr: any) {
+              setError("Failed to send verification code. Please try again.");
+          }
       } else {
           // Hospital mode requires key after Google
           setStep(2);
       }
     } catch (err: any) {
       console.error("Google Login Error:", err);
-      setError("Google Authentication Failed: [AUTH/UNAUTHORIZED-DOMAIN]. Please add this domain in Firebase Console.");
+      setError("Google Authentication Failed. Please ensure your account is authorized.");
     } finally {
       setLoading(false);
     }
@@ -96,20 +102,47 @@ export default function LoginPage() {
     }
   };
 
-  const handleIndividualVerify = () => {
-      setLoading(true);
-      setTimeout(() => {
-          const userData = {
-            uid: googleUser?.uid || 'ind-mock',
-            email: googleUser?.email || 'user@example.com',
-            name: googleUser?.displayName || 'Practitioner',
-            role: 'doctor',
-            userType: 'individual' as const,
-          };
-          localStorage.setItem("user_session", JSON.stringify({ user: userData, token: "mock-token" }));
-          setAuth(true, userData);
-          router.push("/dashboard");
-      }, 1500);
+  const handleOtpChange = (index: number, value: string) => {
+    if (value.length > 1) return;
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+
+    // Auto-focus next input
+    if (value && index < 5) {
+      const nextInput = document.getElementById(`otp-${index + 1}`);
+      nextInput?.focus();
+    }
+  };
+
+  const handleIndividualVerify = async () => {
+    if (otp.some(digit => !digit)) {
+        setError("Please enter the full 6-digit code.");
+        return;
+    }
+
+    setLoading(true);
+    setError(null);
+    const fullOtp = otp.join("");
+
+    try {
+      await api.otp.verify(googleUser?.email!, fullOtp);
+
+      const userData = {
+        uid: googleUser?.uid || 'ind-7702',
+        email: googleUser?.email!,
+        name: googleUser?.displayName || 'Dr. Sterling',
+        role: 'doctor',
+        userType: 'individual' as const,
+      };
+      localStorage.setItem("user_session", JSON.stringify({ user: userData, token: await googleUser?.getIdToken() }));
+      setAuth(true, userData);
+      router.push("/dashboard");
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Invalid or expired code.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -119,7 +152,7 @@ export default function LoginPage() {
         <div className="relative z-10">
           <div className="flex items-center space-x-5">
              <div className="h-14 w-14 bg-white rounded-3xl p-3 shadow-2xl flex items-center justify-center">
-                <img src="/assets/icon/app_icon.svg" className="h-full w-full" alt="NeuroSignal" />
+                <img src="/assets/icon/app_icon.svg" className="h-full w-full object-contain" alt="NeuroSignal" />
              </div>
              <div>
                 <h1 className="text-3xl font-black tracking-tighter">NEUROSIGNAL</h1>
@@ -208,7 +241,17 @@ export default function LoginPage() {
                            <div className="space-y-4">
                               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-center">Identity confirmation sent to your mail</p>
                               <div className="flex gap-4 justify-center">
-                                 {[1,2,3,4].map(i => <div key={i} className="h-16 w-16 bg-white dark:bg-slate-900 border-2 border-border/50 rounded-2xl flex items-center justify-center font-black text-xl">-</div>)}
+                                 {otp.map((digit, i) => (
+                                   <input
+                                     key={i}
+                                     id={`otp-${i}`}
+                                     type="text"
+                                     maxLength={1}
+                                     value={digit}
+                                     onChange={(e) => handleOtpChange(i, e.target.value)}
+                                     className="h-16 w-14 bg-white dark:bg-slate-900 border-2 border-border/50 rounded-2xl flex items-center justify-center font-black text-xl text-center focus:border-primary outline-none transition-colors"
+                                   />
+                                 ))}
                               </div>
                            </div>
                            <button onClick={handleIndividualVerify} disabled={loading} className="w-full h-20 bg-primary text-white rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl shadow-primary/30 flex items-center justify-center gap-4 active:scale-95 transition-all">
