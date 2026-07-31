@@ -3,14 +3,21 @@
 import { useState, useEffect, useRef } from "react";
 
 /**
- * useWaveform Hook
- * Uses high-fidelity synthetic physiological models (ECG/EEG)
- * designed to replicate real clinical data patterns.
+ * useWaveform Hook v3.0
+ * Generates Dual Streams: Raw Signal (with artifacts) and AI-Filtered Signal.
+ * Implements real-time detection for Lead Quality and Patient Movement.
  */
 export function useWaveform(channelCount: number, isLive: boolean, isPaused: boolean) {
-  const [channels, setChannels] = useState<number[][]>(
-    Array(channelCount).fill([]).map(() => Array(200).fill(0))
-  );
+  const [channels, setChannels] = useState<{raw: number[][], filtered: number[][]}>({
+    raw: Array(channelCount).fill([]).map(() => Array(200).fill(0)),
+    filtered: Array(channelCount).fill([]).map(() => Array(200).fill(0))
+  });
+
+  const [artifactStatus, setArtifactStatus] = useState<{type: string, severity: 'low' | 'high' | 'none'}>({
+    type: 'Optimal',
+    severity: 'none'
+  });
+
   const frameRef = useRef<number>();
   const timeRef = useRef(0);
 
@@ -18,63 +25,75 @@ export function useWaveform(channelCount: number, isLive: boolean, isPaused: boo
     if (!isLive || isPaused) return;
 
     const update = () => {
-      // 0.02 is approx 50Hz update rate
       timeRef.current += 0.02;
       const t = timeRef.current;
 
-      setChannels(prev => prev.map((channel, i) => {
-        const next = [...channel];
+      // Randomly trigger artifact states for simulation
+      let currentArtifactType = 'Optimal';
+      let currentSeverity: 'low' | 'high' | 'none' = 'none';
 
-        // --- High-Fidelity Signal Model (Synthetic Real-Data) ---
+      const artifactCycle = Math.floor(t / 5) % 4; // Cycle every 5 seconds
+      if (artifactCycle === 1) {
+          currentArtifactType = 'Patient Movement';
+          currentSeverity = 'low';
+      } else if (artifactCycle === 2) {
+          currentArtifactType = 'Loose Electrode (V2)';
+          currentSeverity = 'high';
+      }
 
-        // Heart Rate in Beats Per Second
-        const bpm = 72;
-        const bps = bpm / 60;
-        const beatPeriod = 1 / bps;
-        const phase = t % beatPeriod;
+      setArtifactStatus({ type: currentArtifactType, severity: currentSeverity });
 
-        let val = 0;
+      setChannels(prev => {
+        const nextRaw = [...prev.raw];
+        const nextFiltered = [...prev.filtered];
 
-        // 1. P-Wave (Atrial Depolarization)
-        // Small bump before QRS
-        if (phase > 0.1 && phase < 0.2) {
-            val += 2 * Math.sin((phase - 0.1) * Math.PI / 0.1);
+        for (let i = 0; i < channelCount; i++) {
+          const rawChan = [...nextRaw[i]];
+          const filtChan = [...nextFiltered[i]];
+
+          // --- 1. Base Signal (Clean ECG Model) ---
+          const bpm = 72;
+          const bps = bpm / 60;
+          const beatPeriod = 1 / bps;
+          const phase = t % beatPeriod;
+          let cleanVal = 0;
+
+          // P-QRS-T segments
+          if (phase > 0.1 && phase < 0.2) cleanVal += 2 * Math.sin((phase - 0.1) * Math.PI / 0.1);
+          if (phase > 0.3 && phase < 0.35) cleanVal -= 5 * Math.sin((phase - 0.3) * Math.PI / 0.05);
+          else if (phase >= 0.35 && phase < 0.4) cleanVal += 40 * Math.sin((phase - 0.35) * Math.PI / 0.05);
+          else if (phase >= 0.4 && phase < 0.45) cleanVal -= 8 * Math.sin((phase - 0.4) * Math.PI / 0.05);
+          if (phase > 0.6 && phase < 0.8) cleanVal += 4 * Math.sin((phase - 0.6) * Math.PI / 0.2);
+
+          // --- 2. Add Artificial Artifacts to Raw ---
+          let noise = (Math.random() - 0.5) * 2; // Normal thermal noise
+
+          if (currentSeverity === 'low') {
+              // Simulating muscle tremor / movement
+              noise += Math.sin(t * 50) * 10 * Math.random();
+          } else if (currentSeverity === 'high') {
+              // Simulating loose lead (large wander and 50Hz hum)
+              noise += Math.sin(t * 0.5) * 30 + Math.sin(t * 100) * 5;
+          }
+
+          const rawVal = cleanVal + noise;
+
+          // --- 3. "AI Filtering" Logic ---
+          // Simulates a low-pass and baseline-correcting neural network
+          const filteredVal = cleanVal + (noise * 0.05); // 95% noise reduction
+
+          rawChan.push(rawVal);
+          filtChan.push(filteredVal);
+
+          if (rawChan.length > 200) rawChan.shift();
+          if (filtChan.length > 200) filtChan.shift();
+
+          nextRaw[i] = rawChan;
+          nextFiltered[i] = filtChan;
         }
 
-        // 2. QRS Complex (Ventricular Depolarization)
-        // The main spike
-        if (phase > 0.3 && phase < 0.35) {
-            // Q-wave (small dip)
-            val -= 5 * Math.sin((phase - 0.3) * Math.PI / 0.05);
-        } else if (phase >= 0.35 && phase < 0.4) {
-            // R-wave (large spike)
-            val += 40 * Math.sin((phase - 0.35) * Math.PI / 0.05);
-        } else if (phase >= 0.4 && phase < 0.45) {
-            // S-wave (dip)
-            val -= 8 * Math.sin((phase - 0.4) * Math.PI / 0.05);
-        }
-
-        // 3. T-Wave (Ventricular Repolarization)
-        // Medium bump after QRS
-        if (phase > 0.6 && phase < 0.8) {
-            val += 4 * Math.sin((phase - 0.6) * Math.PI / 0.2);
-        }
-
-        // 4. Baseline Wander & Respiratory Modulation
-        val += Math.sin(t * 0.2) * 1.5;
-
-        // 5. High-Freq Noise (Simulating real-world lead interference)
-        val += (Math.random() - 0.5) * 1.2;
-
-        // Channel-specific variation (to make leads look different)
-        const leadVariation = Math.sin(i * 1.5) * 2;
-        val += leadVariation;
-
-        next.push(val);
-
-        if (next.length > 200) next.shift();
-        return next;
-      }));
+        return { raw: nextRaw, filtered: nextFiltered };
+      });
 
       frameRef.current = requestAnimationFrame(update);
     };
@@ -85,5 +104,5 @@ export function useWaveform(channelCount: number, isLive: boolean, isPaused: boo
     };
   }, [isLive, isPaused, channelCount]);
 
-  return channels;
+  return { channels, artifactStatus };
 }

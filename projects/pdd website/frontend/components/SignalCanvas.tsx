@@ -4,18 +4,19 @@ import { useEffect, useRef } from "react";
 
 interface SignalCanvasProps {
   label: string;
-  data: number[];
+  rawData?: number[];
+  filteredData: number[];
   color?: string;
   isLive: boolean;
   isPaused: boolean;
+  showRaw?: boolean;
 }
 
 /**
- * SignalCanvas Component
- * High-performance Waveform Renderer using HTML5 Canvas
- * Optimized for Retina/4K and responsive scaling
+ * SignalCanvas Component v2.5
+ * Dual-Trace Support: Displays both Raw and AI-Filtered signals for comparison.
  */
-export default function SignalCanvas({ label, data, color = "#10B981", isLive, isPaused }: SignalCanvasProps) {
+export default function SignalCanvas({ label, rawData, filteredData, color = "#10B981", isLive, isPaused, showRaw = true }: SignalCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -28,11 +29,9 @@ export default function SignalCanvas({ label, data, color = "#10B981", isLive, i
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
 
-        // Use high resolution for sharp lines (Retina/4K support)
         const dpr = window.devicePixelRatio || 1;
         const rect = container.getBoundingClientRect();
 
-        // Only update dimensions if they changed to avoid flicker
         if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
             canvas.width = rect.width * dpr;
             canvas.height = rect.height * dpr;
@@ -42,45 +41,52 @@ export default function SignalCanvas({ label, data, color = "#10B981", isLive, i
         const width = rect.width;
         const height = rect.height;
         const midY = height / 2;
+        const yScale = height / 160;
 
-        // --- Rendering Logic ---
         ctx.clearRect(0, 0, width, height);
 
-        // 1. Draw Grid (Clinical Paper Style)
+        // 1. Clinical Grid
         ctx.strokeStyle = "rgba(255, 255, 255, 0.03)";
         ctx.lineWidth = 0.5;
-        for (let i = 0; i < width; i += 20) {
-          ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, height); ctx.stroke();
-        }
-        for (let i = 0; i < height; i += 20) {
-          ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(width, i); ctx.stroke();
+        for (let i = 0; i < width; i += 20) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, height); ctx.stroke(); }
+        for (let i = 0; i < height; i += 20) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(width, i); ctx.stroke(); }
+
+        const step = width / (filteredData.length - 1);
+
+        // 2. Draw RAW Signal (Faint Red/Orange)
+        if (showRaw && rawData && rawData.length > 0) {
+            ctx.beginPath();
+            ctx.strokeStyle = "rgba(239, 68, 68, 0.3)"; // Red-500 with opacity
+            ctx.lineWidth = 1;
+            rawData.forEach((val, i) => {
+                const x = i * step;
+                const y = midY - (val * yScale);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
         }
 
-        // 2. Draw Signal Path
-        if (data && data.length > 0) {
+        // 3. Draw FILTERED Signal (Primary Color)
+        if (filteredData && filteredData.length > 0) {
           ctx.beginPath();
           ctx.strokeStyle = color;
-          ctx.lineWidth = 1.8; // Slightly thicker for universal visibility
+          ctx.lineWidth = 2;
           ctx.lineJoin = "round";
           ctx.lineCap = "round";
 
-          const step = width / (data.length - 1);
-          data.forEach((val, i) => {
+          filteredData.forEach((val, i) => {
             const x = i * step;
-            // Adaptive scaling based on canvas height
-            const yScale = height / 160;
             const y = midY - (val * yScale);
-
             if (i === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
           });
           ctx.stroke();
 
-          // 3. Draw "Current" point glow
           if (isLive && !isPaused) {
-              const lastVal = data[data.length - 1];
-              const lastX = (data.length - 1) * step;
-              const lastY = midY - (lastVal * (height / 160));
+              const lastVal = filteredData[filteredData.length - 1];
+              const lastX = (filteredData.length - 1) * step;
+              const lastY = midY - (lastVal * yScale);
 
               ctx.beginPath();
               ctx.arc(lastX, lastY, 3, 0, Math.PI * 2);
@@ -92,32 +98,19 @@ export default function SignalCanvas({ label, data, color = "#10B981", isLive, i
         }
     };
 
-    // Use ResizeObserver for perfect scaling on any device
-    const resizeObserver = new ResizeObserver(() => {
-        requestAnimationFrame(render);
-    });
-
-    if (containerRef.current) {
-        resizeObserver.observe(containerRef.current);
-    }
-
+    const resizeObserver = new ResizeObserver(() => requestAnimationFrame(render));
+    if (containerRef.current) resizeObserver.observe(containerRef.current);
     render();
-
     return () => resizeObserver.disconnect();
-  }, [data, isLive, isPaused, color]);
+  }, [rawData, filteredData, isLive, isPaused, color, showRaw]);
 
   return (
-    <div ref={containerRef} className="relative h-full w-full bg-[#0a0f1d] rounded-lg border border-white/5 overflow-hidden group">
-      <div className="absolute top-2 left-3 z-10">
+    <div ref={containerRef} className="relative h-full w-full bg-[#070b14] rounded-lg border border-white/5 overflow-hidden">
+      <div className="absolute top-2 left-3 z-10 flex items-center gap-3">
         <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">{label}</span>
+        {showRaw && <span className="text-[7px] font-bold text-red-500/40 uppercase tracking-widest">Raw Overlay Active</span>}
       </div>
-      <canvas
-        ref={canvasRef}
-        style={{ width: '100%', height: '100%', display: 'block' }}
-      />
-      {isLive && !isPaused && (
-        <div className="absolute top-2 right-3 h-1 w-1 rounded-full bg-secondary animate-pulse shadow-[0_0_8px_#10B981]" />
-      )}
+      <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
     </div>
   );
 }
