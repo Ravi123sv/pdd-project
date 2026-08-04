@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'export',
-  basePath: '/pdd-project',
+  // REMOVED basePath for Android app to ensure local asset resolution
   images: {
     unoptimized: true,
   },
