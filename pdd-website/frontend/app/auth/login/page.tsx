@@ -73,6 +73,8 @@ export default function LoginPage() {
     setError(null);
     try {
       const result = await signInWithPopup(auth, googleProvider);
+      if (!result.user) throw new Error("No user data returned from Google.");
+
       console.log("[LOGIN] Google Identity Confirmed:", result.user.email);
       setGoogleUser(result.user);
 
@@ -81,24 +83,27 @@ export default function LoginPage() {
           try {
               const res = await api.otp.send(result.user.email!, result.user.displayName || 'Practitioner');
 
-              // Handle Dev Fallback (If domain not verified in Resend)
               if (res.data.status === 'DEV_FALLBACK' && res.data.dev_code) {
                   console.warn("[SECURITY] Using Dev-Fallback OTP:", res.data.dev_code);
                   setError(`DEMO MODE: Mail delivery pending domain verification. Use code: ${res.data.dev_code}`);
               }
-
               setStep(2);
           } catch (otpErr: any) {
               console.error("[LOGIN] Clinical Code Error:", otpErr);
               setError("SYSTEM: UNABLE TO DISPATCH CLINICAL CODE. Verify Backend Node.");
           }
       } else {
-          // Hospital mode - proceed to key entry
           setStep(2);
       }
     } catch (err: any) {
-      console.error("[LOGIN] Firebase Error:", err);
-      setError("Google Authentication Failed. Ensure domain is authorized in Firebase Console.");
+      console.error("[LOGIN] Firebase Error Details:", err);
+      if (err.code === 'auth/popup-blocked') {
+          setError("LOGIN BLOCKED: Please enable popups for this clinical workstation.");
+      } else if (err.code === 'auth/unauthorized-domain') {
+          setError("SECURITY ALERT: This domain is not authorized in your Firebase console.");
+      } else {
+          setError(`AUTHENTICATION FAILED: ${err.message || 'Unknown clinical handshake error.'}`);
+      }
     } finally {
       setLoading(false);
     }
