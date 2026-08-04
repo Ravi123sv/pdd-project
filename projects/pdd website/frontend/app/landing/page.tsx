@@ -16,6 +16,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import Link from "next/link";
+import ClinicalDisclaimer from "../../components/ClinicalDisclaimer";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -261,6 +262,10 @@ export default function LandingPage() {
                 <p className="text-sm font-medium text-slate-500 max-w-sm leading-relaxed">
                    Advancing clinical care through high-fidelity signal analysis and neural logic. Professional tools for the modern practitioner.
                 </p>
+                <div className="pt-4 border-t border-border/50 w-64">
+                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Legal Compliance</p>
+                   <p className="text-[9px] font-medium text-slate-400 italic">HIPAA • GDPR • E2EE SECURED</p>
+                </div>
              </div>
              <div>
                 <h4 className="text-[10px] font-black uppercase tracking-widest mb-6">Workstation</h4>
@@ -279,6 +284,11 @@ export default function LandingPage() {
                 </ul>
              </div>
           </div>
+
+          <div className="mb-10">
+             <ClinicalDisclaimer />
+          </div>
+
           <div className="flex flex-col md:flex-row justify-between items-center gap-6 pt-10 border-t border-border/50">
              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                © 2026 NeuroSignal Enterprise AI • Surgical Precision in Web Monitoring

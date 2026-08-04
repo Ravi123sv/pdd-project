@@ -7,6 +7,7 @@ import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import AiChatbot from "../../components/AiChatbot";
 import InstallPrompt from "../../components/InstallPrompt";
+import ClinicalDisclaimer from "../../components/ClinicalDisclaimer";
 import { Menu, X, LayoutDashboard, Activity, Users, Settings2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -117,6 +118,7 @@ export default function DashboardLayout({
         <Header />
         <main className="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth">
           {children}
+          <ClinicalDisclaimer />
         </main>
 
         {/* Mobile Quick Action Bar (Bottom) */}
