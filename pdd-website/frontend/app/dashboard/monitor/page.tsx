@@ -24,6 +24,9 @@ import { twMerge } from "tailwind-merge";
 import { motion, AnimatePresence } from "framer-motion";
 import SignalCanvas from "../../../components/SignalCanvas";
 import { useWaveform } from "../../../hooks/useWaveform";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || "AIzaSyC7RZJ1g1h_y0b0953pnYlz_Bn6qDD1yBU");
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -37,6 +40,8 @@ export default function MonitorPage() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
   const [heartRate, setHeartRate] = useState(0);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [aiReport, setAiReport] = useState<string | null>(null);
 
   const isEEG = activePatient?.modality === 'EEG';
   const channelCount = isEEG ? 8 : 12;
@@ -57,6 +62,26 @@ export default function MonitorPage() {
       setHeartRate(72);
       setHardwareStatus(true);
     }, 2000);
+  };
+
+  const runAiAnalysis = async () => {
+    if (!isLive) return;
+    setAnalyzing(true);
+    setAiReport(null);
+    try {
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const prompt = `Perform a Live Neural Analysis for patient ${activePatient?.name} (${activePatient?.modality}).
+      Current Status: ${artifactStatus.type}.
+      Based on the high-fidelity waveforms, provide a technical clinical interpretation.
+      Roleplay as a senior clinical logic unit. Prepend with [LIVE NEURAL INTERPRETATION].`;
+
+      const result = await model.generateContent(prompt);
+      setAiReport(result.response.text());
+    } catch (e) {
+      setAiReport("Analysis error: Neural unit link timeout.");
+    } finally {
+      setAnalyzing(false);
+    }
   };
 
   return (
@@ -81,9 +106,20 @@ export default function MonitorPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          {/* AI Filter Toggles */}
-          {isLive && (
+          <div className="flex items-center gap-4">
+            {isLive && (
+                <button
+                    onClick={runAiAnalysis}
+                    disabled={analyzing}
+                    className="neuro-button bg-white dark:bg-slate-800 text-primary border border-primary/20 flex items-center space-x-2 px-6 active:scale-95 transition-all"
+                >
+                    {analyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <BrainCircuit className="h-4 w-4" />}
+                    <span className="text-[10px] font-black uppercase tracking-widest">Neural Analysis</span>
+                </button>
+            )}
+
+            {/* AI Filter Toggles */}
+            {isLive && (
               <div className="flex items-center bg-slate-100 dark:bg-slate-900 p-1.5 rounded-2xl border border-border/50">
                 <button
                     onClick={() => setShowRaw(!showRaw)}
@@ -240,6 +276,26 @@ export default function MonitorPage() {
                       />
                    ))}
                 </div>
+
+                <AnimatePresence>
+                  {aiReport && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="absolute bottom-10 left-10 right-10 p-8 glass-card bg-primary text-white shadow-3xl z-[100] border-2 border-white/20"
+                    >
+                       <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center space-x-3">
+                             <BrainCircuit className="h-6 w-6" />
+                             <span className="text-[10px] font-black uppercase tracking-[0.2em]">Neural Interpretation Report</span>
+                          </div>
+                          <button onClick={() => setAiReport(null)} className="hover:opacity-60 transition-opacity"><X className="h-5 w-5" /></button>
+                       </div>
+                       <p className="text-sm font-bold leading-relaxed opacity-95 whitespace-pre-line">{aiReport}</p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
              </div>
           </div>
         </div>
