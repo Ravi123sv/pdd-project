@@ -13,7 +13,9 @@ import {
   Hospital,
   Microscope,
   Lock,
-  ChevronRight
+  ChevronRight,
+  Smartphone,
+  Monitor
 } from "lucide-react";
 import Link from "next/link";
 import ClinicalDisclaimer from "../../components/ClinicalDisclaimer";
@@ -73,17 +75,30 @@ export default function LandingPage() {
                 </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-6 pt-4">
+              <div className="flex flex-col sm:flex-row gap-6 pt-4">
               <button
                 onClick={() => router.push("/auth/login")}
                 className="h-16 px-10 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-[0.3em] shadow-2xl shadow-primary/30 flex items-center justify-center space-x-4 hover:scale-105 active:scale-95 transition-all"
               >
-                <span>Start New Session</span>
+                <span>Launch Workstation</span>
                 <ArrowRight className="h-4 w-4" />
               </button>
-              <button className="h-16 px-10 bg-white dark:bg-slate-800 text-slate-600 dark:text-white border-2 border-border/50 rounded-2xl font-black text-xs uppercase tracking-[0.3em] flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-all">
-                See Use Cases
-              </button>
+              <div className="flex gap-2">
+                  <a
+                    href="/downloads/neurosignal.apk"
+                    className="h-16 w-16 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white border-2 border-border/50 rounded-2xl flex items-center justify-center hover:bg-slate-50 transition-all"
+                    title="Download Android APK"
+                  >
+                    <Smartphone className="h-6 w-6" />
+                  </a>
+                  <a
+                    href="/downloads/neurosignal.exe"
+                    className="h-16 w-16 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white border-2 border-border/50 rounded-2xl flex items-center justify-center hover:bg-slate-50 transition-all"
+                    title="Download Windows EXE"
+                  >
+                    <Monitor className="h-6 w-6" />
+                  </a>
+              </div>
             </div>
 
             <div className="flex items-center space-x-8 pt-8 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">

@@ -1,16 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Activity,
   BrainCircuit,
   ShieldCheck,
-  ArrowRight,
-  ChevronRight,
-  MonitorSmartphone,
-  CheckCircle2
+  ChevronRight
 } from "lucide-react";
 
 export default function OnboardingPage() {
