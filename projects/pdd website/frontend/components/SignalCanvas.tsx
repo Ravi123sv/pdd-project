@@ -13,8 +13,9 @@ interface SignalCanvasProps {
 }
 
 /**
- * SignalCanvas Component v2.5
- * Dual-Trace Support: Displays both Raw and AI-Filtered signals for comparison.
+ * SignalCanvas Component v3.5
+ * Full Dual-Trace Support: Displays Raw (Noise) and AI-Filtered streams simultaneously.
+ * Optimized for high-DPI clinical workstation displays.
  */
 export default function SignalCanvas({ label, rawData, filteredData, color = "#10B981", isLive, isPaused, showRaw = true }: SignalCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -41,22 +42,22 @@ export default function SignalCanvas({ label, rawData, filteredData, color = "#1
         const width = rect.width;
         const height = rect.height;
         const midY = height / 2;
-        const yScale = height / 160;
+        const yScale = height / 150;
 
         ctx.clearRect(0, 0, width, height);
 
-        // 1. Clinical Grid
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.03)";
+        // 1. Digital Grid (Clinical Standard)
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.04)";
         ctx.lineWidth = 0.5;
         for (let i = 0; i < width; i += 20) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, height); ctx.stroke(); }
         for (let i = 0; i < height; i += 20) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(width, i); ctx.stroke(); }
 
         const step = width / (filteredData.length - 1);
 
-        // 2. Draw RAW Signal (Faint Red/Orange)
+        // 2. RAW SIGNAL TRACE (Simulated Analog Input)
         if (showRaw && rawData && rawData.length > 0) {
             ctx.beginPath();
-            ctx.strokeStyle = "rgba(239, 68, 68, 0.3)"; // Red-500 with opacity
+            ctx.strokeStyle = "rgba(244, 63, 94, 0.4)"; // Rose-500 transparent
             ctx.lineWidth = 1;
             rawData.forEach((val, i) => {
                 const x = i * step;
@@ -67,11 +68,11 @@ export default function SignalCanvas({ label, rawData, filteredData, color = "#1
             ctx.stroke();
         }
 
-        // 3. Draw FILTERED Signal (Primary Color)
+        // 3. AI-FILTERED TRACE (Neural Logic Output)
         if (filteredData && filteredData.length > 0) {
           ctx.beginPath();
           ctx.strokeStyle = color;
-          ctx.lineWidth = 2;
+          ctx.lineWidth = 2.2;
           ctx.lineJoin = "round";
           ctx.lineCap = "round";
 
@@ -83,17 +84,19 @@ export default function SignalCanvas({ label, rawData, filteredData, color = "#1
           });
           ctx.stroke();
 
+          // Current Handshake Cursor
           if (isLive && !isPaused) {
               const lastVal = filteredData[filteredData.length - 1];
               const lastX = (filteredData.length - 1) * step;
               const lastY = midY - (lastVal * yScale);
 
               ctx.beginPath();
-              ctx.arc(lastX, lastY, 3, 0, Math.PI * 2);
+              ctx.arc(lastX, lastY, 4, 0, Math.PI * 2);
               ctx.fillStyle = color;
-              ctx.shadowBlur = 12;
+              ctx.shadowBlur = 15;
               ctx.shadowColor = color;
               ctx.fill();
+              ctx.shadowBlur = 0; // Reset for next lead
           }
         }
     };
@@ -105,10 +108,10 @@ export default function SignalCanvas({ label, rawData, filteredData, color = "#1
   }, [rawData, filteredData, isLive, isPaused, color, showRaw]);
 
   return (
-    <div ref={containerRef} className="relative h-full w-full bg-[#070b14] rounded-lg border border-white/5 overflow-hidden">
-      <div className="absolute top-2 left-3 z-10 flex items-center gap-3">
-        <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">{label}</span>
-        {showRaw && <span className="text-[7px] font-bold text-red-500/40 uppercase tracking-widest">Raw Overlay Active</span>}
+    <div ref={containerRef} className="relative h-full w-full bg-[#050810] rounded-xl border border-white/5 overflow-hidden transition-all duration-500 hover:border-primary/20">
+      <div className="absolute top-3 left-4 z-10 flex items-center gap-4">
+        <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">{label}</span>
+        {showRaw && <div className="h-1.5 w-1.5 rounded-full bg-rose-500/50 animate-pulse" title="Raw Stream Active" />}
       </div>
       <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
     </div>

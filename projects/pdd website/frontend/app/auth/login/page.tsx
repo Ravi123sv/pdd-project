@@ -77,13 +77,20 @@ export default function LoginPage() {
       setGoogleUser(result.user);
 
       if (loginMode === 'individual') {
-          console.log("[LOGIN] Requesting OTP for Practitioner...");
+          console.log("[LOGIN] Dispatching Clinical Code...");
           try {
-              await api.otp.send(result.user.email!, result.user.displayName || 'Practitioner');
+              const res = await api.otp.send(result.user.email!, result.user.displayName || 'Practitioner');
+
+              // Handle Dev Fallback (If domain not verified in Resend)
+              if (res.data.status === 'DEV_FALLBACK' && res.data.dev_code) {
+                  console.warn("[SECURITY] Using Dev-Fallback OTP:", res.data.dev_code);
+                  setError(`DEMO MODE: Mail delivery pending domain verification. Use code: ${res.data.dev_code}`);
+              }
+
               setStep(2);
           } catch (otpErr: any) {
-              console.error("[LOGIN] OTP Error:", otpErr);
-              setError("SYSTEM: UNABLE TO DELIVER OTP. Ensure Resend API Key is active.");
+              console.error("[LOGIN] Clinical Code Error:", otpErr);
+              setError("SYSTEM: UNABLE TO DISPATCH CLINICAL CODE. Verify Backend Node.");
           }
       } else {
           // Hospital mode - proceed to key entry

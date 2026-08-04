@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 
 /**
- * useWaveform Hook v3.0
+ * useWaveform Hook v3.5
  * Generates Dual Streams: Raw Signal (with artifacts) and AI-Filtered Signal.
  * Implements real-time detection for Lead Quality and Patient Movement.
  */
@@ -28,16 +28,16 @@ export function useWaveform(channelCount: number, isLive: boolean, isPaused: boo
       timeRef.current += 0.02;
       const t = timeRef.current;
 
-      // Randomly trigger artifact states for simulation
+      // Real-time Artifact Simulation Cycle
       let currentArtifactType = 'Optimal';
       let currentSeverity: 'low' | 'high' | 'none' = 'none';
 
-      const artifactCycle = Math.floor(t / 5) % 4; // Cycle every 5 seconds
+      const artifactCycle = Math.floor(t / 8) % 4; // Cycle every 8 seconds
       if (artifactCycle === 1) {
           currentArtifactType = 'Patient Movement';
           currentSeverity = 'low';
       } else if (artifactCycle === 2) {
-          currentArtifactType = 'Loose Electrode (V2)';
+          currentArtifactType = 'Loose Lead (V2)';
           currentSeverity = 'high';
       }
 
@@ -58,7 +58,7 @@ export function useWaveform(channelCount: number, isLive: boolean, isPaused: boo
           const phase = t % beatPeriod;
           let cleanVal = 0;
 
-          // P-QRS-T segments
+          // P-QRS-T complex segments
           if (phase > 0.1 && phase < 0.2) cleanVal += 2 * Math.sin((phase - 0.1) * Math.PI / 0.1);
           if (phase > 0.3 && phase < 0.35) cleanVal -= 5 * Math.sin((phase - 0.3) * Math.PI / 0.05);
           else if (phase >= 0.35 && phase < 0.4) cleanVal += 40 * Math.sin((phase - 0.35) * Math.PI / 0.05);
@@ -66,21 +66,21 @@ export function useWaveform(channelCount: number, isLive: boolean, isPaused: boo
           if (phase > 0.6 && phase < 0.8) cleanVal += 4 * Math.sin((phase - 0.6) * Math.PI / 0.2);
 
           // --- 2. Add Artificial Artifacts to Raw ---
-          let noise = (Math.random() - 0.5) * 2; // Normal thermal noise
+          let noise = (Math.random() - 0.5) * 2;
 
           if (currentSeverity === 'low') {
-              // Simulating muscle tremor / movement
-              noise += Math.sin(t * 50) * 10 * Math.random();
+              // Simulating muscle tremor / minor patient movement
+              noise += Math.sin(t * 40) * 12 * Math.random();
           } else if (currentSeverity === 'high') {
-              // Simulating loose lead (large wander and 50Hz hum)
-              noise += Math.sin(t * 0.5) * 30 + Math.sin(t * 100) * 5;
+              // Simulating loose lead (significant baseline wander and 50Hz hum)
+              noise += Math.sin(t * 0.4) * 35 + Math.sin(t * 120) * 8;
           }
 
           const rawVal = cleanVal + noise;
 
-          // --- 3. "AI Filtering" Logic ---
-          // Simulates a low-pass and baseline-correcting neural network
-          const filteredVal = cleanVal + (noise * 0.05); // 95% noise reduction
+          // --- 3. Neural AI Filter Simulation ---
+          // Simulates 98% artifact suppression while maintaining morphology
+          const filteredVal = cleanVal + (noise * 0.02);
 
           rawChan.push(rawVal);
           filtChan.push(filteredVal);
