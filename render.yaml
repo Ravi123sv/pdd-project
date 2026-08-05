@@ -3,6 +3,8 @@ services:
     name: neurosignal-clinical-hub
     env: node
     plan: free
+    # Updated path to the backend directory
+    rootDir: pdd-website/backend/express-server
     buildCommand: npm install
     startCommand: node index.js
     envVars:
