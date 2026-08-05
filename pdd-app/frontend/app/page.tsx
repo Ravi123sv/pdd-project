@@ -11,10 +11,19 @@ export default function RootPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // In the App version, we skip landing page detection and always show splash -> onboarding
+    // Detect if running in standalone mode (installed app)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+                       || (window.navigator as any).standalone
+                       || document.referrer.includes('android-app://');
+
+    setIsAppMode(isStandalone);
+
+    // Initial Splash Timer
     const timer = setTimeout(() => {
       setIsLoading(false);
-      router.push("/onboarding");
+      if (isStandalone) {
+        router.push("/onboarding");
+      }
     }, 2500);
 
     return () => clearTimeout(timer);
@@ -39,7 +48,7 @@ export default function RootPage() {
             >
               <div className="h-24 w-24 bg-primary rounded-[2.5rem] flex items-center justify-center shadow-[0_0_50px_rgba(37,99,235,0.3)]">
                 <img
-                  src="/assets/icon/app_icon.svg"
+                  src="https://ravi123sv.github.io/pdd-project/assets/icon/app_icon.svg"
                   className="h-12 w-12"
                   alt="Logo"
                 />

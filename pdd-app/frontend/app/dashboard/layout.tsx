@@ -131,6 +131,7 @@ export default function DashboardLayout({
       </div>
 
       <AiChatbot />
+      <InstallPrompt />
     </div>
   );
 }
