@@ -20,10 +20,7 @@ export default function VerifyHospitalPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.otp.send(email, hospitalName);
-      if (res.data.status === 'DEV_FALLBACK') {
-          setError(`DEMO MODE: Check console for code or use: ${res.data.dev_code}`);
-      }
+      await api.otp.send(email, hospitalName);
       setStep(2);
     } catch (err: any) {
       setError("SYSTEM: FAILED TO DISPATCH VERIFICATION CODE.");

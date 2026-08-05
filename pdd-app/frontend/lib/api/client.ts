@@ -76,8 +76,8 @@ export const api = {
   },
   patients: {
     getAll: (hospitalId: string) => apiClient.get(`/patients/${hospitalId}`),
-    syncSQL: (data: any) => apiClient.post('/sql/sync-patient', data),
-    syncSessionSQL: (data: any) => apiClient.post('/sql/sync-session', data),
+    syncSQL: (data: any) => apiClient.post('/patients/sync-sql', data),
+    syncSessionSQL: (data: any) => apiClient.post('/patients/sync-session', data),
   },
   signals: {
     stream: (data: any) => goClient.post('/go/stream', data),

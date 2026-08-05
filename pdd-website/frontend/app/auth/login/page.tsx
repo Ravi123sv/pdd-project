@@ -65,17 +65,10 @@ export default function LoginPage() {
       setGoogleUser(result.user);
 
       if (loginMode === 'individual') {
-          try {
-              // Primary: Dispatch real-time link
-              await sendSignInLinkToEmail(auth, result.user.email!, actionCodeSettings);
-              window.localStorage.setItem('emailForSignIn', result.user.email!);
-              setStep(2);
-          } catch (e: any) {
-              console.warn("[AUTH] Dispatch failed. Activating local workstation mode.");
-              // Fallback for Demo: If backend is down, allow entry
-              setStep(2);
-              setError("SYSTEM: Gateway Offline. Local workstation mode enabled for this session.");
-          }
+          // Primary: Dispatch real-time link
+          await sendSignInLinkToEmail(auth, result.user.email!, actionCodeSettings);
+          window.localStorage.setItem('emailForSignIn', result.user.email!);
+          setStep(2);
       } else {
           setStep(2);
       }

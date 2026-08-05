@@ -65,13 +65,7 @@ router.post('/send', async (req, res) => {
 
     if (error) {
         console.error('[OTP] Resend Dispatch Error:', error);
-        // Fallback: If mail fails, return code in response for testing/demo
-        return res.json({
-            success: true,
-            status: 'DEV_FALLBACK',
-            message: 'Mail delivery pending domain verification. Code provided in response for demo.',
-            dev_code: otp
-        });
+        return res.status(500).json({ message: 'Mail delivery failed. Ensure Resend domain is verified.' });
     }
 
     res.json({ success: true, message: 'Clinical authorization code dispatched.' });

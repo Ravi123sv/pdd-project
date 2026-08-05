@@ -65,13 +65,9 @@ export default function LoginPage() {
 
       if (loginMode === 'individual') {
           // STRICT REAL-TIME MODE: No fallback code displayed
-          try {
-              await sendSignInLinkToEmail(auth, result.user.email!, actionCodeSettings);
-              window.localStorage.setItem('emailForSignIn', result.user.email!);
-              setStep(2);
-          } catch (e: any) {
-              setError("SYSTEM FAILURE: Real-time verification link could not be sent.");
-          }
+          await sendSignInLinkToEmail(auth, result.user.email!, actionCodeSettings);
+          window.localStorage.setItem('emailForSignIn', result.user.email!);
+          setStep(2);
       } else {
           setStep(2);
       }
