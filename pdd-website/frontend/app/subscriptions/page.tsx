@@ -1,33 +1,68 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Check, Hospital, Shield, Zap, Globe, ArrowLeft } from "lucide-react";
+import { Check, Hospital, Shield, Zap, Globe, ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { api } from "../../lib/api/client";
 
 export default function SubscriptionsPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState<string | null>(null);
+
+  const handleFreeStart = () => {
+    router.push("/auth/login");
+  };
+
+  const handleContactSales = () => {
+    router.push("/contact-sales");
+  };
+
+  const handleUpgrade = async () => {
+    setLoading('research');
+    try {
+        // In a real app, you'd get the user email from state
+        const res = await api.payments.createCheckoutSession('price_research_hub', 'practitioner@example.com');
+        if (res.data.url) {
+            window.location.href = res.data.url;
+        }
+    } catch (e) {
+        console.error("Payment Error", e);
+        alert("Payment gateway connection failed. Please try again.");
+    } finally {
+        setLoading(null);
+    }
+  };
+
   const plans = [
     {
+      id: 'free',
       name: "Clinical Free",
       price: "$0",
       description: "Ideal for solo practitioners and individual clinics during evaluation.",
       features: ["Single User Access", "Basic Signal Processing", "5 Patients Capacity", "Community Support"],
       button: "Get Started",
-      current: true
+      onClick: handleFreeStart
     },
     {
+      id: 'hospital',
       name: "Hospital Enterprise",
       price: "Custom",
       description: "Full-scale solution for hospitals with multi-unit management.",
       features: ["Unlimited Staff", "Advanced Gemini AI Analysis", "Infinite Patient Archive", "Priority Support", "Admin Analytics"],
       button: "Contact Sales",
-      highlight: true
+      highlight: true,
+      onClick: handleContactSales
     },
     {
+      id: 'research',
       name: "Research Hub",
       price: "$299/mo",
       description: "Dedicated tools for neuro-research and academic institutions.",
       features: ["Data Export (EDF/CSV)", "Custom Algorithm Hub", "Collaborative Workspaces", "API Access"],
-      button: "Upgrade Now"
+      button: "Upgrade Now",
+      onClick: handleUpgrade
     }
   ];
 
@@ -90,12 +125,15 @@ export default function SubscriptionsPage() {
                   </div>
                </div>
 
-               <button className={`mt-10 w-full py-5 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] transition-all active:scale-95 ${
+               <button
+                 onClick={plan.onClick}
+                 disabled={loading === plan.id}
+                 className={`mt-10 w-full py-5 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] transition-all active:scale-95 flex items-center justify-center gap-2 ${
                  plan.highlight
                   ? 'bg-white text-primary hover:shadow-xl'
                   : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200'
                }`}>
-                  {plan.button}
+                  {loading === plan.id ? <Loader2 className="h-4 w-4 animate-spin" /> : plan.button}
                </button>
              </motion.div>
            ))}

@@ -38,6 +38,7 @@ const seedRoutes = require('./routes/seed');
 const signalRoutes = require('./routes/signals');
 const otpRoutes = require('./routes/otp');
 const sessionRoutes = require('./routes/sessions');
+const paymentRoutes = require('./routes/payments');
 
 // Use Routes
 app.use('/api/assets', assetRoutes);
@@ -47,6 +48,7 @@ app.use('/api/seed', seedRoutes);
 app.use('/api/signals', signalRoutes);
 app.use('/api/otp', otpRoutes);
 app.use('/api/sessions', sessionRoutes);
+app.use('/api/payments', paymentRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'Operational', db: 'MongoDB' }));
 
