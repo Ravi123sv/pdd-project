@@ -6,8 +6,8 @@ const getApiBaseUrl = () => {
 
   if (typeof window !== 'undefined') {
     const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    // If local, use localhost. If cloud, fallback to a production URL or relative path
-    return isLocal ? 'http://localhost:5000/api' : '/api';
+    // Production Cloud Hub: neurosignal-clinical-hub.onrender.com
+    return isLocal ? 'http://localhost:5000/api' : 'https://neurosignal-clinical-hub.onrender.com/api';
   }
   return 'http://localhost:5000/api';
 };
