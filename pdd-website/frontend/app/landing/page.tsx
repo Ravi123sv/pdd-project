@@ -85,14 +85,14 @@ export default function LandingPage() {
               </button>
               <div className="flex gap-2">
                   <a
-                    href="/downloads/neurosignal.apk"
+                    href="/pdd-project/downloads/neurosignal.apk"
                     className="h-16 w-16 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white border-2 border-border/50 rounded-2xl flex items-center justify-center hover:bg-slate-50 transition-all"
                     title="Download Android APK"
                   >
                     <Smartphone className="h-6 w-6" />
                   </a>
                   <a
-                    href="/downloads/neurosignal.exe"
+                    href="/pdd-project/downloads/neurosignal.exe"
                     className="h-16 w-16 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white border-2 border-border/50 rounded-2xl flex items-center justify-center hover:bg-slate-50 transition-all"
                     title="Download Windows EXE"
                   >

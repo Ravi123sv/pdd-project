@@ -48,7 +48,7 @@ export default function RootPage() {
             >
               <div className="h-24 w-24 bg-primary rounded-[2.5rem] flex items-center justify-center shadow-[0_0_50px_rgba(37,99,235,0.3)]">
                 <img
-                  src="https://ravi123sv.github.io/pdd-project/assets/icon/app_icon.svg"
+                  src="/pdd-project/assets/icon/app_icon.svg"
                   className="h-12 w-12"
                   alt="Logo"
                 />

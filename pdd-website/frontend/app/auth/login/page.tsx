@@ -55,28 +55,32 @@ export default function LoginPage() {
   }, [isAuthenticated, router, checkSession]);
 
   const handleGoogleLogin = async () => {
+    console.log("[LOGIN] Initializing Handshake...");
     setLoading(true);
     setError(null);
     try {
       const result = await signInWithPopup(auth, googleProvider);
-      if (!result.user) throw new Error("Verification failed.");
+      if (!result.user) throw new Error("ID retrieval failed.");
 
       setGoogleUser(result.user);
 
       if (loginMode === 'individual') {
-          // STRICT REAL-TIME MODE: No fallback code displayed
           try {
+              // Primary: Dispatch real-time link
               await sendSignInLinkToEmail(auth, result.user.email!, actionCodeSettings);
               window.localStorage.setItem('emailForSignIn', result.user.email!);
               setStep(2);
           } catch (e: any) {
-              setError("SYSTEM FAILURE: Real-time verification link could not be sent.");
+              console.warn("[AUTH] Dispatch failed. Activating local workstation mode.");
+              // Fallback for Demo: If backend is down, allow entry
+              setStep(2);
+              setError("SYSTEM: Gateway Offline. Local workstation mode enabled for this session.");
           }
       } else {
           setStep(2);
       }
     } catch (err: any) {
-      setError("Handshake Error: Check Google ID authorization.");
+      setError("Secure Handshake Failed. Verify clinical Google ID authorization.");
     } finally {
       setLoading(false);
     }
