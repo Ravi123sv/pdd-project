@@ -90,5 +90,8 @@ export const api = {
   sessions: {
     getAll: (hospitalId: string) => apiClient.get(`/sessions/${hospitalId}`),
     update: (id: string, data: any) => apiClient.put(`/sessions/${id}`, data),
+  },
+  payments: {
+    createCheckoutSession: (priceId: string, email: string) => apiClient.post('/payments/create-checkout-session', { priceId, email }),
   }
 };
