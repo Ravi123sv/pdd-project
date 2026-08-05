@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db_local');
+const Patient = require('../models/Patient');
 
 // Get all patients for a hospital
 router.get('/:hospitalId', async (req, res) => {
   try {
-    const patients = await db.patients.find({ hospitalId: req.params.hospitalId });
+    const patients = await Patient.find({ hospitalId: req.params.hospitalId });
     res.json(patients);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -14,28 +14,30 @@ router.get('/:hospitalId', async (req, res) => {
 
 // Add new patient (Admission)
 router.post('/', async (req, res) => {
-  const patient = {
-    patientId: req.body.patientId,
-    name: req.body.name,
-    age: req.body.age,
-    department: req.body.department || 'General',
-    hospitalId: req.body.hospitalId,
-    createdAt: new Date()
-  };
-
   try {
-    const newPatient = await db.patients.insert(patient);
+    const patient = new Patient({
+        patientId: req.body.patientId,
+        name: req.body.name,
+        age: req.body.age,
+        department: req.body.department || 'General',
+        hospitalId: req.body.hospitalId,
+    });
+    const newPatient = await patient.save();
     res.status(201).json(newPatient);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 });
 
-// SQL Sync Proxy logic (Replicating Flutter's syncSQL call)
+// SQL Sync Proxy logic (Sync to Atlas)
 router.post('/sync-sql', async (req, res) => {
     const { id, name, age, hospitalId } = req.body;
     try {
-        await db.patients.update({ patientId: id }, { $set: { name, age, hospitalId, updatedAt: new Date() } }, { upsert: true });
+        await Patient.findOneAndUpdate(
+            { patientId: id },
+            { name, age, hospitalId },
+            { upsert: true, new: true }
+        );
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ message: err.message });
