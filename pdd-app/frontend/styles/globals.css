@@ -4,8 +4,9 @@
 
 @layer base {
   :root {
-    /* Fluid Typography: Scales smoothly between 375px and 1440px */
-    --base-font-size: clamp(0.875rem, 0.8rem + 0.375vw, 1rem);
+    /* Fluid Typography & Spacing System */
+    --base-font-size: clamp(0.875rem, 0.7rem + 0.5vw, 1.125rem);
+    --view-padding: clamp(1rem, 3vw, 2.5rem);
 
     /* Device Safe Area Constants */
     --sat: env(safe-area-inset-top);
@@ -17,8 +18,9 @@
   html {
     font-size: var(--base-font-size);
     -webkit-tap-highlight-color: transparent;
+    /* Prevent vertical pull-to-refresh & overflow-x */
+    overscroll-behavior-y: none;
     overflow-x: hidden;
-    /* Prevent rubber-band scrolling on iOS */
     height: 100%;
   }
 
@@ -28,56 +30,50 @@
     height: 100%;
     margin: 0;
     padding: 0;
+    font-family: 'Inter', -apple-system, sans-serif;
   }
 }
 
 @layer components {
-  /* Universal Responsive Container with Safe Area awareness */
+  /* Ultra-Responsive Clinical Container */
   .clinical-container {
     width: 100%;
-    max-width: 1920px;
+    max-width: 100vw;
+    padding-left: calc(var(--view-padding) + var(--sal));
+    padding-right: calc(var(--view-padding) + var(--sar));
     margin-left: auto;
     margin-right: auto;
-    padding-left: calc(1rem + var(--sal));
-    padding-right: calc(1rem + var(--sar));
   }
 
-  /* Adaptive Grid for any device */
-  .universal-grid {
+  /* Adaptive Grid System: 1 column on phone, 2 on tablet, 3-4 on Desktop */
+  .universal-dashboard-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+    gap: clamp(1rem, 2vw, 2rem);
   }
 
-  /* Notch-Safe Header */
-  .safe-header {
-    padding-top: var(--sat);
-    padding-left: var(--sal);
-    padding-right: var(--sar);
-  }
-
-  /* Notch-Safe Sidebar */
-  .safe-sidebar {
-    padding-top: var(--sat);
-    padding-bottom: var(--sab);
-    padding-left: var(--sal);
+  /* Force elements to respect device boundaries */
+  .device-safe-edge {
+    margin-top: var(--sat);
+    margin-bottom: var(--sab);
+    margin-left: var(--sal);
+    margin-right: var(--sar);
   }
 }
 
-/* Custom Scrollbar for Clinical Aesthetic */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { @apply bg-transparent; }
+::-webkit-scrollbar-thumb { @apply bg-slate-200 dark:bg-slate-800 rounded-full hover:bg-primary/40 transition-colors; }
+
+/* Responsive Adjustments for Small Mobiles (iPhone SE etc) */
+@media (max-width: 380px) {
+    :root { --base-font-size: 0.8rem; }
+    .glass-card { @apply p-4; }
 }
 
-::-webkit-scrollbar-track {
-  @apply bg-transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  @apply bg-slate-200 dark:bg-slate-800 rounded-full;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-primary/40;
+/* Landscape Mode Optimization for Mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+    .hide-on-landscape { display: none !important; }
+    .main-viewport { padding: 1rem !important; }
 }
