@@ -5,10 +5,10 @@ const getSocketUrl = () => {
 
   if (typeof window !== 'undefined') {
     const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    // Use localhost for dev, or the same origin for prod (if behind a proxy)
-    return isLocal ? 'http://localhost:5000' : window.location.origin;
+    // Production Cloud Hub: neurosignal-clinical-hub.onrender.com
+    return isLocal ? 'http://localhost:5000' : 'https://neurosignal-clinical-hub.onrender.com';
   }
-  return 'http://localhost:5000';
+  return process.env.NODE_ENV === 'production' ? 'https://neurosignal-clinical-hub.onrender.com' : 'http://localhost:5000';
 };
 
 const SOCKET_URL = getSocketUrl();
