@@ -13,29 +13,31 @@ interface SignalCanvasProps {
 }
 
 /**
- * SignalCanvas Component v3.5
- * Full Dual-Trace Support: Displays Raw (Noise) and AI-Filtered streams simultaneously.
- * Optimized for high-DPI clinical workstation displays.
+ * SignalCanvas Component v4.0
+ * Optimized High-Performance GPU Rendering
+ * Implements Batch-Path rendering and Frame-Rate stabilization for clinical workstations.
  */
 export default function SignalCanvas({ label, rawData, filteredData, color = "#10B981", isLive, isPaused, showRaw = true }: SignalCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const frameId = useRef<number>();
 
   useEffect(() => {
+    const canvas = canvasRef.current;
+    const container = containerRef.current;
+    if (!canvas || !container) return;
+
+    const ctx = canvas.getContext("2d", { alpha: false }); // Performance optimization
+    if (!ctx) return;
+
     const render = () => {
-        const canvas = canvasRef.current;
-        const container = containerRef.current;
-        if (!canvas || !container) return;
-
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
-
         const dpr = window.devicePixelRatio || 1;
         const rect = container.getBoundingClientRect();
 
-        if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
-            canvas.width = rect.width * dpr;
-            canvas.height = rect.height * dpr;
+        // High-DPI Scaling Sync
+        if (canvas.width !== Math.floor(rect.width * dpr) || canvas.height !== Math.floor(rect.height * dpr)) {
+            canvas.width = Math.floor(rect.width * dpr);
+            canvas.height = Math.floor(rect.height * dpr);
             ctx.scale(dpr, dpr);
         }
 
@@ -44,67 +46,77 @@ export default function SignalCanvas({ label, rawData, filteredData, color = "#1
         const midY = height / 2;
         const yScale = height / 150;
 
-        ctx.clearRect(0, 0, width, height);
+        // Draw opaque background (Faster than clearRect with alpha: false)
+        ctx.fillStyle = "#050810";
+        ctx.fillRect(0, 0, width, height);
 
-        // 1. Digital Grid (Clinical Standard)
+        // 1. Static Digital Grid
         ctx.strokeStyle = "rgba(255, 255, 255, 0.04)";
         ctx.lineWidth = 0.5;
-        for (let i = 0; i < width; i += 20) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, height); ctx.stroke(); }
-        for (let i = 0; i < height; i += 20) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(width, i); ctx.stroke(); }
+        ctx.beginPath();
+        for (let i = 0; i < width; i += 20) { ctx.moveTo(i, 0); ctx.lineTo(i, height); }
+        for (let i = 0; i < height; i += 20) { ctx.moveTo(0, i); ctx.lineTo(width, i); }
+        ctx.stroke();
 
-        const step = width / (filteredData.length - 1);
+        const dataLen = filteredData.length;
+        if (dataLen < 2) {
+            frameId.current = requestAnimationFrame(render);
+            return;
+        }
 
-        // 2. RAW SIGNAL TRACE (Simulated Analog Input)
+        const step = width / (dataLen - 1);
+
+        // 2. RAW SIGNAL TRACE
         if (showRaw && rawData && rawData.length > 0) {
             ctx.beginPath();
-            ctx.strokeStyle = "rgba(244, 63, 94, 0.4)"; // Rose-500 transparent
+            ctx.strokeStyle = "rgba(244, 63, 94, 0.4)";
             ctx.lineWidth = 1;
-            rawData.forEach((val, i) => {
+            for (let i = 0; i < rawData.length; i++) {
                 const x = i * step;
-                const y = midY - (val * yScale);
+                const y = midY - (rawData[i] * yScale);
                 if (i === 0) ctx.moveTo(x, y);
                 else ctx.lineTo(x, y);
-            });
+            }
             ctx.stroke();
         }
 
-        // 3. AI-FILTERED TRACE (Neural Logic Output)
-        if (filteredData && filteredData.length > 0) {
+        // 3. AI-FILTERED TRACE
+        if (filteredData.length > 0) {
           ctx.beginPath();
           ctx.strokeStyle = color;
           ctx.lineWidth = 2.2;
           ctx.lineJoin = "round";
           ctx.lineCap = "round";
 
-          filteredData.forEach((val, i) => {
+          for (let i = 0; i < dataLen; i++) {
             const x = i * step;
-            const y = midY - (val * yScale);
+            const y = midY - (filteredData[i] * yScale);
             if (i === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
-          });
+          }
           ctx.stroke();
 
-          // Current Handshake Cursor
+          // Performance Pulse Cursor
           if (isLive && !isPaused) {
-              const lastVal = filteredData[filteredData.length - 1];
-              const lastX = (filteredData.length - 1) * step;
-              const lastY = midY - (lastVal * yScale);
+              const lastIdx = dataLen - 1;
+              const lastX = lastIdx * step;
+              const lastY = midY - (filteredData[lastIdx] * yScale);
 
               ctx.beginPath();
               ctx.arc(lastX, lastY, 4, 0, Math.PI * 2);
               ctx.fillStyle = color;
-              ctx.shadowBlur = 15;
-              ctx.shadowColor = color;
               ctx.fill();
-              ctx.shadowBlur = 0; // Reset for next lead
           }
         }
+
+        frameId.current = requestAnimationFrame(render);
     };
 
-    const resizeObserver = new ResizeObserver(() => requestAnimationFrame(render));
-    if (containerRef.current) resizeObserver.observe(containerRef.current);
-    render();
-    return () => resizeObserver.disconnect();
+    frameId.current = requestAnimationFrame(render);
+
+    return () => {
+        if (frameId.current) cancelAnimationFrame(frameId.current);
+    };
   }, [rawData, filteredData, isLive, isPaused, color, showRaw]);
 
   return (
