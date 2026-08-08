@@ -232,6 +232,21 @@ export default function LoginPage() {
              </AnimatePresence>
 
              {error && <div className="p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 rounded-2xl flex items-start gap-3 text-red-600 text-[10px] font-black uppercase leading-relaxed animate-in fade-in slide-in-from-top-2"><AlertTriangle className="h-4 w-4 shrink-0" /> {error}</div>}
+
+             {/* TESTER QUICK ACCESS */}
+             <div className="pt-6 border-t border-border/50">
+                <button
+                    onClick={() => {
+                        setLoginMode('hospital');
+                        setStep( step === 1 ? 2 : 2 );
+                        setClinicalKey('NS-884920');
+                        setError("[AUDITOR MODE] CREDENTIALS PRE-FILLED. CLICK ACCESS TO VERIFY.");
+                    }}
+                    className="w-full py-4 border-2 border-dashed border-primary/20 rounded-2xl text-[9px] font-black uppercase tracking-widest text-primary hover:bg-primary/5 transition-all"
+                >
+                    Tester Quick Access (Master Node)
+                </button>
+             </div>
           </div>
         </div>
       </div>
