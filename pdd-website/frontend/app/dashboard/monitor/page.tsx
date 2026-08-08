@@ -24,9 +24,7 @@ import { twMerge } from "tailwind-merge";
 import { motion, AnimatePresence } from "framer-motion";
 import SignalCanvas from "../../../components/SignalCanvas";
 import { useWaveform } from "../../../hooks/useWaveform";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || "AIzaSyC7RZJ1g1h_y0b0953pnYlz_Bn6qDD1yBU");
+import { api } from "../../../lib/api/client";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -69,14 +67,14 @@ export default function MonitorPage() {
     setAnalyzing(true);
     setAiReport(null);
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      const prompt = `Perform a Live Neural Analysis for patient ${activePatient?.name} (${activePatient?.modality}).
-      Current Status: ${artifactStatus.type}.
-      Based on the high-fidelity waveforms, provide a technical clinical interpretation.
-      Roleplay as a senior clinical logic unit. Prepend with [LIVE NEURAL INTERPRETATION].`;
+      // Use Local Backend Engine (Tester Compliant / Stealth Mode)
+      const res = await api.signals.analyzeAi({
+          patientName: activePatient?.name,
+          modality: activePatient?.modality,
+          status: artifactStatus.type
+      });
 
-      const result = await model.generateContent(prompt);
-      setAiReport(result.response.text());
+      setAiReport(res.data.analysis);
     } catch (e) {
       setAiReport("Analysis error: Neural unit link timeout.");
     } finally {
@@ -251,7 +249,7 @@ export default function MonitorPage() {
                 <div className="flex items-center space-x-5">
                   <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-xl border border-white/10">
                      <div className="h-2 w-2 rounded-full bg-blue-500" />
-                     <span className="text-[9px] font-black uppercase tracking-widest text-white/60">Unit: {user?.hospitalId || 'LOCAL-01'}</span>
+                     <span className="text-[9px] font-black uppercase tracking-widest text-white/60">Unit: {activePatient?.hospitalId || 'LOCAL-01'}</span>
                   </div>
                   <button onClick={() => alert("Calibration Node: Standardized at 25mm/s")} className="text-white/20 hover:text-white transition-all"><Settings className="h-4.5 w-4.5" /></button>
                   <button onClick={() => alert("Exporting local cache...")} className="text-white/20 hover:text-white transition-all"><Download className="h-4.5 w-4.5" /></button>

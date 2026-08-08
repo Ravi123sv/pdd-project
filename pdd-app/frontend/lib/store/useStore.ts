@@ -44,7 +44,7 @@ export const useStore = create<AppState>((set, get) => ({
   latencyMs: 0,
   activePatient: null,
   settings: {
-      backendUrl: 'http://localhost:5000/api',
+      backendUrl: process.env.NEXT_PUBLIC_API_URL || 'https://neurosignal-clinical-hub.onrender.com/api',
       aiEnabled: true,
       encryptionEnabled: true,
   },
