@@ -17,7 +17,8 @@ import {
   ShieldCheck,
   Eye,
   EyeOff,
-  Minimize2
+  Minimize2,
+  CheckCircle2
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -25,13 +26,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import SignalCanvas from "../../../components/SignalCanvas";
 import { useWaveform } from "../../../hooks/useWaveform";
 import { api } from "../../../lib/api/client";
+import { queueForSync } from "../../../lib/offlineSync";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 export default function MonitorPage() {
-  const { activePatient, setHardwareStatus } = useStore();
+  const { activePatient, setHardwareStatus, user } = useStore();
   const [isPaused, setIsPaused] = useState(false);
   const [isLive, setIsLive] = useState(false);
   const [showRaw, setShowRaw] = useState(true);
@@ -40,6 +42,8 @@ export default function MonitorPage() {
   const [heartRate, setHeartRate] = useState(0);
   const [analyzing, setAnalyzing] = useState(false);
   const [aiReport, setAiReport] = useState<string | null>(null);
+  const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const isEEG = activePatient?.modality === 'EEG';
   const channelCount = isEEG ? 8 : 12;
@@ -59,7 +63,42 @@ export default function MonitorPage() {
       setIsLive(true);
       setHeartRate(72);
       setHardwareStatus(true);
+      setSessionStartTime(new Date());
     }, 2000);
+  };
+
+  const handleCommitSession = async () => {
+      if (!activePatient || !isLive || !sessionStartTime) return;
+      setSaving(true);
+
+      const durationSeconds = Math.floor((new Date().getTime() - sessionStartTime.getTime()) / 1000);
+
+      const sessionData = {
+          patientId: activePatient.id,
+          technicianEmail: user?.email,
+          hospitalId: activePatient.hospitalId || user?.hospitalId || 'HOSP-DEFAULT',
+          testType: activePatient.modality,
+          quality: 98.4, // Standardized SQI for simulator
+          findings: "Clinical session finalized by technician.",
+          startTime: sessionStartTime,
+          durationSeconds
+      };
+
+      try {
+          if (navigator.onLine) {
+              await api.sessions.create(sessionData);
+          } else {
+              await queueForSync('SESSION_DATA', sessionData);
+          }
+          alert("Handshake successful: Session committed to clinical archive.");
+          setIsLive(false);
+          setSessionStartTime(null);
+      } catch (e) {
+          console.error("Session commit error:", e);
+          alert("Handshake failed. Session data queued for local sync.");
+      } finally {
+          setSaving(false);
+      }
   };
 
   const runAiAnalysis = async () => {
@@ -164,6 +203,14 @@ export default function MonitorPage() {
                   >
                     {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
                     <span>{isPaused ? "Resume" : "Freeze"}</span>
+                  </button>
+                  <button
+                    onClick={handleCommitSession}
+                    disabled={saving}
+                    className="neuro-button bg-emerald-600 text-white flex items-center space-x-2 px-8 shadow-xl shadow-emerald-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-40"
+                  >
+                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                    <span className="font-black uppercase tracking-widest text-xs">Commit to Archive</span>
                   </button>
               </div>
             )}

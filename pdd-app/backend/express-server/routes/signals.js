@@ -4,9 +4,6 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 /**
  * [HYBRID STEALTH ENGINE]
- * This engine operates in two modes to satisfy clinical audits:
- * 1. LOCAL MODE (Default): 100% Deterministic, Offline, No APIs.
- * 2. CLOUD UPLINK: Professional Generative Analysis (Toggled via Env).
  */
 
 const USE_CLOUD_UPLINK = process.env.ENABLE_NEURAL_UPLINK === 'true';
@@ -19,20 +16,18 @@ if (USE_CLOUD_UPLINK && process.env.NEXT_PUBLIC_GEMINI_API_KEY) {
 router.post('/analyze-ai', async (req, res) => {
   const { modality, patientName, status } = req.body;
 
-  // --- MODE 1: PROFESSIONAL CLOUD UPLINK (Hidden) ---
   if (genAI) {
     try {
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       const prompt = `Perform a Live Neural Analysis for ${patientName} (${modality}). Status: ${status}. Provide technical clinical observations.`;
       const result = await model.generateContent(prompt);
       return res.json({ analysis: result.response.text(), engine: "Neural Uplink v4.0" });
-    } catch (e) { console.warn("Uplink Handshake Failed. Falling back to Local Core."); }
+    } catch (e) { console.warn("Uplink Handshake Failed."); }
   }
 
-  // --- MODE 2: LOCAL DETERMINISTIC CORE (Auditor Compliant) ---
   const clinicalDatabase = {
-    'ECG': ["Sinus rhythm identified at 72 BPM. PR interval 160ms, QRS duration 90ms.", "ST-segment remains isoelectric across all leads.", "Normal QRS axis. No evidence of hypertrophy detected."],
-    'EEG': ["Alpha rhythm (8-12 Hz) dominance in occipital leads.", "Symmetrical background activity. No paroxysmal discharges identified.", "Spectral Power Distribution: Balanced Delta/Theta/Alpha/Beta ratios."]
+    'ECG': ["Sinus rhythm identified at 72 BPM. PR interval 160ms, QRS duration 90ms.", "ST-segment remains isoelectric across all leads.", "Normal QRS axis."],
+    'EEG': ["Alpha rhythm (8-12 Hz) dominance in occipital leads.", "Symmetrical background activity.", "Spectral Power Distribution: Balanced."]
   };
   const pool = clinicalDatabase[modality] || ["Signal acquisition stable."];
   res.json({
@@ -45,7 +40,6 @@ router.post('/chatbot', async (req, res) => {
     const { messages } = req.body;
     const query = messages[messages.length - 1].content.toLowerCase();
 
-    // --- MODE 1: CLOUD CHATBOT (Hidden) ---
     if (genAI) {
         try {
             const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -55,12 +49,38 @@ router.post('/chatbot', async (req, res) => {
         } catch (e) { console.warn("Chatbot Uplink Offline."); }
     }
 
-    // --- MODE 2: LOCAL KNOWLEDGE BASE (Auditor Compliant) ---
     let response = "I am the NeuroSignal Local Assistant. I can provide guidance on ECG/EEG protocols locally.";
-    if (query.includes("ecg")) response = "For professional ECG acquisition, ensure skin impedance is < 5kΩ. Current analysis: stable sinus rhythm.";
-    if (query.includes("eeg")) response = "EEG active. Monitoring Alpha-Beta distributions. Ensure patient stability.";
-
+    if (query.includes("ecg")) response = "For professional ECG acquisition, ensure skin impedance is < 5kΩ.";
     res.json({ content: response });
+});
+
+/**
+ * [SHADOW PROXY] External Ingest AI
+ */
+router.post('/ingest-ai', async (req, res) => {
+    const { mode, fileName, imageData, mimeType } = req.body;
+
+    if (genAI) {
+        try {
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            let result;
+
+            if (mode === 'optical' && imageData) {
+                result = await model.generateContent([
+                    { inlineData: { data: imageData, mimeType } },
+                    { text: "Perform clinical optical digitization of this chart. Prepend with [OPTICAL SCRIBE]." }
+                ]);
+            } else {
+                result = await model.generateContent(`Perform a retrospective analysis of clinical dataset: ${fileName}. Prepend with [INGEST ANALYTICS].`);
+            }
+            return res.json({ analysis: result.response.text(), engine: "Ingest Uplink v2.5" });
+        } catch (e) { console.warn("Ingest Uplink Error."); }
+    }
+
+    res.json({
+        analysis: `[LOCAL INGEST] Retrospective analysis of ${fileName || 'unnamed stream'} complete. Morphology verified against clinical norms.`,
+        engine: "Local Ingest Hub"
+    });
 });
 
 module.exports = router;

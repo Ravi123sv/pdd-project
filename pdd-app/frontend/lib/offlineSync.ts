@@ -39,7 +39,7 @@ export const syncAll = async () => {
       if (item.type === 'PATIENT_ADMISSION') {
         await api.patients.syncSQL(item.data);
       } else if (item.type === 'SESSION_DATA') {
-        await api.patients.syncSessionSQL(item.data);
+        await api.sessions.syncSessionSQL(item.data);
       }
 
       // If successful, remove from queue

@@ -14,7 +14,8 @@ import {
   CloudUpload,
   FileDown,
   BrainCircuit,
-  Settings2
+  Settings2,
+  Zap
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -50,6 +51,7 @@ export default function Sidebar({ isCollapsed, setCollapsed }: SidebarProps) {
     { href: "/dashboard/export", label: "Export Vault", icon: FileDown, section: "DATA MANAGEMENT" },
     { href: "/dashboard/team", label: "Team Management", icon: Users, section: "ADMINISTRATION", userTypes: ['hospital'], roles: ['admin'] },
     { href: "/dashboard/profile", label: "My Profile", icon: User, section: "SYSTEM" },
+    { href: "/subscriptions", label: "Subscriptions", icon: Zap, section: "SYSTEM" },
     { href: "/dashboard/security", label: "Security Center", icon: Shield, section: "SYSTEM" },
     { href: "/dashboard/settings", label: "System Settings", icon: Settings2, section: "SYSTEM" },
   ];
@@ -97,21 +99,39 @@ export default function Sidebar({ isCollapsed, setCollapsed }: SidebarProps) {
 
               {sectionItems.map(item => {
                 const isActive = pathname === item.href;
+                const isExternal = item.href.startsWith('http');
+
+                const content = (
+                  <>
+                    <item.icon className={cn("h-5 w-5 shrink-0", isActive ? "text-primary" : "text-slate-400 group-hover:text-slate-600")} />
+                    {!isCollapsed && <span className="text-sm truncate">{item.label}</span>}
+                  </>
+                );
+
+                const className = cn(
+                    "w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all group",
+                    isActive
+                      ? "bg-primary/10 text-primary font-bold shadow-sm"
+                      : "text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200",
+                    isCollapsed && "justify-center px-0"
+                );
+
+                if (isExternal) {
+                    return (
+                        <a key={item.href} href={item.href} target="_blank" rel="noopener noreferrer" className={className}>
+                            {content}
+                        </a>
+                    );
+                }
+
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
                     title={isCollapsed ? item.label : ""}
-                    className={cn(
-                      "w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all group",
-                      isActive
-                        ? "bg-primary/10 text-primary font-bold shadow-sm"
-                        : "text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200",
-                      isCollapsed && "justify-center px-0"
-                    )}
+                    className={className}
                   >
-                    <item.icon className={cn("h-5 w-5 shrink-0", isActive ? "text-primary" : "text-slate-400 group-hover:text-slate-600")} />
-                    {!isCollapsed && <span className="text-sm truncate">{item.label}</span>}
+                    {content}
                   </Link>
                 );
               })}

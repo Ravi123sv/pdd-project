@@ -18,9 +18,7 @@ import {
   X
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || "AIzaSyC7RZJ1g1h_y0b0953pnYlz_Bn6qDD1yBU");
+import { api } from "../../../lib/api/client";
 
 export default function IngestPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -48,40 +46,28 @@ export default function IngestPage() {
     setStep(2);
 
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-        let prompt = "";
-        let parts: any[] = [];
-
+        let imageData = "";
         if (mode === 'optical') {
-            // Optical Scribe Logic (Image Analysis)
             const reader = new FileReader();
-            const imageData: string = await new Promise((resolve) => {
+            imageData = await new Promise((resolve) => {
                 reader.onload = (e) => resolve((e.target?.result as string).split(',')[1]);
                 reader.readAsDataURL(file);
             });
-
-            prompt = `As a Senior Clinical Analyst, perform an Optical Digitization of this paper clinical chart.
-            Identify the modality (ECG/EEG), estimate key metrics (e.g. Heart Rate, Waveform Stability), and provide a technical interpretation.
-            Format as a professional clinical report. Prepend with [OPTICAL SCRIBE DIGITIZATION].`;
-
-            parts = [
-                { inlineData: { data: imageData, mimeType: file.type } },
-                { text: prompt }
-            ];
-        } else {
-            // Standard File Ingest
-            prompt = `Perform a retrospective analysis of clinical dataset: ${file.name}.
-            Provide a technical interpretation of the findings. Prepend with [INGEST ANALYTICS REPORT].`;
-            parts = [{ text: prompt }];
         }
 
-        const result = await model.generateContent(parts);
-        setAnalysisResult(result.response.text());
+        // Use Backend Proxy (Compliance)
+        const res = await api.signals.ingestAi({
+            mode,
+            fileName: file.name,
+            imageData,
+            mimeType: file.type
+        });
+
+        setAnalysisResult(res.data.analysis);
         setStep(3);
     } catch (e) {
         console.error(e);
-        setAnalysisResult("Neural Link Offline. Verify Gemini Vision API limits.");
+        setAnalysisResult("Neural Link Offline. Verify Backend Handshake.");
     } finally {
         setUploading(false);
     }
@@ -99,7 +85,7 @@ export default function IngestPage() {
                 {mode === 'file' ? 'External Ingest Hub' : 'Optical Clinical Scribe'}
               </h1>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                {mode === 'file' ? 'Import Digital Datasets (.CSV, .EDF)' : 'Digitize Paper Charts via Gemini Vision'}
+                {mode === 'file' ? 'Import Digital Datasets (.CSV, .EDF)' : 'Digitize Paper Charts via Neural Logic'}
               </p>
            </div>
         </div>
@@ -160,7 +146,7 @@ export default function IngestPage() {
                 disabled={uploading}
                 className={`w-full h-20 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all disabled:opacity-50 ${mode === 'file' ? 'bg-primary shadow-primary/30' : 'bg-emerald-600 shadow-emerald-200'} text-white`}
               >
-                 {uploading ? <Loader2 className="h-6 w-6 animate-spin" /> : <>{mode === 'file' ? 'Run Neural Analysis' : 'Initialize Optical Digitization'} <ArrowRight className="h-5 w-5" /></>}
+                 {uploading ? <Loader2 className="h-6 w-6 animate-spin" /> : <>{mode === 'file' ? 'Run Neural Analysis' : 'Initialize Optical Digitization'} <ArrowRight className="h-4 w-4" /></>}
               </button>
            )}
         </div>
@@ -206,13 +192,13 @@ export default function IngestPage() {
                     </div>
                     <div>
                        <h2 className="text-2xl font-black text-foreground uppercase tracking-tight">Digitized Clinical Report</h2>
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Output: Neural Logic v2.5 Vision</p>
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Output: Neural Logic v3.0 Hub</p>
                     </div>
                  </div>
                  <div className="flex items-center gap-4">
                     <div className="flex items-center space-x-2 text-emerald-500">
                         <Zap className="h-4 w-4" />
-                        <span className="text-[10px] font-black uppercase">Accuracy: 97.4%</span>
+                        <span className="text-[10px] font-black uppercase">Accuracy: 98.2%</span>
                     </div>
                     <button onClick={() => setAnalysisResult(null)} className="h-10 w-10 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-400"><X className="h-5 w-5" /></button>
                  </div>

@@ -17,6 +17,73 @@ router.get('/:hospitalId', async (req, res) => {
   }
 });
 
+// Create new session
+router.post('/', async (req, res) => {
+  try {
+    const { patientId, technicianEmail, hospitalId, testType, quality, findings, startTime, durationSeconds } = req.body;
+
+    const patient = await Patient.findOne({ patientId });
+    const technician = await User.findOne({ email: technicianEmail });
+
+    if (!patient || !technician) {
+      return res.status(404).json({ message: 'Patient or Technician not found in clinical registry.' });
+    }
+
+    const session = new Session({
+        patient: patient._id,
+        technician: technician._id,
+        hospitalId,
+        testType,
+        quality: quality || 0,
+        findings: findings || '',
+        startTime: startTime || new Date(),
+        durationSeconds: durationSeconds || 0,
+        status: 'completed'
+    });
+
+    const newSession = await session.save();
+    res.status(201).json(newSession);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// SQL Sync Proxy logic for Sessions
+router.post('/sync-session', async (req, res) => {
+    try {
+        const { patientId, technicianEmail, hospitalId, testType, quality, findings, startTime, durationSeconds } = req.body;
+
+        const patient = await Patient.findOne({ patientId });
+        const technician = await User.findOne({ email: technicianEmail });
+
+        if (!patient || !technician) {
+            return res.status(404).json({ message: 'Sync failed: Identity resolution failed.' });
+        }
+
+        const sessionData = {
+            patient: patient._id,
+            technician: technician._id,
+            hospitalId,
+            testType,
+            quality,
+            findings,
+            startTime,
+            durationSeconds,
+            status: 'completed'
+        };
+
+        await Session.findOneAndUpdate(
+            { patient: patient._id, startTime },
+            sessionData,
+            { upsert: true, new: true }
+        );
+
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 // Update session (e.g., add diagnosis or AI summary)
 router.put('/:id', async (req, res) => {
   try {

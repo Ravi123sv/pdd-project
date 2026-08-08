@@ -77,12 +77,12 @@ export const api = {
   patients: {
     getAll: (hospitalId: string) => apiClient.get(`/patients/${hospitalId}`),
     syncSQL: (data: any) => apiClient.post('/patients/sync-sql', data),
-    syncSessionSQL: (data: any) => apiClient.post('/patients/sync-session', data),
   },
   signals: {
     stream: (data: any) => goClient.post('/go/stream', data),
     analyze: (data: any) => apiClient.post('/signals/analyze', data),
     analyzeAi: (data: any) => apiClient.post('/signals/analyze-ai', data),
+    ingestAi: (data: any) => apiClient.post('/signals/ingest-ai', data),
     chatbot: (messages: any) => apiClient.post('/signals/chatbot', { messages }),
   },
   otp: {
@@ -91,6 +91,8 @@ export const api = {
   },
   sessions: {
     getAll: (hospitalId: string) => apiClient.get(`/sessions/${hospitalId}`),
+    create: (data: any) => apiClient.post('/sessions', data),
+    syncSessionSQL: (data: any) => apiClient.post('/sessions/sync-session', data),
     update: (id: string, data: any) => apiClient.put(`/sessions/${id}`, data),
   },
   payments: {

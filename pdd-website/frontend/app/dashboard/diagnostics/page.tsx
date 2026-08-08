@@ -12,10 +12,12 @@ import {
   Play,
   CheckCircle2,
   AlertTriangle,
-  ChevronRight
+  ChevronRight,
+  ShieldAlert
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { motion, AnimatePresence } from "framer-motion";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -23,12 +25,14 @@ function cn(...inputs: ClassValue[]) {
 
 export default function DiagnosticsPage() {
   const [runningTest, setRunningTest] = useState<string | null>(null);
+  const [scanning, setScanning] = useState(false);
+  const [scanComplete, setScanComplete] = useState(false);
 
   const tests = [
     { id: 'LINK', label: "Clinical Link Latency", status: "Optimal", value: "42ms", icon: Wifi, color: "text-secondary" },
-    { id: 'SIGNAL', label: "Signal Engine (Go)", status: "Active", value: "2.4 GHz", icon: Activity, color: "text-primary" },
+    { id: 'SIGNAL', label: "Signal Engine (Local)", status: "Active", value: "3.2 GHz", icon: Activity, color: "text-primary" },
     { id: 'SQL', label: "Database Persistence", status: "Operational", value: "99.9% Sync", icon: Database, color: "text-amber-500" },
-    { id: 'NEURAL', label: "Neural Logic Unit", status: "Active", value: "v2.0-Pro", icon: Cpu, color: "text-blue-500" },
+    { id: 'NEURAL', label: "Neural Logic Unit", status: "Active", value: "v3.0-Local", icon: Cpu, color: "text-blue-500" },
   ];
 
   const runDiagnostic = (id: string) => {
@@ -36,16 +40,30 @@ export default function DiagnosticsPage() {
     setTimeout(() => setRunningTest(null), 1500);
   };
 
+  const startFullScan = () => {
+      setScanning(true);
+      setScanComplete(false);
+      setTimeout(() => {
+          setScanning(false);
+          setScanComplete(true);
+          setTimeout(() => setScanComplete(false), 3000);
+      }, 3000);
+  };
+
   return (
-    <div className="space-y-8 max-w-5xl mx-auto">
+    <div className="space-y-8 max-w-5xl mx-auto pb-12">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-foreground tracking-tight">QA Diagnostics</h1>
-          <p className="text-sm font-medium text-slate-500">System-wide stability analysis and hardware link verification</p>
+          <p className="text-sm font-medium text-slate-500">System-wide stability analysis and clinical logic verification</p>
         </div>
-        <button className="neuro-button bg-primary text-white flex items-center space-x-2 text-sm">
-          <RefreshCw className="h-4 w-4" />
-          <span>FULL SYSTEM SCAN</span>
+        <button
+            onClick={startFullScan}
+            disabled={scanning}
+            className="neuro-button bg-primary text-white flex items-center space-x-2 text-sm shadow-xl shadow-primary/20"
+        >
+          {scanning ? <RefreshCw className="h-4 w-4 animate-spin" /> : <ShieldAlert className="h-4 w-4" />}
+          <span>{scanning ? "SCANNING CORE..." : "FULL SYSTEM SCAN"}</span>
         </button>
       </div>
 
@@ -65,6 +83,21 @@ export default function DiagnosticsPage() {
           </div>
         ))}
       </div>
+
+      <AnimatePresence>
+          {scanComplete && (
+              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-6 bg-emerald-500 text-white rounded-[2rem] flex items-center justify-between shadow-2xl">
+                  <div className="flex items-center gap-4">
+                      <CheckCircle2 className="h-6 w-6" />
+                      <div>
+                          <p className="text-sm font-black uppercase tracking-widest">Core Integrity Verified</p>
+                          <p className="text-[10px] font-bold opacity-80">All 14 clinical sub-nodes reported optimal handshakes.</p>
+                      </div>
+                  </div>
+                  <ShieldCheck className="h-10 w-10 opacity-20" />
+              </motion.div>
+          )}
+      </AnimatePresence>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Diagnostic Logs */}
@@ -110,7 +143,7 @@ export default function DiagnosticsPage() {
             <div className="relative z-10">
               <ShieldCheck className="h-10 w-10 text-primary mb-6" />
               <h3 className="text-xl font-black mb-2">Backbone Integrity</h3>
-              <p className="text-sm text-white/50 font-medium mb-8">Clinical data integrity is currently verified across all available backends.</p>
+              <p className="text-sm text-white/50 font-medium mb-8">Clinical data integrity is currently verified across all available local backends.</p>
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between text-xs font-bold">

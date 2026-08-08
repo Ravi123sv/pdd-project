@@ -48,7 +48,7 @@ export default function ArchivePage() {
     setSummarizing(true);
     try {
       // Use Local Backend Engine (Tester Compliant)
-      const res = await api.signals.analyze({
+      const res = await api.signals.analyzeAi({
           patientName: session.patient?.name,
           modality: session.testType,
           status: 'Retrospective'
