@@ -35,7 +35,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     // 3. Service Worker Registration (Offline Support)
     if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/pdd-project/sw.js')
+        const swPath = window.location.pathname.startsWith('/pdd-project') ? '/pdd-project/sw.js' : '/sw.js';
+        navigator.serviceWorker.register(swPath)
           .then(reg => console.log('NeuroSignal SW Active:', reg.scope))
           .catch(err => console.warn('SW Handshake Failed:', err));
       });
