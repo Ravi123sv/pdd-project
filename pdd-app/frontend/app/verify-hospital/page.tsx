@@ -21,8 +21,9 @@ export default function VerifyHospitalPage() {
     setError(null);
     try {
       const res = await api.otp.send(email, hospitalName);
+      // Dual-Mode Support: If SMTP fails but backend returns code for tester, show it.
       if (res.data.code) {
-          setError(`[LOCAL AUTH] YOUR VERIFICATION CODE IS: ${res.data.code}`);
+          setError(`[SECURITY FALLBACK] YOUR CODE IS: ${res.data.code}`);
       }
       setStep(2);
     } catch (err: any) {
