@@ -50,7 +50,7 @@ export default function SubscriptionsPage() {
       name: "Hospital Enterprise",
       price: "Custom",
       description: "Full-scale solution for hospitals with multi-unit management.",
-      features: ["Unlimited Staff", "Advanced Gemini AI Analysis", "Infinite Patient Archive", "Priority Support", "Admin Analytics"],
+      features: ["Unlimited Staff", "Advanced Neural Logic Analysis", "Infinite Patient Archive", "Priority Support", "Admin Analytics"],
       button: "Contact Sales",
       highlight: true,
       onClick: handleContactSales
