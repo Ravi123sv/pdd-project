@@ -1,16 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
-  basePath: '/pdd-project',
-  images: {
-    unoptimized: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-}
+    output: 'export',
+    images: {
+        unoptimized: true,
+    },
+    trailingSlash: true,
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;

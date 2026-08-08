@@ -3,20 +3,21 @@ services:
     name: neurosignal-clinical-hub
     env: node
     plan: free
-    # Updated path to the backend directory
-    rootDir: pdd-website/backend/express-server
-    buildCommand: npm install
-    startCommand: node index.js
+    rootDir: pdd-website
+    buildCommand: "cd frontend && npm install && npm run build && cd ../backend/express-server && npm install"
+    startCommand: "cd backend/express-server && node index.js"
     envVars:
+      - key: NODE_ENV
+        value: production
       - key: MONGO_URI
-        sync: false
-      - key: RESEND_API_KEY
         sync: false
       - key: SMTP_USER
         value: neurosignalai1@gmail.com
       - key: SMTP_PASS
         value: aqpi tlvx slnb eaye
-      - key: STRIPE_SECRET_KEY
+      - key: NEXT_PUBLIC_GEMINI_API_KEY
         sync: false
+      - key: ENABLE_NEURAL_UPLINK
+        value: "false"
       - key: JWT_SECRET
         value: neurosignal_clinical_secret_key_2026

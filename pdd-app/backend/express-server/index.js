@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
@@ -14,23 +15,15 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.json());
 
-// Request Logging Middleware
-app.use((req, res, next) => {
-  const start = Date.now();
-  res.on('finish', () => {
-    const duration = Date.now() - start;
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} ${res.statusCode} - ${duration}ms`);
-  });
-  next();
-});
+// Database Connection Logic
+const MONGO_URI = process.env.MONGO_URI;
+if (MONGO_URI) {
+    mongoose.connect(MONGO_URI)
+      .then(() => console.log('NeuroSignal Hub: Clinical Atlas Node Online'))
+      .catch(err => console.error('CRITICAL: Database Handshake Failed:', err.message));
+}
 
-// DB Connection
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/neurosignal';
-mongoose.connect(MONGO_URI)
-  .then(() => console.log('MongoDB Connected'))
-  .catch(err => console.error('MongoDB Connection Error:', err));
-
-// Import Routes
+// 1. API ROUTES
 const assetRoutes = require('./routes/assets');
 const patientRoutes = require('./routes/patients');
 const authRoutes = require('./routes/auth');
@@ -39,7 +32,6 @@ const signalRoutes = require('./routes/signals');
 const otpRoutes = require('./routes/otp');
 const sessionRoutes = require('./routes/sessions');
 
-// Use Routes
 app.use('/api/assets', assetRoutes);
 app.use('/api/patients', patientRoutes);
 app.use('/api/auth', authRoutes);
@@ -48,55 +40,38 @@ app.use('/api/signals', signalRoutes);
 app.use('/api/otp', otpRoutes);
 app.use('/api/sessions', sessionRoutes);
 
-app.get('/api/health', (req, res) => res.json({ status: 'Operational', db: 'MongoDB' }));
+// 2. UNIFIED FRONTEND SERVING (Cloud Only)
+if (process.env.NODE_ENV === 'production') {
+    // Serve static files from the Next.js 'out' directory
+    const frontendPath = path.join(__dirname, '../../frontend/out');
+    app.use(express.static(frontendPath));
 
-app.get('/', (req, res) => {
-  res.send('NeuroSignal Clinical API v1.0 Operational');
-});
-
-// WebSocket Logic for Collaboration
-io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
-
-  socket.on('join_channel', (channel) => {
-    socket.join(channel);
-    console.log(`User ${socket.id} joined channel ${channel}`);
-  });
-
-  socket.on('send_message', (data) => {
-    io.to(data.channel).emit('receive_message', data);
-  });
-
-  socket.on('broadcast_signal', (data) => {
-    // High-frequency telemetry broadcast to a specific clinical unit
-    socket.to(data.channel).emit('receive_signal', data);
-  });
-
-  socket.on('trigger_red_alert', (data) => {
-    console.log(`EMERGENCY: RED ALERT from ${data.sender} in unit ${data.channel}`);
-    io.emit('receive_message', {
-      ...data,
-      channel: 'RED_ALERT',
-      severity: 'CRITICAL',
-      time: new Date()
+    app.get('*', (req, res) => {
+        if (!req.path.startsWith('/api')) {
+            res.sendFile(path.join(frontendPath, 'index.html'));
+        }
     });
-  });
+} else {
+    app.get('/', (req, res) => {
+      res.send('NeuroSignal Clinical Hub v2.5 Online (App Mode)');
+    });
+}
 
-  socket.on('disconnect', () => {
-    console.log('User disconnected');
-  });
+// WebSocket Unit Handshake
+io.on('connection', (socket) => {
+  console.log('Clinical Node Joined:', socket.id);
+  socket.on('join_channel', (channel) => socket.join(channel));
+  socket.on('broadcast_signal', (data) => socket.to(data.channel).emit('receive_signal', data));
+  socket.on('disconnect', () => console.log('Clinical Node Disconnected'));
 });
 
-// Global Error Handler
+// Error Handling
 app.use((err, req, res, next) => {
   console.error(`[ERROR] ${new Date().toISOString()}:`, err.stack);
-  res.status(500).json({
-    error: 'Internal Server Error',
-    message: process.env.NODE_ENV === 'production' ? 'A clinical server error occurred.' : err.message
-  });
+  res.status(500).json({ error: 'Internal Hub Error', message: err.message });
 });
 
-const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
-  console.log(`Clinical Server running on port ${PORT}`);
+const PORT = process.env.PORT || 10000;
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Clinical Hub Active on port ${PORT}`);
 });
