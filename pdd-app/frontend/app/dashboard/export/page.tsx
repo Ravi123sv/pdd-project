@@ -14,9 +14,12 @@ import {
   ShieldCheck,
   BrainCircuit,
   Loader2,
-  ChevronRight
+  ChevronRight,
+  Database,
+  FileSpreadsheet
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { FhirService } from "../../../lib/services/FhirService";
 
 export default function ExportVaultPage() {
   const { user } = useStore();
@@ -41,6 +44,26 @@ export default function ExportVaultPage() {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const downloadFile = (content: string, fileName: string, contentType: string) => {
+    const a = document.createElement("a");
+    const file = new Blob([content], { type: contentType });
+    a.href = URL.createObjectURL(file);
+    a.download = fileName;
+    a.click();
+  };
+
+  const handleFhirExport = () => {
+      if (!selectedExport) return;
+      const bundle = FhirService.generateDiagnosticReport(selectedExport);
+      downloadFile(JSON.stringify(bundle, null, 2), `FHIR_${selectedExport.patient?.patientId}_${selectedExport.testType}.json`, 'application/json');
+  };
+
+  const handleCsvExport = () => {
+      if (!selectedExport) return;
+      const csv = FhirService.convertToCSV(selectedExport);
+      downloadFile(csv, `DATA_${selectedExport.patient?.patientId}_${selectedExport.testType}.csv`, 'text/csv');
   };
 
   return (
@@ -74,7 +97,7 @@ export default function ExportVaultPage() {
            <div className="space-y-3">
               <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Available Sessions</h4>
               {loading ? (
-                  <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+                  <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
               ) : exports.map((session) => (
                 <button
                   key={session._id}
@@ -111,17 +134,31 @@ export default function ExportVaultPage() {
                    className="bg-white dark:bg-slate-950 rounded-[3rem] border-2 border-border/50 shadow-2xl flex flex-col overflow-hidden min-h-[800px] print:border-0 print:shadow-none print:rounded-none"
                 >
                    {/* Preview Controls */}
-                   <div className="p-8 border-b border-border flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50 print:hidden">
+                   <div className="p-8 border-b border-border flex flex-wrap gap-4 items-center justify-between bg-slate-50/50 dark:bg-slate-900/50 print:hidden">
                       <div className="flex items-center space-x-3 text-primary">
                          <ShieldCheck className="h-5 w-5" />
                          <span className="text-[10px] font-black uppercase tracking-widest">Certified Clinical Preview</span>
                       </div>
-                      <button
-                        onClick={handlePrint}
-                        className="h-12 px-8 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:scale-105 transition-all shadow-xl"
-                      >
-                         <Printer className="h-4 w-4" /> Print PDF Report
-                      </button>
+                      <div className="flex flex-wrap gap-3">
+                         <button
+                            onClick={handleFhirExport}
+                            className="h-11 px-6 bg-blue-500/10 text-blue-600 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center gap-2 hover:bg-blue-500/20 transition-all"
+                         >
+                            <Database className="h-3.5 w-3.5" /> FHIR Bundle
+                         </button>
+                         <button
+                            onClick={handleCsvExport}
+                            className="h-11 px-6 bg-emerald-500/10 text-emerald-600 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center gap-2 hover:bg-emerald-500/20 transition-all"
+                         >
+                            <FileSpreadsheet className="h-3.5 w-3.5" /> Research CSV
+                         </button>
+                         <button
+                            onClick={handlePrint}
+                            className="h-11 px-6 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-all shadow-xl"
+                         >
+                            <Printer className="h-3.5 w-3.5" /> Print PDF
+                         </button>
+                      </div>
                    </div>
 
                    {/* The Actual Report Content (Styled for PDF) */}
@@ -201,11 +238,11 @@ export default function ExportVaultPage() {
                       <div className="space-y-6">
                          <div className="flex items-center space-x-2 text-primary">
                             <BrainCircuit className="h-5 w-5" />
-                            <h5 className="text-[10px] font-black uppercase tracking-widest">Neural Logic Interpretation (AI)</h5>
+                            <h5 className="text-[10px] font-black uppercase tracking-widest">Neural Logic Interpretation (Local Engine)</h5>
                          </div>
                          <div className="p-10 bg-primary/5 border-2 border-primary/20 rounded-[3rem] relative overflow-hidden">
                             <p className="text-sm font-black text-slate-900 leading-relaxed relative z-10 whitespace-pre-line">
-                               {selectedExport.aiSummary || "[SYSTEM: NO AI ANALYSIS REQUESTED FOR THIS SESSION. CONTACT UNIT ADMIN FOR NEURAL LINK GENERATION.]"}
+                               {selectedExport.aiSummary || "[SYSTEM: NO AI ANALYSIS REQUESTED FOR THIS SESSION. USE ARCHIVE MODULE TO GENERATE SUMMARY.]"}
                             </p>
                          </div>
                       </div>
@@ -213,9 +250,9 @@ export default function ExportVaultPage() {
                       {/* Footer Disclaimer */}
                       <div className="pt-20 border-t border-slate-200 text-center space-y-4">
                          <p className="text-[9px] font-bold text-slate-400 leading-relaxed uppercase tracking-widest">
-                            [CLINICAL NOTICE: This document is generated for professional medical use. AI summaries must be verified by a licensed specialist.]
+                            [CLINICAL NOTICE: This document is generated for professional medical use. Analysis must be verified by a licensed specialist.]
                          </p>
-                         <p className="text-[10px] font-black text-slate-300 tracking-[0.4em]">NEUROSIGNAL AI CORE v2.5</p>
+                         <p className="text-[10px] font-black text-slate-300 tracking-[0.4em]">NEUROSIGNAL LOCAL HUB v3.5</p>
                       </div>
                    </div>
                 </motion.div>
