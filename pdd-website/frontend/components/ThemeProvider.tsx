@@ -18,7 +18,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const { checkSession } = useStore();
 
   useEffect(() => {
+    // 1. Session Handshake
     checkSession();
+
+    // 2. Theme Sync
     const savedTheme = localStorage.getItem("theme") as Theme;
     if (savedTheme) {
       setTheme(savedTheme);
@@ -28,8 +31,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       setTheme("dark");
       document.documentElement.classList.add("dark");
     }
+
+    // 3. Service Worker Registration (Offline Support)
+    if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/pdd-project/sw.js')
+          .then(reg => console.log('NeuroSignal SW Active:', reg.scope))
+          .catch(err => console.warn('SW Handshake Failed:', err));
+      });
+    }
+
     setMounted(true);
-  }, []);
+  }, [checkSession]);
 
   const toggleTheme = () => {
     const newTheme = theme === "light" ? "dark" : "light";
