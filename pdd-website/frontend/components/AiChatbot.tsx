@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import {
   Bot,
   Send,
@@ -12,13 +11,12 @@ import {
   AlertCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-
-const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || "AIzaSyC7RZJ1g1h_y0b0953pnYlz_Bn6qDD1yBU");
+import { api } from "../lib/api/client";
 
 export default function AiChatbot() {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<{role: 'user' | 'model', content: string}[]>([
-    { role: 'model', content: "[CLINICAL ADVISORY: This module provides signal interpretation assistance only.] Clinical Link Stable. I am the NeuroSignal AI Consultant. How can I assist you?" }
+  const [messages, setMessages] = useState<{role: 'user' | 'assistant', content: string}[]>([
+    { role: 'assistant', content: "[LOCAL CLINICAL ADVISORY] System initialized. I am the NeuroSignal Local Assistant. How can I assist with your clinical acquisition today?" }
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -34,28 +32,17 @@ export default function AiChatbot() {
 
     const userMsg = input.trim();
     setInput("");
-    setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
+    const newMessages = [...messages, { role: 'user' as const, content: userMsg }];
+    setMessages(newMessages);
     setLoading(true);
 
     try {
-      const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
-      });
-
-      // Simple generation instead of chat state if history is causing issues
-      const prompt = `System: You are the 'NeuroSignal Clinical Consultant'. Never mention AI or Google. Use technical medical terminology.
-      Context: User is a licensed clinician at a workstation.
-      History: ${messages.map(m => `${m.role}: ${m.content}`).join('\n')}
-      User: ${userMsg}`;
-
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
-
-      setMessages(prev => [...prev, { role: 'model', content: text }]);
+      // Use Local Backend Chatbot Proxy (Compliance)
+      const res = await api.signals.chatbot(newMessages);
+      setMessages(prev => [...prev, { role: 'assistant', content: res.data.content }]);
     } catch (err) {
-      console.error("AI Error:", err);
-      setMessages(prev => [...prev, { role: 'model', content: "Connection to Neural Logic Unit timed out. Re-syncing..." }]);
+      console.error("Chatbot Error:", err);
+      setMessages(prev => [...prev, { role: 'assistant', content: "Local logic unit re-syncing. Please verify signal grounding." }]);
     } finally {
       setLoading(false);
     }
@@ -78,10 +65,10 @@ export default function AiChatbot() {
                    <Bot className="h-5 w-5" />
                 </div>
                 <div>
-                   <h4 className="text-xs font-black uppercase tracking-widest">Clinical Consultant</h4>
+                   <h4 className="text-xs font-black uppercase tracking-widest">Clinical Assistant</h4>
                    <div className="flex items-center space-x-1.5">
-                      <div className="h-1.5 w-1.5 rounded-full bg-secondary animate-pulse" />
-                      <span className="text-[8px] font-bold opacity-70 uppercase">Neural Link Active</span>
+                      <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                      <span className="text-[8px] font-bold opacity-70 uppercase">Local Node Active</span>
                    </div>
                 </div>
               </div>
@@ -107,7 +94,7 @@ export default function AiChatbot() {
                 <div className="flex justify-start">
                    <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-2xl rounded-bl-none flex items-center space-x-2">
                       <Loader2 className="h-3 w-3 animate-spin text-primary" />
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Processing Waveforms...</span>
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Analyzing Logic...</span>
                    </div>
                 </div>
               )}
@@ -119,7 +106,7 @@ export default function AiChatbot() {
                   <input
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder="Inquire about clinical findings..."
+                    placeholder="Ask about acquisition protocols..."
                     className="w-full bg-white dark:bg-slate-800 border-2 border-border rounded-xl py-3 pl-4 pr-12 text-xs font-bold outline-none focus:border-primary transition-all"
                   />
                   <button
@@ -140,7 +127,7 @@ export default function AiChatbot() {
           >
              <MessageSquare className="h-7 w-7 group-hover:hidden" />
              <Bot className="h-7 w-7 hidden group-hover:block" />
-             <div className="absolute -top-1 -right-1 h-5 w-5 bg-secondary border-4 border-white dark:border-slate-900 rounded-full" />
+             <div className="absolute -top-1 -right-1 h-5 w-5 bg-emerald-500 border-4 border-white dark:border-slate-900 rounded-full" />
           </motion.button>
         )}
       </AnimatePresence>

@@ -20,7 +20,10 @@ export default function VerifyHospitalPage() {
     setLoading(true);
     setError(null);
     try {
-      await api.otp.send(email, hospitalName);
+      const res = await api.otp.send(email, hospitalName);
+      if (res.data.code) {
+          setError(`[LOCAL AUTH] YOUR VERIFICATION CODE IS: ${res.data.code}`);
+      }
       setStep(2);
     } catch (err: any) {
       setError("SYSTEM: FAILED TO DISPATCH VERIFICATION CODE.");
