@@ -25,7 +25,9 @@ export const storage = getStorage(app);
 
 // Helper for Email Link Auth
 export const actionCodeSettings = {
-  url: typeof window !== 'undefined' ? `${window.location.origin}/auth/verify` : 'https://ravi123sv.github.io/pdd-project/auth/verify',
+  url: typeof window !== 'undefined'
+    ? `${window.location.origin}${window.location.pathname.startsWith('/pdd-project') ? '/pdd-project' : ''}/auth/verify`
+    : 'https://ravi123sv.github.io/pdd-project/auth/verify',
   handleCodeInApp: true,
 };
 

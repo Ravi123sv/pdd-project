@@ -50,27 +50,28 @@ export default function DashboardPage() {
         const hospitalId = user.hospitalId || 'HOSP-DEFAULT';
 
         // Parallel requests
-        const [patientsRes, assetsRes, teamRes] = await Promise.all([
+        const [patientsRes, assetsRes, sessionsRes, teamRes] = await Promise.all([
           api.patients.getAll(hospitalId),
           api.assets.getAll(hospitalId),
+          api.sessions.getAll(hospitalId),
           isHospital ? api.auth.getTeam(hospitalId) : Promise.resolve({ data: [] })
         ]);
 
         setStats({
-          sessions: patientsRes.data.length,
+          sessions: sessionsRes.data.length,
           assets: assetsRes.data.length,
           team: teamRes.data.length
         });
 
-        // Generate dynamic feed from real patient data
-        const patientFeed = patientsRes.data.slice(0, 3).map((p: any) => ({
-          title: "PATIENT ADMISSION",
-          body: `New session initialized for ${p.name} (${p.patientId || 'MRN-7701'}).`,
+        // Generate dynamic feed from real session data
+        const sessionFeed = sessionsRes.data.slice(0, 3).map((s: any) => ({
+          title: "SESSION FINALIZED",
+          body: `Analysis complete for ${s.patient?.name} (${s.testType}). Quality: ${s.quality}%.`,
           category: "CLINICAL"
         }));
 
         setFeed([
-          ...patientFeed,
+          ...sessionFeed,
           { title: "PROTOCOL UPDATE", body: "New artifact suppression algorithm v2.5 deployed.", category: "SYSTEM" },
         ]);
 

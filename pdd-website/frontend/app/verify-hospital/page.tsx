@@ -49,14 +49,23 @@ export default function VerifyHospitalPage() {
     }
   };
 
-  const handleFinalize = () => {
+  const handleFinalize = async () => {
      setLoading(true);
-     // Simulate real key generation based on hospital name
-     setTimeout(() => {
-        setGeneratedKey(`NS-${Math.floor(100000 + Math.random() * 900000)}`);
-        setLoading(false);
-        setStep(4);
-     }, 2000);
+     const newKey = `NS-${Math.floor(100000 + Math.random() * 900000)}`;
+     try {
+         await api.auth.registerHospital({
+             name: hospitalName,
+             adminEmail: email,
+             clinicalKey: newKey
+         });
+         setGeneratedKey(newKey);
+         setStep(4);
+     } catch (err) {
+         console.error(err);
+         alert("Institutional registration failed. This identity might already be registered.");
+     } finally {
+         setLoading(false);
+     }
   };
 
   const handleOtpChange = (index: number, value: string) => {

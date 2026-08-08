@@ -6,6 +6,26 @@ const Hospital = require('../models/Hospital');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'neurosignal_clinical_secret_key';
 
+// Institutional Onboarding: Register New Hospital
+router.post('/register-hospital', async (req, res) => {
+  const { name, adminEmail, clinicalKey } = req.body;
+  try {
+    const hospitalId = `HOSP-${Math.floor(1000 + Math.random() * 9000)}`;
+    const newHospital = new Hospital({
+      hospitalId,
+      name,
+      adminEmail,
+      clinicalKey,
+      authorizedEmails: [{ email: adminEmail, role: 'admin' }],
+      subscriptionTier: 'free'
+    });
+    await newHospital.save();
+    res.status(201).json({ success: true, hospital: newHospital });
+  } catch (err) {
+    res.status(400).json({ message: 'Hospital registration failed. Key or ID might already exist.' });
+  }
+});
+
 // Login with Clinical Key + Google Email Validation
 router.post('/login-key', async (req, res) => {
   const { clinicalKey, email } = req.body;

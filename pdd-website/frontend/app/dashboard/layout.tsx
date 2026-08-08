@@ -79,7 +79,7 @@ export default function DashboardLayout({
       {/* Mobile Header Overlay - Notch Safe */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white dark:bg-slate-900 border-b border-border z-[60] flex items-center justify-between px-6 safe-header">
          <div className="flex items-center space-x-3">
-            <img src="/assets/icon/app_icon.svg" className="h-8 w-8" alt="Logo" />
+            <img src="https://ravi123sv.github.io/pdd-project/assets/icon/app_icon.svg" className="h-8 w-8" alt="Logo" />
             <span className="text-xs font-black tracking-widest uppercase">NeuroSignal</span>
          </div>
          <button

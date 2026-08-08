@@ -67,7 +67,7 @@ export default function Sidebar({ isCollapsed, setCollapsed }: SidebarProps) {
       <div className="h-20 flex items-center px-6 border-b border-border/50 shrink-0">
         {!isCollapsed ? (
           <div className="flex items-center space-x-3">
-            <img src="/assets/icon/app_icon.svg" alt="NeuroSignal Logo" className="h-8 w-8" />
+            <img src="https://ravi123sv.github.io/pdd-project/assets/icon/app_icon.svg" alt="NeuroSignal Logo" className="h-8 w-8" />
             <div className="min-w-0">
               <p className="text-[10px] font-black tracking-tighter text-foreground leading-none">NEUROSIGNAL</p>
               <p className="text-[8px] font-bold text-slate-400 mt-1 uppercase truncate">

@@ -66,6 +66,7 @@ apiClient.interceptors.response.use(
 export const api = {
   auth: {
     loginWithKey: (clinicalKey: string, email: string) => apiClient.post('/auth/login-key', { clinicalKey, email }),
+    registerHospital: (data: any) => apiClient.post('/auth/register-hospital', data),
     getProfile: (uid: string) => apiClient.get(`/auth/profile/${uid}`),
     getTeam: (hospitalId: string) => apiClient.get(`/auth/hospital-team/${hospitalId}`),
     authorizeStaff: (hospitalId: string, email: string, role: string) => apiClient.post('/auth/authorize-staff', { hospitalId, email, role }),
