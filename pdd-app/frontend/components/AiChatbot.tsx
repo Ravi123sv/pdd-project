@@ -37,13 +37,36 @@ export default function AiChatbot() {
     setLoading(true);
 
     try {
+      // Simulate "Thinking" time for professional feel
+      await new Promise(resolve => setTimeout(resolve, 600));
+
       // Use Local Backend Chatbot Proxy (Compliance)
       const res = await api.signals.chatbot(newMessages);
-      setMessages(prev => [...prev, { role: 'assistant', content: res.data.content }]);
+
+      // Typing effect for the response
+      const fullResponse = res.data.content;
+      let currentIdx = 0;
+      const interval = setInterval(() => {
+        setMessages(prev => {
+          const last = prev[prev.length - 1];
+          if (last.role === 'assistant' && last.content !== "[LOCAL CLINICAL ADVISORY] System initialized. I am the NeuroSignal Local Assistant. How can I assist with your clinical acquisition today?") {
+             const updated = [...prev];
+             updated[updated.length - 1] = { ...last, content: fullResponse.slice(0, currentIdx + 1) };
+             return updated;
+          }
+          return [...prev, { role: 'assistant', content: fullResponse.slice(0, 1) }];
+        });
+
+        currentIdx++;
+        if (currentIdx >= fullResponse.length) {
+          clearInterval(interval);
+          setLoading(false);
+        }
+      }, 15);
+
     } catch (err) {
       console.error("Chatbot Error:", err);
       setMessages(prev => [...prev, { role: 'assistant', content: "Local logic unit re-syncing. Please verify signal grounding." }]);
-    } finally {
       setLoading(false);
     }
   };
