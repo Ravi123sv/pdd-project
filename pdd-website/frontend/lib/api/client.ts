@@ -71,6 +71,9 @@ export const api = {
     getTeam: (hospitalId: string) => apiClient.get(`/auth/hospital-team/${hospitalId}`),
     authorizeStaff: (hospitalId: string, email: string, role: string) => apiClient.post('/auth/authorize-staff', { hospitalId, email, role }),
   },
+  system: {
+    seed: (hospitalId: string) => apiClient.post('/seed', { hospitalId }),
+  },
   assets: {
     getAll: (hospitalId: string) => apiClient.get(`/assets/${hospitalId}`),
     reportMalfunction: (id: string, data: any) => apiClient.post(`/assets/malfunction/${id}`, data),

@@ -32,6 +32,19 @@ export default function SettingsPage() {
       alert("System endpoint updated successfully.");
   };
 
+  const seedSystem = async () => {
+      if (!user?.hospitalId) return;
+      if (!confirm("This will clear current clinical data and insert test records. Continue?")) return;
+      try {
+          await api.system.seed(user.hospitalId);
+          alert("Clinical Hub seeded with test data. Dashboard will refresh.");
+          window.location.reload();
+      } catch (e) {
+          console.error(e);
+          alert("Seeding failed. Verify backend connectivity.");
+      }
+  };
+
   const settingsGroups = [
     {
       title: "Workstation Preferences",
@@ -90,13 +103,22 @@ export default function SettingsPage() {
           label: "Database Integrity",
           description: `Synchronization Status: ${networkStatus}`,
           action: (
-            <button
-              onClick={async () => { await syncAll(); alert("Cloud Synchronization Successful."); }}
-              className="flex items-center space-x-2 px-4 py-2 bg-secondary/10 text-secondary rounded-xl font-black text-[10px] uppercase border border-secondary/20"
-            >
-              <RefreshCw className="h-3.5 w-3.5" />
-              <span>Force Handshake</span>
-            </button>
+            <div className="flex gap-2">
+                <button
+                  onClick={async () => { await syncAll(); alert("Cloud Synchronization Successful."); }}
+                  className="flex items-center space-x-2 px-4 py-2 bg-secondary/10 text-secondary rounded-xl font-black text-[10px] uppercase border border-secondary/20"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  <span>Sync</span>
+                </button>
+                <button
+                  onClick={seedSystem}
+                  className="flex items-center space-x-2 px-4 py-2 bg-primary/10 text-primary rounded-xl font-black text-[10px] uppercase border border-primary/20"
+                >
+                  <Database className="h-3.5 w-3.5" />
+                  <span>Seed Hub</span>
+                </button>
+            </div>
           )
         }
       ]

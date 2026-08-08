@@ -51,6 +51,11 @@ export const useStore = create<AppState>((set, get) => ({
 
   setAuth: (isAuthenticated, user) => {
       console.log("[STORE] Updating Auth State:", isAuthenticated, user?.email);
+      // For individual practitioners, use their UID as the data bucket ID
+      if (user && user.userType === 'individual' && !user.hospitalId) {
+          user.hospitalId = `IND-${user.uid.slice(-6).toUpperCase()}`;
+          user.hospitalName = "Private Clinic";
+      }
       set({ isAuthenticated, user });
   },
 
