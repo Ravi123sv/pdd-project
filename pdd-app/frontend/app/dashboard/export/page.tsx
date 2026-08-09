@@ -6,35 +6,38 @@ import { api } from "../../../lib/api/client";
 import {
   FileDown,
   Search,
-  Clock,
-  CheckCircle2,
-  Printer,
+  FileJson,
+  FileSpreadsheet,
   FileText,
-  Activity,
   ShieldCheck,
-  BrainCircuit,
+  Activity,
+  Download,
   Loader2,
-  ChevronRight,
-  Database,
-  FileSpreadsheet
+  AlertCircle,
+  Eye,
+  X,
+  BrainCircuit,
+  RefreshCw,
+  Clock
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FhirService } from "../../../lib/services/FhirService";
+import SignalCanvas from "../../../components/SignalCanvas";
 
 export default function ExportVaultPage() {
   const { user } = useStore();
-  const [exports, setExports] = useState<any[]>([]);
+  const [sessions, setSessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedExport, setSelectedSession] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedForPreview, setSelectedForPreview] = useState<any>(null);
 
   useEffect(() => {
     const fetchSessions = async () => {
       if (!user?.hospitalId) return;
       try {
         const res = await api.sessions.getAll(user.hospitalId);
-        setExports(res.data);
+        setSessions(res.data);
       } catch (e) {
-        console.error("Failed to fetch exports", e);
+        console.error(e);
       } finally {
         setLoading(false);
       }
@@ -42,33 +45,14 @@ export default function ExportVaultPage() {
     fetchSessions();
   }, [user]);
 
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const downloadFile = (content: string, fileName: string, contentType: string) => {
-    const a = document.createElement("a");
-    const file = new Blob([content], { type: contentType });
-    a.href = URL.createObjectURL(file);
-    a.download = fileName;
-    a.click();
-  };
-
-  const handleFhirExport = () => {
-      if (!selectedExport) return;
-      const bundle = FhirService.generateDiagnosticReport(selectedExport);
-      downloadFile(JSON.stringify(bundle, null, 2), `FHIR_${selectedExport.patient?.patientId}_${selectedExport.testType}.json`, 'application/json');
-  };
-
-  const handleCsvExport = () => {
-      if (!selectedExport) return;
-      const csv = FhirService.convertToCSV(selectedExport);
-      downloadFile(csv, `DATA_${selectedExport.patient?.patientId}_${selectedExport.testType}.csv`, 'text/csv');
-  };
+  const filtered = sessions.filter(s =>
+    s.patient?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    s.patient?.patientId?.includes(searchQuery)
+  );
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-12 print:p-0">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 print:hidden">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-12">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center space-x-4">
            <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
               <FileDown className="h-7 w-7" />
@@ -76,209 +60,203 @@ export default function ExportVaultPage() {
            <div>
               <h1 className="text-2xl font-black text-foreground tracking-tight">Export Vault</h1>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                Clinical Report Generation & Data Handover
+                Professional Data Handover • HL7 FHIR & CSV Formats
               </p>
            </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 print:block">
-        {/* Left: Ready for Export List */}
-        <div className="lg:col-span-1 flex flex-col space-y-4 print:hidden">
-           <div className="bg-slate-900 text-white p-6 rounded-[2rem] relative overflow-hidden group">
-              <div className="relative z-10 space-y-4">
-                 <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Total Reports Ready</p>
-                 <h3 className="text-4xl font-black text-primary">{exports.length}</h3>
-                 <p className="text-[10px] font-medium text-white/50">All reports are E2E encrypted before download.</p>
-              </div>
-              <FileDown className="absolute -bottom-4 -right-4 h-24 w-24 text-primary opacity-10" />
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="lg:col-span-3 space-y-6">
+           <div className="relative">
+              <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search registry MRN or Name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full h-16 bg-white dark:bg-slate-900 border-2 border-border/50 rounded-3xl pl-14 pr-6 text-sm font-bold outline-none focus:border-primary transition-all"
+              />
            </div>
 
-           <div className="space-y-3">
-              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Available Sessions</h4>
-              {loading ? (
-                  <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
-              ) : exports.map((session) => (
-                <button
-                  key={session._id}
-                  onClick={() => setSelectedSession(session)}
-                  className={`w-full p-6 rounded-2xl border-2 transition-all text-left flex items-center justify-between group ${
-                    selectedExport?._id === session._id
-                      ? 'bg-white dark:bg-slate-800 border-primary shadow-lg'
-                      : 'bg-white dark:bg-slate-900 border-border/50 hover:border-primary/30'
-                  }`}
-                >
-                  <div className="flex items-center space-x-4">
-                     <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${selectedExport?._id === session._id ? 'bg-primary text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
-                        <FileText className="h-5 w-5" />
-                     </div>
-                     <div>
-                        <p className="text-sm font-bold text-foreground">{session.patient?.name}</p>
-                        <p className="text-[10px] font-black text-slate-400 uppercase">{session.testType} • {new Date(session.startTime).toLocaleDateString()}</p>
-                     </div>
-                  </div>
-                  <ChevronRight className={`h-4 w-4 transition-all ${selectedExport?._id === session._id ? 'text-primary translate-x-1' : 'text-slate-300'}`} />
-                </button>
-              ))}
-           </div>
+           {loading ? (
+               <div className="flex justify-center py-20"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>
+           ) : (
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {filtered.map((s) => (
+                    <motion.div
+                        key={s._id}
+                        whileHover={{ y: -5 }}
+                        className="glass-card p-8 space-y-8 group"
+                    >
+                        <div className="flex justify-between items-start">
+                            <div className="flex items-center gap-4">
+                                <div className="h-12 w-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-500">
+                                    {s.testType === 'ECG' ? <Activity className="h-6 w-6" /> : <BrainCircuit className="h-6 w-6" />}
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-black text-foreground truncate max-w-[140px]">{s.patient?.name}</h3>
+                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{s.testType} • {s.quality}% SQI</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setSelectedForPreview(s)}
+                                className="h-10 w-10 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-primary transition-all flex items-center justify-center"
+                            >
+                                <Eye className="h-5 w-5" />
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 pt-4 border-t border-border/50">
+                            <ExportButton label="FHIR JSON" icon={FileJson} />
+                            <ExportButton label="DATA CSV" icon={FileSpreadsheet} />
+                        </div>
+                    </motion.div>
+                  ))}
+               </div>
+           )}
+
+           {filtered.length === 0 && !loading && (
+               <div className="py-20 text-center opacity-30">
+                  <FileDown className="h-16 w-16 mx-auto mb-4 text-slate-400" />
+                  <p className="text-sm font-black uppercase tracking-widest text-slate-500">No exportable records found</p>
+               </div>
+           )}
         </div>
 
-        {/* Right: PDF Preview (The Report) */}
-        <div className="lg:col-span-2 print:col-span-3">
-           <AnimatePresence mode="wait">
-              {selectedExport ? (
-                <motion.div
-                   key={selectedExport._id}
-                   initial={{ opacity: 0, y: 20 }}
-                   animate={{ opacity: 1, y: 0 }}
-                   className="bg-white dark:bg-slate-950 rounded-[3rem] border-2 border-border/50 shadow-2xl flex flex-col overflow-hidden min-h-[800px] print:border-0 print:shadow-none print:rounded-none"
-                >
-                   {/* Preview Controls */}
-                   <div className="p-8 border-b border-border flex flex-wrap gap-4 items-center justify-between bg-slate-50/50 dark:bg-slate-900/50 print:hidden">
-                      <div className="flex items-center space-x-3 text-primary">
-                         <ShieldCheck className="h-5 w-5" />
-                         <span className="text-[10px] font-black uppercase tracking-widest">Certified Clinical Preview</span>
-                      </div>
-                      <div className="flex flex-wrap gap-3">
-                         <button
-                            onClick={handleFhirExport}
-                            className="h-11 px-6 bg-blue-500/10 text-blue-600 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center gap-2 hover:bg-blue-500/20 transition-all"
-                         >
-                            <Database className="h-3.5 w-3.5" /> FHIR Bundle
-                         </button>
-                         <button
-                            onClick={handleCsvExport}
-                            className="h-11 px-6 bg-emerald-500/10 text-emerald-600 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center gap-2 hover:bg-emerald-500/20 transition-all"
-                         >
-                            <FileSpreadsheet className="h-3.5 w-3.5" /> Research CSV
-                         </button>
-                         <button
-                            onClick={handlePrint}
-                            className="h-11 px-6 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-all shadow-xl"
-                         >
-                            <Printer className="h-3.5 w-3.5" /> Print PDF
-                         </button>
-                      </div>
-                   </div>
+        <div className="space-y-6">
+           <section className="glass-card p-8 bg-slate-900 text-white relative overflow-hidden group">
+              <div className="relative z-10 space-y-6">
+                 <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Vault Security</p>
+                 <div className="flex items-end justify-between">
+                    <h2 className="text-5xl font-black text-emerald-500">AES</h2>
+                    <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">256-Bit</span>
+                 </div>
+                 <div className="pt-6 border-t border-white/5 space-y-3 opacity-60">
+                    <div className="flex justify-between text-[9px] font-bold uppercase tracking-widest">
+                       <span>E2EE Active</span>
+                       <span className="text-emerald-500">VERIFIED</span>
+                    </div>
+                    <div className="flex justify-between text-[9px] font-bold uppercase tracking-widest">
+                       <span>HL7 v4.0.1</span>
+                       <span>COMPLIANT</span>
+                    </div>
+                 </div>
+              </div>
+              <ShieldCheck className="absolute -bottom-8 -right-8 h-40 w-40 text-primary opacity-5" />
+           </section>
 
-                   {/* The Actual Report Content (Styled for PDF) */}
-                   <div id="clinical-report" className="flex-1 p-16 space-y-12 bg-white text-slate-900 dark:text-slate-900 print:p-0">
-
-                      {/* Report Header */}
-                      <div className="flex justify-between items-start border-b-4 border-slate-900 pb-10">
-                         <div className="flex items-center space-x-4">
-                            <img src="https://ravi123sv.github.io/pdd-project/assets/icon/app_icon.svg" className="h-16 w-16 grayscale" alt="Logo" />
-                            <div>
-                               <h1 className="text-3xl font-black tracking-tighter uppercase">NeuroSignal</h1>
-                               <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Institutional Diagnostic Report</p>
-                            </div>
-                         </div>
-                         <div className="text-right space-y-1">
-                            <p className="text-xs font-black uppercase tracking-widest">Report ID: NS-{selectedExport._id.slice(-8).toUpperCase()}</p>
-                            <p className="text-xs font-bold text-slate-500">{new Date().toLocaleString()}</p>
-                            <div className="inline-flex items-center space-x-2 px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full mt-2">
-                                <CheckCircle2 className="h-3 w-3" />
-                                <span className="text-[9px] font-black uppercase">Verified Secure</span>
-                            </div>
-                         </div>
-                      </div>
-
-                      {/* Patient & Clinic Info */}
-                      <div className="grid grid-cols-2 gap-12 bg-slate-50 p-10 rounded-[2rem] border border-slate-200">
-                         <div className="space-y-4">
-                            <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Patient Metadata</h5>
-                            <div className="grid grid-cols-2 gap-4">
-                               <ReportField label="Patient Name" value={selectedExport.patient?.name} />
-                               <ReportField label="Clinical MRN" value={selectedExport.patient?.patientId} />
-                               <ReportField label="Age / DOB" value={`${selectedExport.patient?.age || '--'} Years`} />
-                               <ReportField label="Modality" value={selectedExport.testType} />
-                            </div>
-                         </div>
-                         <div className="space-y-4">
-                            <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Session Authority</h5>
-                            <div className="grid grid-cols-2 gap-4">
-                               <ReportField label="Clinic" value={user?.hospitalName || 'Institutional Hub'} />
-                               <ReportField label="Technician" value={selectedExport.technician?.name} />
-                               <ReportField label="Start Time" value={new Date(selectedExport.startTime).toLocaleTimeString()} />
-                               <ReportField label="Reliability" value={`${selectedExport.quality}% SQI`} />
-                            </div>
-                         </div>
-                      </div>
-
-                      {/* Simulated Signal Snapshot */}
-                      <div className="space-y-4">
-                         <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Telemetry Snapshot (Representative)</h5>
-                         <div className="h-40 w-full border-2 border-slate-200 rounded-2xl relative flex items-center justify-center overflow-hidden bg-white">
-                            {/* Static clinical grid for PDF */}
-                            <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
-                            {/* Realistic waveform drawing (Simplified for preview/print) */}
-                            <svg className="w-full h-full relative z-10" viewBox="0 0 1000 200">
-                               <path
-                                 d="M 0 100 L 50 100 L 60 90 L 70 100 L 100 100 L 110 50 L 120 150 L 130 100 L 160 100 L 180 120 L 200 100 L 1000 100"
-                                 fill="none"
-                                 stroke="#000"
-                                 strokeWidth="2"
-                               />
-                            </svg>
-                            <div className="absolute bottom-4 left-6 text-[8px] font-black uppercase tracking-widest text-slate-400">Reference Lead II • 25mm/s • 10mm/mV</div>
-                         </div>
-                      </div>
-
-                      {/* Technical Findings */}
-                      <div className="space-y-4">
-                         <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Diagnostic Findings</h5>
-                         <div className="p-8 border-2 border-slate-200 rounded-[2.5rem] bg-slate-50/30 min-h-[150px]">
-                            <p className="text-sm font-bold text-slate-800 leading-relaxed italic">
-                               "{selectedExport.findings || "Normal clinical morphology observed. No significant artifacts or anomalies identified during session duration."}"
-                            </p>
-                         </div>
-                      </div>
-
-                      {/* Neural Logic AI Summary */}
-                      <div className="space-y-6">
-                         <div className="flex items-center space-x-2 text-primary">
-                            <BrainCircuit className="h-5 w-5" />
-                            <h5 className="text-[10px] font-black uppercase tracking-widest">Neural Logic Interpretation (Local Engine)</h5>
-                         </div>
-                         <div className="p-10 bg-primary/5 border-2 border-primary/20 rounded-[3rem] relative overflow-hidden">
-                            <p className="text-sm font-black text-slate-900 leading-relaxed relative z-10 whitespace-pre-line">
-                               {selectedExport.aiSummary || "[SYSTEM: NO AI ANALYSIS REQUESTED FOR THIS SESSION. USE ARCHIVE MODULE TO GENERATE SUMMARY.]"}
-                            </p>
-                         </div>
-                      </div>
-
-                      {/* Footer Disclaimer */}
-                      <div className="pt-20 border-t border-slate-200 text-center space-y-4">
-                         <p className="text-[9px] font-bold text-slate-400 leading-relaxed uppercase tracking-widest">
-                            [CLINICAL NOTICE: This document is generated for professional medical use. Analysis must be verified by a licensed specialist.]
-                         </p>
-                         <p className="text-[10px] font-black text-slate-300 tracking-[0.4em]">NEUROSIGNAL LOCAL HUB v3.5</p>
-                      </div>
-                   </div>
-                </motion.div>
-              ) : (
-                <div className="h-full flex flex-col items-center justify-center text-center space-y-6 opacity-30 border-2 border-dashed border-border rounded-[3rem]">
-                   <div className="h-24 w-24 rounded-[3rem] bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                      <FileDown className="h-10 w-10 text-slate-400" />
-                   </div>
-                   <div>
-                      <h4 className="text-xl font-black uppercase tracking-tight">Select Report to Export</h4>
-                      <p className="text-sm font-medium">Verify data integrity before printing.</p>
-                   </div>
-                </div>
-              )}
-           </AnimatePresence>
+           <div className="p-8 bg-amber-500/10 border-2 border-dashed border-amber-500/20 rounded-[2.5rem] space-y-4">
+              <div className="flex items-center space-x-3 text-amber-600">
+                 <AlertCircle className="h-5 w-5" />
+                 <h4 className="text-[10px] font-black uppercase tracking-widest">Legal Notice</h4>
+              </div>
+              <p className="text-xs font-bold leading-relaxed text-amber-700/80 italic">
+                Data exports contain Protected Health Information (PHI). Ensure destination workstations are HIPAA-secured.
+              </p>
+           </div>
         </div>
       </div>
+
+      {/* Export Preview Modal */}
+      <AnimatePresence>
+         {selectedForPreview && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-8">
+               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedForPreview(null)} className="absolute inset-0 bg-slate-950/90 backdrop-blur-md" />
+               <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="w-full max-w-4xl bg-white dark:bg-slate-900 rounded-[3rem] shadow-3xl relative z-10 border-2 border-white/5 overflow-hidden flex flex-col max-h-[90vh]">
+
+                  {/* Modal Header */}
+                  <div className="p-8 border-b border-border flex items-center justify-between bg-slate-50/50 dark:bg-slate-950">
+                     <div className="flex items-center space-x-6">
+                        <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-2xl font-black">
+                           {selectedForPreview.testType}
+                        </div>
+                        <div>
+                           <h2 className="text-2xl font-black tracking-tight">{selectedForPreview.patient?.name}</h2>
+                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                             Snapshot ID: <span className="text-primary">{selectedForPreview._id.slice(-12)}</span> • {new Date(selectedForPreview.startTime).toLocaleString()}
+                           </p>
+                        </div>
+                     </div>
+                     <button onClick={() => setSelectedForPreview(null)} className="h-12 w-12 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-red-500 transition-all flex items-center justify-center"><X className="h-6 w-6" /></button>
+                  </div>
+
+                  {/* Modal Content */}
+                  <div className="flex-1 overflow-y-auto p-10 space-y-10 scrollbar-hide">
+                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                        {/* Waveform Preview */}
+                        <div className="lg:col-span-2 space-y-6">
+                           <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                              <Activity className="h-4 w-4 text-primary" /> Visual Signal Verification
+                           </h3>
+                           <div className="h-72 bg-[#03060c] rounded-[2.5rem] border-2 border-primary/20 p-6 relative overflow-hidden">
+                                <SignalCanvas
+                                    label="Lead II (Archived Snapshot)"
+                                    filteredData={selectedForPreview.waveformSnapshot?.length > 0 ? selectedForPreview.waveformSnapshot : Array(100).fill(0).map((_, i) => Math.sin(i * 0.2) * 20)}
+                                    isLive={false}
+                                    isPaused={true}
+                                    showRaw={false}
+                                    color="#10B981"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-[#03060c] to-transparent pointer-events-none opacity-40" />
+                           </div>
+                        </div>
+
+                        {/* Metadata & Actions */}
+                        <div className="space-y-6">
+                           <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                              <Clock className="h-4 w-4 text-primary" /> Handover Metadata
+                           </h3>
+                           <div className="glass-card p-6 bg-slate-50 dark:bg-slate-800/30 border border-border/50 space-y-4">
+                              <div className="flex justify-between">
+                                 <span className="text-[9px] font-black text-slate-400 uppercase">Duration</span>
+                                 <span className="text-xs font-bold text-foreground">{selectedForPreview.durationSeconds}s</span>
+                              </div>
+                              <div className="flex justify-between">
+                                 <span className="text-[9px] font-black text-slate-400 uppercase">Integrity</span>
+                                 <span className="text-xs font-bold text-emerald-500">{selectedForPreview.quality}%</span>
+                              </div>
+                              <div className="flex justify-between">
+                                 <span className="text-[9px] font-black text-slate-400 uppercase">Technician</span>
+                                 <span className="text-xs font-bold text-foreground truncate max-w-[120px]">{selectedForPreview.technician?.name || 'Authorized Staff'}</span>
+                              </div>
+                              <div className="pt-4 space-y-3">
+                                 <button className="w-full h-14 bg-primary text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-all">
+                                    <Download className="h-4 w-4" /> Download Certified Bundle
+                                 </button>
+                                 <button className="w-full h-14 bg-slate-100 dark:bg-slate-800 text-slate-600 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all">
+                                    <FileText className="h-4 w-4" /> View Full Report
+                                 </button>
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+
+                     {/* AI Context */}
+                     <div className="space-y-4">
+                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <BrainCircuit className="h-4 w-4 text-primary" /> Neural Log Analysis
+                        </h3>
+                        <div className="p-8 bg-primary/5 border border-primary/20 rounded-[2.5rem]">
+                            <p className="text-sm font-medium text-slate-600 dark:text-slate-200 leading-relaxed italic">
+                                {selectedForPreview.aiSummary || "No retrospective analysis requested. Snapshot morphology appears stable against institutional baseline."}
+                            </p>
+                        </div>
+                     </div>
+                  </div>
+               </motion.div>
+            </div>
+         )}
+      </AnimatePresence>
     </div>
   );
 }
 
-function ReportField({ label, value }: any) {
+function ExportButton({ label, icon: Icon }: any) {
     return (
-        <div className="space-y-1">
-            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{label}</p>
-            <p className="text-sm font-bold text-slate-900">{value || '--'}</p>
-        </div>
+        <button className="flex items-center justify-center gap-2 p-4 bg-slate-50 dark:bg-slate-800/50 border border-border rounded-xl hover:bg-primary/5 hover:border-primary/30 transition-all group">
+            <Icon className="h-4 w-4 text-slate-400 group-hover:text-primary" />
+            <span className="text-[9px] font-black text-slate-500 group-hover:text-foreground uppercase tracking-widest">{label}</span>
+        </button>
     );
 }

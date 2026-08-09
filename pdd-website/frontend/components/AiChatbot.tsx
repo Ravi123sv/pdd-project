@@ -1,159 +1,165 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import {
-  Bot,
-  Send,
-  X,
-  MessageSquare,
-  Loader2,
-  Minimize2,
-  AlertCircle
-} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  MessageSquare,
+  X,
+  Send,
+  Loader2,
+  BrainCircuit,
+  Bot,
+  User,
+  Sparkles,
+  History,
+  Trash2
+} from "lucide-react";
+import { useStore } from "../lib/store/useStore";
 import { api } from "../lib/api/client";
 
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 export default function AiChatbot() {
+  const { user, activePatient } = useStore();
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<{role: 'user' | 'assistant', content: string}[]>([
-    { role: 'assistant', content: "[LOCAL CLINICAL ADVISORY] System initialized. I am the NeuroSignal Local Assistant. How can I assist with your clinical acquisition today?" }
-  ]);
   const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<Message[]>([
+    { role: 'assistant', content: `Greetings Dr. ${user?.name || 'Practitioner'}. I am the NeuroSignal Neural Assistant. How can I assist with your clinical workflow today?` }
+  ]);
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo(0, scrollRef.current.scrollHeight);
-  }, [messages]);
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages, loading]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || loading) return;
 
-    const userMsg = input.trim();
-    setInput("");
-    const newMessages = [...messages, { role: 'user' as const, content: userMsg }];
+    const userMessage: Message = { role: 'user', content: input };
+    const newMessages = [...messages, userMessage];
     setMessages(newMessages);
+    setInput("");
     setLoading(true);
 
     try {
-      // Simulate "Thinking" time for professional feel
-      await new Promise(resolve => setTimeout(resolve, 600));
+      // Inject Clinical Context into the request
+      const contextPrompt = activePatient
+        ? `[CONTEXT: Currently monitoring ${activePatient.name}, MRN ${activePatient.id}, Modality ${activePatient.modality}] `
+        : "[CONTEXT: No active patient session]";
 
-      // Use Local Backend Chatbot Proxy (Compliance)
-      const res = await api.signals.chatbot(newMessages);
+      const res = await api.signals.chatbot([
+          { role: 'user', content: contextPrompt + input }
+      ]);
 
-      // Typing effect for the response
-      const fullResponse = res.data.content;
-      let currentIdx = 0;
-      const interval = setInterval(() => {
-        setMessages(prev => {
-          const last = prev[prev.length - 1];
-          if (last.role === 'assistant' && last.content !== "[LOCAL CLINICAL ADVISORY] System initialized. I am the NeuroSignal Local Assistant. How can I assist with your clinical acquisition today?") {
-             const updated = [...prev];
-             updated[updated.length - 1] = { ...last, content: fullResponse.slice(0, currentIdx + 1) };
-             return updated;
-          }
-          return [...prev, { role: 'assistant', content: fullResponse.slice(0, 1) }];
-        });
-
-        currentIdx++;
-        if (currentIdx >= fullResponse.length) {
-          clearInterval(interval);
-          setLoading(false);
-        }
-      }, 15);
-
+      setMessages([...newMessages, { role: 'assistant', content: res.data.content }]);
     } catch (err) {
-      console.error("Chatbot Error:", err);
-      setMessages(prev => [...prev, { role: 'assistant', content: "Local logic unit re-syncing. Please verify signal grounding." }]);
+      setMessages([...newMessages, { role: 'assistant', content: "Neural link interrupted. Please verify hub connectivity." }]);
+    } finally {
       setLoading(false);
     }
+  };
+
+  const clearChat = () => {
+      setMessages([{ role: 'assistant', content: "Neural buffer cleared. Assistant ready." }]);
   };
 
   return (
     <div className="fixed bottom-8 right-8 z-[100]">
       <AnimatePresence>
-        {isOpen ? (
+        {isOpen && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="w-[400px] h-[600px] glass-card bg-white dark:bg-slate-900 shadow-2xl flex flex-col overflow-hidden border-2 border-primary/20"
+            initial={{ opacity: 0, y: 20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            className="mb-6 w-[400px] h-[600px] bg-white dark:bg-slate-900 rounded-[3rem] shadow-3xl border-2 border-primary/10 overflow-hidden flex flex-col"
           >
             {/* Header */}
-            <div className="p-4 bg-primary text-white flex items-center justify-between">
+            <div className="p-6 bg-primary text-white flex items-center justify-between shadow-lg">
               <div className="flex items-center space-x-3">
-                <div className="h-8 w-8 rounded-lg bg-white/20 flex items-center justify-center">
-                   <Bot className="h-5 w-5" />
+                <div className="h-10 w-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-md">
+                   <BrainCircuit className="h-6 w-6" />
                 </div>
                 <div>
-                   <h4 className="text-xs font-black uppercase tracking-widest">Clinical Assistant</h4>
-                   <div className="flex items-center space-x-1.5">
-                      <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                      <span className="text-[8px] font-bold opacity-70 uppercase">Local Node Active</span>
+                   <h3 className="text-sm font-black uppercase tracking-widest">Neural Assistant</h3>
+                   <div className="flex items-center gap-1.5 text-[8px] font-bold text-white/60">
+                      <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      LOCAL LOGIC ACTIVE
                    </div>
                 </div>
               </div>
-              <button onClick={() => setIsOpen(false)} className="hover:bg-white/10 p-1.5 rounded-lg transition-colors">
-                <Minimize2 className="h-4 w-4" />
-              </button>
+              <div className="flex gap-2">
+                  <button onClick={clearChat} className="h-8 w-8 rounded-lg hover:bg-white/10 flex items-center justify-center transition-colors">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                  <button onClick={() => setIsOpen(false)} className="h-8 w-8 rounded-lg hover:bg-white/10 flex items-center justify-center transition-colors">
+                    <X className="h-5 w-5" />
+                  </button>
+              </div>
             </div>
 
-            {/* Messages */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide">
+            {/* Chat area */}
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide bg-slate-50/50 dark:bg-slate-900">
               {messages.map((m, i) => (
                 <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[85%] p-4 rounded-2xl text-xs font-medium leading-relaxed ${
-                    m.role === 'user'
-                      ? 'bg-primary text-white rounded-br-none shadow-lg shadow-primary/10'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-bl-none'
-                  }`}>
-                    {m.content}
-                  </div>
+                   <div className={`max-w-[85%] p-5 rounded-[2rem] text-xs font-medium leading-relaxed shadow-sm ${
+                      m.role === 'user'
+                        ? 'bg-primary text-white rounded-tr-none'
+                        : 'bg-white dark:bg-slate-800 text-foreground rounded-tl-none border border-border/50'
+                   }`}>
+                      {m.content}
+                   </div>
                 </div>
               ))}
               {loading && (
                 <div className="flex justify-start">
-                   <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-2xl rounded-bl-none flex items-center space-x-2">
-                      <Loader2 className="h-3 w-3 animate-spin text-primary" />
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Analyzing Logic...</span>
+                   <div className="bg-white dark:bg-slate-800 p-5 rounded-[2rem] rounded-tl-none border border-border/50 flex items-center space-x-3">
+                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Neural Processing...</span>
                    </div>
                 </div>
               )}
             </div>
 
+            {/* Active Context Badge */}
+            {activePatient && (
+                <div className="px-6 py-2 bg-emerald-500/10 border-t border-border/50 flex items-center gap-2">
+                    <Sparkles className="h-3 w-3 text-emerald-500" />
+                    <span className="text-[8px] font-black text-emerald-600 uppercase">Context: {activePatient.name}</span>
+                </div>
+            )}
+
             {/* Input */}
-            <form onSubmit={handleSend} className="p-4 border-t border-border bg-slate-50 dark:bg-slate-900/50">
-               <div className="relative">
-                  <input
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder="Ask about acquisition protocols..."
-                    className="w-full bg-white dark:bg-slate-800 border-2 border-border rounded-xl py-3 pl-4 pr-12 text-xs font-bold outline-none focus:border-primary transition-all"
-                  />
-                  <button
-                    disabled={!input.trim() || loading}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 bg-primary text-white rounded-lg flex items-center justify-center hover:opacity-90 disabled:opacity-30 transition-all"
-                  >
-                    <Send className="h-4 w-4" />
-                  </button>
-               </div>
+            <form onSubmit={handleSend} className="p-6 bg-white dark:bg-slate-900 border-t border-border/50 flex items-center space-x-4">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Query clinical protocols..."
+                className="flex-1 h-12 bg-slate-100 dark:bg-slate-800 border-none rounded-2xl px-6 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+              />
+              <button type="submit" className="h-12 w-12 bg-primary text-white rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
+                <Send className="h-5 w-5" />
+              </button>
             </form>
           </motion.div>
-        ) : (
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setIsOpen(true)}
-            className="h-16 w-16 bg-primary text-white rounded-[2rem] shadow-2xl shadow-primary/40 flex items-center justify-center relative group"
-          >
-             <MessageSquare className="h-7 w-7 group-hover:hidden" />
-             <Bot className="h-7 w-7 hidden group-hover:block" />
-             <div className="absolute -top-1 -right-1 h-5 w-5 bg-emerald-500 border-4 border-white dark:border-slate-900 rounded-full" />
-          </motion.button>
         )}
       </AnimatePresence>
+
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="h-16 w-16 bg-primary text-white rounded-2xl flex items-center justify-center shadow-2xl shadow-primary/30 hover:scale-110 active:scale-90 transition-all group relative"
+      >
+        <MessageSquare className="h-7 w-7 group-hover:hidden" />
+        <BrainCircuit className="h-7 w-7 hidden group-hover:block animate-pulse" />
+        <span className="absolute -top-1 -right-1 h-4 w-4 bg-emerald-500 border-2 border-white rounded-full" />
+      </button>
     </div>
   );
 }
