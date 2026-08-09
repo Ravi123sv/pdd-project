@@ -82,9 +82,11 @@ export default function PatientDirectoryPage() {
               <Users className="h-7 w-7" />
            </div>
            <div>
-              <h1 className="text-2xl font-black text-foreground tracking-tight">Patient Registry</h1>
+              <h1 className="text-2xl font-black text-foreground tracking-tight">
+                {user?.userType === 'hospital' ? 'Patient Registry' : 'Private Practice Index'}
+              </h1>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                Institutional Master Index • {user?.hospitalName}
+                {user?.userType === 'hospital' ? `Institutional Master Index • ${user?.hospitalName}` : 'Personal Specialist Registry • Private Practice'}
               </p>
            </div>
         </div>

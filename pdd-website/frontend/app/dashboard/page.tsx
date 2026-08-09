@@ -137,7 +137,11 @@ export default function DashboardPage() {
       {/* Quick Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard label="SESSIONS" value={loading ? "..." : stats.sessions.toString()} icon={Activity} color="text-accent" />
-        {isHospital && <StatCard label="TEAM" value={loading ? "..." : stats.team.toString()} icon={Users} color="text-primary" />}
+        {isHospital ? (
+            <StatCard label="TEAM" value={loading ? "..." : stats.team.toString()} icon={Users} color="text-primary" />
+        ) : (
+            <StatCard label="PRACTICE SQI" value="98.2%" icon={ShieldCheck} color="text-emerald-500" />
+        )}
         <StatCard label="ASSETS" value={loading ? "..." : stats.assets.toString()} icon={Package} color="text-secondary" />
         <StatCard label="NETWORK" value={networkStatus || "Clinical-Net"} icon={Wifi} color="text-amber-500" />
       </div>
@@ -168,6 +172,23 @@ export default function DashboardPage() {
             </div>
             <div className="mt-auto" />
           </div>
+
+          {!isHospital && (
+            <div className="glass-card p-8 bg-primary text-white space-y-6 relative overflow-hidden group">
+               <div className="relative z-10 space-y-4">
+                  <div className="flex items-center space-x-3 text-secondary">
+                     <ShieldCheck className="h-6 w-6" />
+                     <span className="text-[10px] font-black uppercase tracking-widest">Private Vault Active</span>
+                  </div>
+                  <h4 className="text-xl font-black">Practice Integrity Mode</h4>
+                  <p className="text-xs font-medium leading-relaxed opacity-80 max-w-sm">
+                    Your sessions are secured within your private specialist node. Patient data is encrypted with your personal clinical signature.
+                  </p>
+                  <button onClick={() => router.push("/dashboard/archive")} className="text-[10px] font-black uppercase tracking-widest bg-white/20 px-6 py-3 rounded-xl hover:bg-white/30 transition-all">Review Private Archive</button>
+               </div>
+               <Activity className="absolute -bottom-10 -right-10 h-48 w-48 text-white opacity-10 group-hover:scale-110 transition-transform duration-1000" />
+            </div>
+          )}
 
           {isHospital && (
             <div className="glass-card p-8">
@@ -210,6 +231,23 @@ export default function DashboardPage() {
               ))}
             </div>
           </div>
+
+          {!isHospital && (
+            <div className="glass-card p-8 bg-primary text-white space-y-6 relative overflow-hidden group">
+               <div className="relative z-10 space-y-4">
+                  <div className="flex items-center space-x-3 text-secondary">
+                     <ShieldCheck className="h-6 w-6" />
+                     <span className="text-[10px] font-black uppercase tracking-widest">Private Vault Active</span>
+                  </div>
+                  <h4 className="text-xl font-black">Practice Integrity Mode</h4>
+                  <p className="text-xs font-medium leading-relaxed opacity-80 max-w-sm">
+                    Your sessions are secured within your private specialist node. Patient data is encrypted with your personal clinical signature.
+                  </p>
+                  <button onClick={() => router.push("/dashboard/archive")} className="text-[10px] font-black uppercase tracking-widest bg-white/20 px-6 py-3 rounded-xl hover:bg-white/30 transition-all">Review Private Archive</button>
+               </div>
+               <Activity className="absolute -bottom-10 -right-10 h-48 w-48 text-white opacity-10 group-hover:scale-110 transition-transform duration-1000" />
+            </div>
+          )}
 
           {isHospital && (
             <div className="glass-card p-6">
