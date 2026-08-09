@@ -183,9 +183,10 @@ export default function DashboardPage() {
                  {activeUnits.length > 0 ? activeUnits.map((unit, i) => (
                     <UnitRow
                         key={unit._id}
-                        name={unit.metadata?.department || "Emergency Unit"}
-                        status={`${unit.patient?.name} - ${unit.testType} Active`}
+                        name={unit.patient?.name || "Patient Acquisition"}
+                        status={`${unit.testType} - Live Stream`}
                         active
+                        onMirror={() => router.push(`/dashboard/monitor?mode=mirror&patient=${unit.patient?.patientId}`)}
                     />
                  )) : (
                     <div className="py-12 text-center opacity-30">
@@ -249,14 +250,24 @@ function StatCard({ label, value, icon: Icon, color }: any) {
   );
 }
 
-function UnitRow({ name, status, active }: any) {
+function UnitRow({ name, status, active, onMirror }: any) {
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between group">
       <div className="flex items-center space-x-3">
-        <div className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-secondary' : 'bg-slate-300'}`} />
-        <span className="text-sm font-bold text-foreground">{name}</span>
+        <div className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-secondary animate-pulse' : 'bg-slate-300'}`} />
+        <div>
+            <span className="text-sm font-bold text-foreground block">{name}</span>
+            <span className="text-[9px] font-black text-slate-400 uppercase">{status}</span>
+        </div>
       </div>
-      <span className="text-[10px] font-black text-slate-400 uppercase">{status}</span>
+      {active && onMirror && (
+          <button
+            onClick={onMirror}
+            className="h-8 px-4 bg-primary text-white rounded-lg font-black text-[8px] uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all shadow-lg shadow-primary/20"
+          >
+            Mirror Stream
+          </button>
+      )}
     </div>
   );
 }

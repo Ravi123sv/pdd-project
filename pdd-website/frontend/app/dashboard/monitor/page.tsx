@@ -31,15 +31,21 @@ import SignalCanvas from "../../../components/SignalCanvas";
 import { useWaveform, ArtifactSeverity } from "../../../hooks/useWaveform";
 import { api } from "../../../lib/api/client";
 import { queueForSync } from "../../../lib/offlineSync";
+import { useSearchParams } from "next/navigation";
+import { socketService } from "../../../lib/api/socket";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 export default function MonitorPage() {
-  const { activePatient, setHardwareStatus, user } = useStore();
+  const { activePatient, setHardwareStatus, user, setActivePatient } = useStore();
+  const searchParams = useSearchParams();
+  const isMirrorMode = searchParams.get('mode') === 'mirror';
+  const mirrorPatientId = searchParams.get('patient');
+
   const [isPaused, setIsPaused] = useState(false);
-  const [isLive, setIsLive] = useState(false);
+  const [isLive, setIsLive] = useState(isMirrorMode);
   const [showRaw, setShowRaw] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
@@ -62,6 +68,21 @@ export default function MonitorPage() {
 
   // v4.5 Signal Engine: Dual Streams + Manual Stress Testing + Sweep Speed
   const { channels, artifactStatus } = useWaveform(channelCount, isLive, isPaused, manualArtifact, sweepSpeed);
+
+  // Mirror Handshake
+  useEffect(() => {
+      if (isMirrorMode && mirrorPatientId) {
+          const fetchPatient = async () => {
+              try {
+                  const res = await api.patients.getAll(user?.hospitalId || 'HOSP-DEFAULT');
+                  const p = res.data.find((pat: any) => pat.patientId === mirrorPatientId);
+                  if (p) setActivePatient({ id: p.patientId, name: p.name, age: p.age, modality: 'ECG' });
+              } catch (e) { console.error(e); }
+          };
+          fetchPatient();
+          setIsLive(true);
+      }
+  }, [isMirrorMode, mirrorPatientId, user, setActivePatient]);
 
   // Audio Pulse Handshake
   useEffect(() => {
@@ -217,11 +238,11 @@ export default function MonitorPage() {
           </div>
           <div>
             <h1 className="text-2xl font-black text-foreground tracking-tight flex items-center gap-3">
-              Clinical Node
+              {isMirrorMode ? "Mirror Node" : "Clinical Node"}
               {activePatient && <span className="bg-primary/10 text-primary text-[10px] px-3 py-1 rounded-full uppercase tracking-[0.2em] border border-primary/20">{activePatient.id}</span>}
             </h1>
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-              {isLive ? `${activePatient?.modality} Core Active • ${activePatient?.name}` : "Awaiting Clinical Link handshake"}
+              {isMirrorMode ? "VIEW-ONLY TELEMETRY STREAM" : (isLive ? `${activePatient?.modality} Core Active • ${activePatient?.name}` : "Awaiting Clinical Link handshake")}
             </p>
           </div>
         </div>
@@ -280,41 +301,50 @@ export default function MonitorPage() {
               </button>
             ) : (
               <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setIsAudioEnabled(!isAudioEnabled)}
-                    className={cn(
-                        "neuro-button h-14 w-14 flex items-center justify-center transition-all border border-border/50",
-                        isAudioEnabled ? "bg-primary text-white shadow-lg" : "bg-white dark:bg-slate-800 text-slate-500"
-                    )}
-                    title="Toggle Audio Feedback"
-                  >
-                    {isAudioEnabled ? <Volume2 className="h-6 w-6" /> : <VolumeX className="h-6 w-6" />}
-                  </button>
-                  <button
-                    onClick={() => setIsFullscreen(!isFullscreen)}
-                    className="neuro-button h-14 w-14 flex items-center justify-center bg-white dark:bg-slate-800 text-slate-500 hover:text-primary transition-all border border-border/50"
-                    title="Fullscreen Monitoring"
-                  >
-                    {isFullscreen ? <Minimize2 className="h-6 w-6" /> : <Maximize2 className="h-6 w-6" />}
-                  </button>
-                  <button
-                    onClick={() => setIsPaused(!isPaused)}
-                    className={cn(
-                      "neuro-button flex items-center space-x-3 px-10 h-14 text-xs font-black uppercase tracking-widest transition-all active:scale-95",
-                      isPaused ? "bg-amber-500 text-white shadow-lg shadow-amber-500/20" : "bg-slate-100 dark:bg-slate-800 text-slate-600"
-                    )}
-                  >
-                    {isPaused ? <Play className="h-5 w-5" /> : <Pause className="h-5 w-5" />}
-                    <span>{isPaused ? "Resume" : "Freeze"}</span>
-                  </button>
-                  <button
-                    onClick={handleCommitSession}
-                    disabled={saving}
-                    className="neuro-button bg-emerald-600 text-white flex items-center space-x-2 px-10 h-14 shadow-xl shadow-emerald-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-40"
-                  >
-                    {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <CheckCircle2 className="h-5 w-5" />}
-                    <span className="font-black uppercase tracking-widest text-xs">Commit to Archive</span>
-                  </button>
+                  {isMirrorMode ? (
+                      <div className="flex items-center gap-3 px-6 py-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
+                          <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                          <span className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Mirroring Active</span>
+                      </div>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => setIsAudioEnabled(!isAudioEnabled)}
+                        className={cn(
+                            "neuro-button h-14 w-14 flex items-center justify-center transition-all border border-border/50",
+                            isAudioEnabled ? "bg-primary text-white shadow-lg" : "bg-white dark:bg-slate-800 text-slate-500"
+                        )}
+                        title="Toggle Audio Feedback"
+                      >
+                        {isAudioEnabled ? <Volume2 className="h-6 w-6" /> : <VolumeX className="h-6 w-6" />}
+                      </button>
+                      <button
+                        onClick={() => setIsFullscreen(!isFullscreen)}
+                        className="neuro-button h-14 w-14 flex items-center justify-center bg-white dark:bg-slate-800 text-slate-500 hover:text-primary transition-all border border-border/50"
+                        title="Fullscreen Monitoring"
+                      >
+                        {isFullscreen ? <Minimize2 className="h-6 w-6" /> : <Maximize2 className="h-6 w-6" />}
+                      </button>
+                      <button
+                        onClick={() => setIsPaused(!isPaused)}
+                        className={cn(
+                          "neuro-button flex items-center space-x-3 px-10 h-14 text-xs font-black uppercase tracking-widest transition-all active:scale-95",
+                          isPaused ? "bg-amber-500 text-white shadow-lg shadow-amber-500/20" : "bg-slate-100 dark:bg-slate-800 text-slate-600"
+                        )}
+                      >
+                        {isPaused ? <Play className="h-5 w-5" /> : <Pause className="h-5 w-5" />}
+                        <span>{isPaused ? "Resume" : "Freeze"}</span>
+                      </button>
+                      <button
+                        onClick={handleCommitSession}
+                        disabled={saving}
+                        className="neuro-button bg-emerald-600 text-white flex items-center space-x-2 px-10 h-14 shadow-xl shadow-emerald-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-40"
+                      >
+                        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-5 w-5" />}
+                        <span className="font-black uppercase tracking-widest text-xs">Commit to Archive</span>
+                      </button>
+                    </>
+                  )}
               </div>
             )}
           </div>
