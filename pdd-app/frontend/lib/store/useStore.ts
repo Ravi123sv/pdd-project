@@ -62,11 +62,20 @@ export const useStore = create<AppState>((set, get) => ({
   setNavIndex: (index) => set({ currentNavIndex: index }),
   setHardwareStatus: (status) => set({ isHardwareConnected: status }),
   setNetworkStatus: (status, latency = 0) => set({ networkStatus: status, latencyMs: latency }),
-  setActivePatient: (patient) => set({ activePatient: patient }),
+
+  setActivePatient: (patient) => {
+      set({ activePatient: patient });
+      if (typeof window !== 'undefined') {
+          if (patient) localStorage.setItem('active_clinical_patient', JSON.stringify(patient));
+          else localStorage.removeItem('active_clinical_patient');
+      }
+  },
+
   setSettings: (newSettings) => set((state) => ({ settings: { ...state.settings, ...newSettings } })),
 
   checkSession: () => {
     if (typeof window !== 'undefined') {
+      // 1. Restore User Session
       const saved = localStorage.getItem('user_session');
       if (saved) {
           try {
@@ -78,6 +87,16 @@ export const useStore = create<AppState>((set, get) => ({
               localStorage.removeItem('user_session');
           }
       }
+
+      // 2. Restore Active Patient
+      const savedPatient = localStorage.getItem('active_clinical_patient');
+      if (savedPatient) {
+          try {
+              set({ activePatient: JSON.parse(savedPatient) });
+          } catch (e) {
+              localStorage.removeItem('active_clinical_patient');
+          }
+      }
     }
   },
 
@@ -85,6 +104,7 @@ export const useStore = create<AppState>((set, get) => ({
     console.log("[STORE] Logging out...");
     if (typeof window !== 'undefined') {
       localStorage.removeItem('user_session');
+      localStorage.removeItem('active_clinical_patient');
     }
     set({ isAuthenticated: false, user: null, currentNavIndex: 0, activePatient: null });
   }
