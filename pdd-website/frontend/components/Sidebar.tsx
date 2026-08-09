@@ -49,6 +49,7 @@ export default function Sidebar({ isCollapsed, setCollapsed }: SidebarProps) {
     { href: "/dashboard/assets", label: "Asset Inventory", icon: Package, section: "WORKSTATION" },
     { href: "/dashboard/monitor", label: "Signal Monitor", icon: Activity, section: "DIAGNOSTICS" },
     { href: "/dashboard/diagnostics", label: "Stability Analysis", icon: BrainCircuit, section: "DIAGNOSTICS" },
+    { href: "/dashboard/protocols", label: "Protocol Library", icon: BookOpen, section: "DIAGNOSTICS" },
     { href: "/dashboard/archive", label: "Clinical Archive", icon: FolderArchive, section: "DATA MANAGEMENT" },
     { href: "/dashboard/ingest", label: "External Ingest", icon: CloudUpload, section: "DATA MANAGEMENT", userTypes: ['hospital'] },
     { href: "/dashboard/export", label: "Export Vault", icon: FileDown, section: "DATA MANAGEMENT" },
