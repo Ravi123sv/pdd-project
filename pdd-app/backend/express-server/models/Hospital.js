@@ -7,7 +7,7 @@ const HospitalSchema = new mongoose.Schema({
   adminEmail: { type: String, required: true },
   authorizedEmails: [{
     email: String,
-    role: { type: String, enum: ['doctor', 'technician'], default: 'doctor' },
+    role: { type: String, enum: ['doctor', 'technician', 'admin'], default: 'doctor' },
     addedAt: { type: Date, default: Date.now }
   }],
   subscriptionTier: { type: String, enum: ['free', 'enterprise', 'research'], default: 'free' },

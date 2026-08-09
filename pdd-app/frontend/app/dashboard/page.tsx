@@ -23,7 +23,7 @@ import { socketService } from "../../lib/api/socket";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, networkStatus } = useStore();
+  const { user, networkStatus, activePatient } = useStore();
   const [stats, setStats] = useState({
     sessions: 0,
     team: 0,
@@ -155,13 +155,15 @@ export default function DashboardPage() {
             </div>
 
             <div className="space-y-4">
-              <MonitorHeart className="h-16 w-16 text-slate-200 dark:text-slate-800 mx-auto" />
-              <p className="text-sm font-bold text-slate-400">No active clinical acquisition</p>
+              <MonitorHeart className={cn("h-16 w-16 mx-auto", activePatient ? "text-primary animate-pulse" : "text-slate-200 dark:text-slate-800")} />
+              <p className="text-sm font-bold text-slate-400">
+                {activePatient ? `Monitoring ${activePatient.name}...` : "No active clinical acquisition"}
+              </p>
               <button
-                onClick={() => router.push("/dashboard/admission")}
+                onClick={() => router.push(activePatient ? "/dashboard/monitor" : "/dashboard/admission")}
                 className="neuro-button bg-primary text-white text-xs px-12"
               >
-                INITIALIZE LINK
+                {activePatient ? "OPEN LIVE MONITOR" : "INITIALIZE LINK"}
               </button>
             </div>
             <div className="mt-auto" />

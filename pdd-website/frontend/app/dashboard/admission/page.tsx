@@ -33,6 +33,7 @@ export default function AdmissionPage() {
   const [modality, setModality] = useState("ECG");
   const [isHospitalConnected, setIsHospitalConnected] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
 
@@ -58,15 +59,27 @@ export default function AdmissionPage() {
 
   const handleLaunch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (name.length < 2 || mrn.length < 5) return;
+    if (name.length < 2) {
+        setError("VALIDATION ERROR: Patient name is too short.");
+        return;
+    }
+    if (mrn.length < 5) {
+        setError("VALIDATION ERROR: Clinical MRN must be at least 5 characters.");
+        return;
+    }
+    if (!age || parseInt(age) < 0 || parseInt(age) > 150) {
+        setError("VALIDATION ERROR: Invalid physiological age range (0-150).");
+        return;
+    }
 
     setLoading(true);
+    setError(null);
     try {
       const patientData = {
         id: mrn,
         name,
         age: parseInt(age),
-        hospitalId: user?.hospitalId
+        hospitalId: user?.hospitalId || 'HOSP-DEFAULT'
       };
 
       // 1. Sync Patient to Clinical Registry (with offline support)
@@ -82,8 +95,9 @@ export default function AdmissionPage() {
 
       // 3. Secure Link and Navigate
       router.push("/dashboard/monitor");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Admission error:", err);
+      setError(err.response?.data?.message || "ADMISSION FAILED: Clinical Hub Handshake Timeout.");
     } finally {
       setLoading(false);
     }
@@ -171,6 +185,13 @@ export default function AdmissionPage() {
                   </div>
                </div>
             </div>
+
+            {error && (
+                <div className="p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 rounded-2xl flex items-center gap-3 text-red-600 text-[10px] font-black uppercase">
+                    <AlertTriangle className="h-4 w-4" />
+                    {error}
+                </div>
+            )}
 
             <button
               disabled={loading}

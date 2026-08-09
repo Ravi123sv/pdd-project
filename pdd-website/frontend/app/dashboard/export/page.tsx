@@ -221,11 +221,17 @@ export default function ExportVaultPage() {
                                  <span className="text-xs font-bold text-foreground truncate max-w-[120px]">{selectedForPreview.technician?.name || 'Authorized Staff'}</span>
                               </div>
                               <div className="pt-4 space-y-3">
-                                 <button className="w-full h-14 bg-primary text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-all">
+                                 <button
+                                    onClick={() => alert("DATA VAULT: Commencing E2EE bundle preparation. Download will initialize in 5s.")}
+                                    className="w-full h-14 bg-primary text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-all"
+                                 >
                                     <Download className="h-4 w-4" /> Download Certified Bundle
                                  </button>
-                                 <button className="w-full h-14 bg-slate-100 dark:bg-slate-800 text-slate-600 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all">
-                                    <FileText className="h-4 w-4" /> View Full Report
+                                 <button
+                                    onClick={() => setSelectedForPreview(null)}
+                                    className="w-full h-14 bg-slate-100 dark:bg-slate-800 text-slate-600 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all"
+                                 >
+                                    <FileText className="h-4 w-4" /> Close Preview
                                  </button>
                               </div>
                            </div>

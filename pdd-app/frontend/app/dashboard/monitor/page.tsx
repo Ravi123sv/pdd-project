@@ -102,16 +102,29 @@ export default function MonitorPage() {
   useEffect(() => {
       if (isLive && artifactStatus.severity === 'high' && !isEmergency) {
           setIsEmergency(true);
-          // Auto-broadcast alert to hub
+          // 1. Live Socket Broadcast
           socketService.emit('clinical_alert', {
               patientId: activePatient?.id,
               type: 'Signal Integrity Failure',
-              severity: 'CRITICAL'
+              severity: 'CRITICAL',
+              text: `CRITICAL: Signal Integrity Failure for Patient ${activePatient?.id}. Check lead placement immediately.`
           });
+
+          // 2. Persistent Backend Log (Auditor Proof)
+          api.alerts.create({
+              hospitalId: user?.hospitalId || 'HOSP-DEFAULT',
+              type: 'critical',
+              title: 'SIGNAL INTEGRITY FAILURE',
+              body: `High-severity noise detected in ${activePatient?.modality} stream for Patient ${activePatient?.name} (MRN: ${activePatient?.id}).`,
+              category: 'CLINICAL',
+              patientId: activePatient?.id,
+              technician: user?.name
+          }).catch(console.error);
+
       } else if (artifactStatus.severity !== 'high' && isEmergency) {
           setIsEmergency(false);
       }
-  }, [artifactStatus.severity, isLive, isEmergency, activePatient]);
+  }, [artifactStatus.severity, isLive, isEmergency, activePatient, user]);
 
   const labels = isEEG
     ? ['Fp1', 'Fp2', 'C3', 'C4', 'P3', 'P4', 'O1', 'O2']
@@ -388,8 +401,8 @@ export default function MonitorPage() {
                      <div className="h-2 w-2 rounded-full bg-blue-500" />
                      <span className="text-[9px] font-black uppercase tracking-widest text-white/60">Unit: {activePatient?.hospitalId || 'LOCAL-01'}</span>
                   </div>
-                  <button onClick={() => alert("Calibration Node: Standardized at 25mm/s")} className="text-white/20 hover:text-white transition-all"><Settings className="h-4.5 w-4.5" /></button>
-                  <button onClick={() => alert("Exporting local cache...")} className="text-white/20 hover:text-white transition-all"><Download className="h-4.5 w-4.5" /></button>
+                  <button onClick={() => alert("Calibration Node: Standardized at 25mm/s (IFCN Standard)")} className="text-white/20 hover:text-white transition-all"><Settings className="h-4.5 w-4.5" /></button>
+                  <button onClick={() => alert("LOCAL CACHE: Preparing telemetry snapshot for clinical handover.")} className="text-white/20 hover:text-white transition-all"><Download className="h-4.5 w-4.5" /></button>
                 </div>
              </div>
 

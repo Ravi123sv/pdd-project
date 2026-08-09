@@ -137,7 +137,15 @@ export default function ProfilePage() {
                            <p className="font-mono font-black text-xl tracking-[0.3em] text-primary">
                               {user?.clinicalKey ? user.clinicalKey : 'NS-884920'}
                            </p>
-                           <button className="h-10 px-4 bg-slate-100 dark:bg-slate-800 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-primary transition-all">Copy Key</button>
+                           <button
+                                onClick={() => {
+                                    navigator.clipboard.writeText(user?.clinicalKey || 'NS-884920');
+                                    alert("Clinical Key copied to secure clipboard.");
+                                }}
+                                className="h-10 px-4 bg-slate-100 dark:bg-slate-800 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-primary transition-all"
+                           >
+                                Copy Key
+                           </button>
                         </div>
                         <p className="text-[9px] font-medium text-slate-400 italic">This key grants root access to the {user?.hospitalName} clinical hub. Store with extreme caution.</p>
                      </div>

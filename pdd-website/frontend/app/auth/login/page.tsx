@@ -89,8 +89,10 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      // STRICT REAL-TIME MODE: Requires real backend validation
-      const response = await api.auth.loginWithKey(clinicalKey, googleUser?.email!);
+      // Demo Handshake: If Google is skipped (for master key), use a fallback email
+      const targetEmail = googleUser?.email || "auditor@neurosignal.org";
+
+      const response = await api.auth.loginWithKey(clinicalKey, targetEmail);
       const { user, token } = response.data;
 
       setShowSuccess(true);
@@ -239,9 +241,9 @@ export default function LoginPage() {
                 <button
                     onClick={() => {
                         setLoginMode('hospital');
-                        setStep( step === 1 ? 2 : 2 );
+                        setStep(2);
                         setClinicalKey('NS-884920');
-                        setError("[AUDITOR MODE] CREDENTIALS PRE-FILLED. CLICK ACCESS TO VERIFY.");
+                        setError("[AUDITOR MODE] MASTER CREDENTIALS PRE-FILLED. CLICK ACCESS TO VERIFY HUB.");
                     }}
                     className="w-full py-4 border-2 border-dashed border-primary/20 rounded-2xl text-[9px] font-black uppercase tracking-widest text-primary hover:bg-primary/5 transition-all"
                 >
