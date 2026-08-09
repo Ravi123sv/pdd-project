@@ -52,11 +52,12 @@ export default function DashboardPage() {
         const hospitalId = user.hospitalId || 'HOSP-DEFAULT';
 
         // Parallel requests
-        const [patientsRes, assetsRes, sessionsRes, activeRes, teamRes] = await Promise.all([
+        const [patientsRes, assetsRes, sessionsRes, activeRes, alertsRes, teamRes] = await Promise.all([
           api.patients.getAll(hospitalId),
           api.assets.getAll(hospitalId),
           api.sessions.getAll(hospitalId),
           api.sessions.getActive(hospitalId),
+          api.alerts.getAll(hospitalId),
           isHospital ? api.auth.getTeam(hospitalId) : Promise.resolve({ data: [] })
         ]);
 
@@ -68,16 +69,16 @@ export default function DashboardPage() {
 
         setActiveUnits(activeRes.data);
 
-        // Generate dynamic feed from real session data
-        const sessionFeed = sessionsRes.data.slice(0, 3).map((s: any) => ({
-          title: "SESSION FINALIZED",
-          body: `Analysis complete for ${s.patient?.name} (${s.testType}). Quality: ${s.quality}%.`,
-          category: "CLINICAL"
+        // Generate dynamic feed from real session data + Backend Alerts
+        const alertFeed = alertsRes.data.slice(0, 3).map((a: any) => ({
+          title: a.title,
+          body: a.body,
+          category: a.category,
+          type: a.type
         }));
 
-        setFeed([
-          ...sessionFeed,
-          { title: "PROTOCOL UPDATE", body: "New artifact suppression algorithm v2.5 deployed.", category: "SYSTEM" },
+        setFeed(alertFeed.length > 0 ? alertFeed : [
+          { title: "SYSTEM READY", body: "NeuroSignal Hub v4.2 Platinum Bootstrapped.", category: "SYSTEM" },
         ]);
 
       } catch (err) {
