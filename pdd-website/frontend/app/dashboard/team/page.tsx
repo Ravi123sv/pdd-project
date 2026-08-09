@@ -28,6 +28,7 @@ export default function TeamPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("doctor");
   const [inviting, setInviting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const isAdmin = user?.role === 'admin';
 
@@ -74,6 +75,11 @@ export default function TeamPage() {
       }
   };
 
+  const filteredTeam = team.filter(m =>
+    m.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    m.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-12">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -107,6 +113,8 @@ export default function TeamPage() {
               <input
                 type="text"
                 placeholder="Search team by name or email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full h-14 bg-white dark:bg-slate-900 border-2 border-border/50 rounded-2xl pl-12 pr-4 text-xs font-bold outline-none focus:border-primary transition-all"
               />
            </div>
@@ -115,7 +123,7 @@ export default function TeamPage() {
                <div className="flex justify-center py-20"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>
            ) : (
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {team.map((member) => (
+                  {filteredTeam.map((member) => (
                     <motion.div
                         key={member._id}
                         whileHover={{ y: -5 }}
