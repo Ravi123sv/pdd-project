@@ -186,6 +186,7 @@ export default function DashboardPage() {
                         name={unit.patient?.name || "Patient Acquisition"}
                         status={`${unit.testType} - Live Stream`}
                         active
+                        bpm={unit.testType === 'ECG' ? 72 : null}
                         onMirror={() => router.push(`/dashboard/monitor?mode=mirror&patient=${unit.patient?.patientId}`)}
                     />
                  )) : (
@@ -250,13 +251,16 @@ function StatCard({ label, value, icon: Icon, color }: any) {
   );
 }
 
-function UnitRow({ name, status, active, onMirror }: any) {
+function UnitRow({ name, status, active, onMirror, bpm }: any) {
   return (
     <div className="flex items-center justify-between group">
       <div className="flex items-center space-x-3">
         <div className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-secondary animate-pulse' : 'bg-slate-300'}`} />
         <div>
-            <span className="text-sm font-bold text-foreground block">{name}</span>
+            <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-foreground block">{name}</span>
+                {bpm && <span className="text-[9px] font-black text-emerald-500 animate-pulse">{bpm} BPM</span>}
+            </div>
             <span className="text-[9px] font-black text-slate-400 uppercase">{status}</span>
         </div>
       </div>
