@@ -70,6 +70,7 @@ export const api = {
     getProfile: (uid: string) => apiClient.get(`/auth/profile/${uid}`),
     getTeam: (hospitalId: string) => apiClient.get(`/auth/hospital-team/${hospitalId}`),
     authorizeStaff: (hospitalId: string, email: string, role: string) => apiClient.post('/auth/authorize-staff', { hospitalId, email, role }),
+    removeStaff: (hospitalId: string, email: string) => apiClient.post('/auth/remove-staff', { hospitalId, email }),
   },
   system: {
     seed: (hospitalId: string) => apiClient.post('/seed', { hospitalId }),

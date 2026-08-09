@@ -5,12 +5,18 @@ import { useState, useEffect, useRef } from "react";
 export type ArtifactSeverity = 'low' | 'high' | 'none';
 
 /**
- * useWaveform Hook v4.0
+ * useWaveform Hook v4.5
  * Generates Dual Streams: Raw Signal (with artifacts) and AI-Filtered Signal.
- * Implements real-time detection for Lead Quality and Patient Movement.
+ * Added: Sweep Speed control (12.5, 25, 50 mm/s) for diagnostic fidelity.
  * Added: Manual Artifact Injection support for clinical stress-testing.
  */
-export function useWaveform(channelCount: number, isLive: boolean, isPaused: boolean, manualArtifact?: { type: string, severity: ArtifactSeverity }) {
+export function useWaveform(
+    channelCount: number,
+    isLive: boolean,
+    isPaused: boolean,
+    manualArtifact?: { type: string, severity: ArtifactSeverity },
+    sweepSpeed: 12.5 | 25 | 50 = 25
+) {
   const [channels, setChannels] = useState<{raw: number[][], filtered: number[][]}>({
     raw: Array(channelCount).fill([]).map(() => Array(200).fill(0)),
     filtered: Array(channelCount).fill([]).map(() => Array(200).fill(0))
@@ -28,22 +34,23 @@ export function useWaveform(channelCount: number, isLive: boolean, isPaused: boo
     if (!isLive || isPaused) return;
 
     const update = () => {
-      timeRef.current += 0.02;
+      // Adjusted time increment based on Sweep Speed (Clinical Standard)
+      const speedFactor = sweepSpeed / 25;
+      const deltaT = 0.02 * speedFactor;
+      timeRef.current += deltaT;
       const t = timeRef.current;
 
-      const modality = isEEG ? 'EEG' : (channelCount === 12 ? 'ECG' : 'EMG');
+      const modality = channelCount === 8 ? 'EEG' : (channelCount === 12 ? 'ECG' : 'EMG');
 
       // --- 1. Artifact Determination ---
       let currentArtifactType = 'Optimal';
       let currentSeverity: ArtifactSeverity = 'none';
 
       if (manualArtifact && manualArtifact.severity !== 'none') {
-          // Manual Override (Stress Test)
           currentArtifactType = manualArtifact.type;
           currentSeverity = manualArtifact.severity;
       } else {
-          // Automatic Cycle
-          const artifactCycle = Math.floor(t / 8) % 4; // Cycle every 8 seconds
+          const artifactCycle = Math.floor(t / 8) % 4;
           if (artifactCycle === 1) {
               currentArtifactType = 'Patient Movement';
               currentSeverity = 'low';
@@ -77,21 +84,15 @@ export function useWaveform(channelCount: number, isLive: boolean, isPaused: boo
               else if (phase >= 0.4 && phase < 0.45) cleanVal -= 8 * Math.sin((phase - 0.4) * Math.PI / 0.05);
               if (phase > 0.6 && phase < 0.8) cleanVal += 4 * Math.sin((phase - 0.6) * Math.PI / 0.2);
           } else if (modality === 'EEG') {
-              // Simulated Alpha/Beta mix
               cleanVal = 6 * Math.sin(t * 10 * Math.PI) + 3 * Math.sin(t * 24 * Math.PI);
           } else if (modality === 'EMG') {
-              // Simulated Muscle Recruitment
               cleanVal = (Math.random() - 0.5) * 15 * (1 + Math.sin(t * 2));
           }
 
           // --- 3. Add Artificial Artifacts to Raw ---
           let noise = (Math.random() - 0.5) * 2;
-
-          if (currentSeverity === 'low') {
-              noise += Math.sin(t * 40) * 12 * Math.random();
-          } else if (currentSeverity === 'high') {
-              noise += Math.sin(t * 0.4) * 35 + Math.sin(t * 120) * 8;
-          }
+          if (currentSeverity === 'low') noise += Math.sin(t * 40) * 12 * Math.random();
+          else if (currentSeverity === 'high') noise += Math.sin(t * 0.4) * 35 + Math.sin(t * 120) * 8;
 
           const rawVal = cleanVal + noise;
 
@@ -118,7 +119,7 @@ export function useWaveform(channelCount: number, isLive: boolean, isPaused: boo
     return () => {
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
     };
-  }, [isLive, isPaused, channelCount, manualArtifact]);
+  }, [isLive, isPaused, channelCount, manualArtifact, sweepSpeed]);
 
   return { channels, artifactStatus };
 }

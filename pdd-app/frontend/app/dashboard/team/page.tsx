@@ -6,65 +6,72 @@ import { api } from "../../../lib/api/client";
 import {
   Users,
   UserPlus,
-  Shield,
   Mail,
-  ShieldCheck,
-  Activity,
-  Search,
+  Shield,
+  Trash2,
   MoreVertical,
-  Key,
-  Globe,
-  Settings,
-  Lock,
-  Loader2
+  CheckCircle2,
+  Clock,
+  Loader2,
+  ShieldCheck,
+  AlertCircle,
+  X,
+  Search
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function TeamManagementPage() {
+export default function TeamPage() {
   const { user } = useStore();
   const [team, setTeam] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showInvite, setShowInvite] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState("technician");
+  const [inviteRole, setInviteRole] = useState("doctor");
+  const [inviting, setInviting] = useState(false);
 
-  const isHospitalAdmin = user?.userType === 'hospital' && user?.role === 'admin';
+  const isAdmin = user?.role === 'admin';
+
+  const fetchTeam = async () => {
+    if (!user?.hospitalId) return;
+    setLoading(true);
+    try {
+      const res = await api.auth.getTeam(user.hospitalId);
+      setTeam(res.data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchTeam = async () => {
-      if (!user?.hospitalId) return;
-      try {
-        const res = await api.auth.getTeam(user.hospitalId);
-        setTeam(res.data);
-      } catch (e) {
-        console.error("Failed to fetch team", e);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchTeam();
   }, [user]);
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user?.hospitalId || !inviteEmail) return;
-
-    setLoading(true);
+    if (!inviteEmail || !isAdmin) return;
+    setInviting(true);
     try {
-        await api.auth.authorizeStaff(user.hospitalId, inviteEmail, inviteRole);
-
-        // Refresh Team List
-        const res = await api.auth.getTeam(user.hospitalId);
-        setTeam(res.data);
-
-        setInviteEmail("");
-        setShowInvite(false);
-    } catch (err: any) {
-        console.error("Authorization Error:", err);
-        alert(err.response?.data?.message || "Failed to authorize staff member.");
+      await api.auth.authorizeStaff(user!.hospitalId!, inviteEmail, inviteRole);
+      setShowInvite(false);
+      setInviteEmail("");
+      fetchTeam();
+    } catch (e) {
+      alert("Invitation failed. Practitioner may already be authorized.");
     } finally {
-        setLoading(false);
+      setInviting(false);
     }
+  };
+
+  const handleRemove = async (email: string) => {
+      if (!isAdmin || !confirm(`Revoke access for ${email}?`)) return;
+      try {
+          await api.auth.removeStaff(user!.hospitalId!, email);
+          setTeam(prev => prev.filter(m => m.email !== email));
+      } catch (e) {
+          alert("Revoke operation failed.");
+      }
   };
 
   return (
@@ -75,248 +82,164 @@ export default function TeamManagementPage() {
               <Users className="h-7 w-7" />
            </div>
            <div>
-              <h1 className="text-2xl font-black text-foreground tracking-tight">Staff Privilege Hub</h1>
+              <h1 className="text-2xl font-black text-foreground tracking-tight">Team Management</h1>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                Manage {user?.hospitalName} • Authorized Clinical IDs
+                Unit Access Control & Personnel Directory
               </p>
            </div>
         </div>
 
-        {isHospitalAdmin && (
-          <button
-            onClick={() => setShowInvite(true)}
-            className="neuro-button bg-primary text-white flex items-center space-x-2 px-8 shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
-          >
-            <UserPlus className="h-4 w-4" />
-            <span className="text-[10px] font-black uppercase tracking-widest">Authorize Staff</span>
-          </button>
+        {isAdmin && (
+            <button
+                onClick={() => setShowInvite(true)}
+                className="neuro-button bg-primary text-white flex items-center space-x-2 px-8 shadow-xl shadow-primary/20"
+            >
+                <UserPlus className="h-4 w-4" />
+                <span className="text-[10px] font-black uppercase tracking-widest">Authorize Staff</span>
+            </button>
         )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Left Stats/Quick Info */}
-        <div className="lg:col-span-1 space-y-6">
-           <section className="glass-card p-6 bg-slate-900 text-white relative overflow-hidden group">
-              <div className="relative z-10 space-y-4">
-                 <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">Global Master Key</p>
-                 <div className="flex items-center justify-between">
-                    <h3 className="text-2xl font-mono font-black text-primary tracking-widest">NS-884920</h3>
-                    <Lock className="h-4 w-4 text-white/20" />
-                 </div>
-                 <p className="text-[9px] font-medium text-white/50 leading-relaxed">
-                   Share this key ONLY with staff verified via hospital domain.
-                 </p>
-              </div>
-              <div className="absolute -bottom-4 -right-4 h-20 w-20 bg-primary/10 rounded-full blur-2xl" />
-           </section>
+        <div className="lg:col-span-3 space-y-6">
+           <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search team by name or email..."
+                className="w-full h-14 bg-white dark:bg-slate-900 border-2 border-border/50 rounded-2xl pl-12 pr-4 text-xs font-bold outline-none focus:border-primary transition-all"
+              />
+           </div>
 
-           <section className="glass-card p-6 space-y-4">
-              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Authorization Rules</h4>
-              <div className="space-y-4">
-                 <RuleItem icon={ShieldCheck} label="Google Auth Required" active={true} />
-                 <RuleItem icon={Globe} label="IP Restricted" active={false} />
-                 <RuleItem icon={Settings} label="2FA Protocol" active={true} />
-              </div>
-           </section>
+           {loading ? (
+               <div className="flex justify-center py-20"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>
+           ) : (
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {team.map((member) => (
+                    <motion.div
+                        key={member._id}
+                        whileHover={{ y: -5 }}
+                        className="glass-card p-8 flex flex-col justify-between group"
+                    >
+                        <div className="space-y-6">
+                            <div className="flex justify-between items-start">
+                                <div className="h-12 w-12 rounded-xl bg-slate-50 dark:bg-slate-800 border border-border flex items-center justify-center text-slate-400 group-hover:bg-primary group-hover:text-white transition-all duration-500 font-black uppercase">
+                                    {member.name?.[0] || member.email[0]}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
+                                        member.status === 'active' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 border-border/50'
+                                    }`}>
+                                        {member.status}
+                                    </span>
+                                    {isAdmin && member.email !== user?.email && (
+                                        <button
+                                            onClick={() => handleRemove(member.email)}
+                                            className="h-8 w-8 rounded-lg bg-red-50 text-red-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="space-y-1">
+                                <h4 className="text-lg font-black tracking-tight text-foreground truncate">{member.name}</h4>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                    <Mail className="h-3 w-3" /> {member.email}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="mt-8 pt-6 border-t border-border/50 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Shield className="h-3 w-3 text-primary" />
+                                <span className="text-[9px] font-black text-primary uppercase tracking-widest">{member.role}</span>
+                            </div>
+                            {member.status === 'active' ? (
+                                <div className="flex items-center gap-1.5 text-emerald-500">
+                                    <CheckCircle2 className="h-3.5 w-3.5" />
+                                    <span className="text-[8px] font-black uppercase">Verified</span>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-1.5 text-slate-400">
+                                    <Clock className="h-3.5 w-3.5" />
+                                    <span className="text-[8px] font-black uppercase">Awaiting Login</span>
+                                </div>
+                            )}
+                        </div>
+                    </motion.div>
+                  ))}
+               </div>
+           )}
         </div>
 
-        {/* Main Team Table */}
-        <div className="lg:col-span-3">
-           <div className="glass-card overflow-hidden">
-              <div className="p-6 border-b border-border bg-slate-50/50 dark:bg-slate-800/20 flex items-center justify-between">
-                 <div className="relative w-64">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <input type="text" placeholder="Search staff..." className="w-full h-10 bg-white dark:bg-slate-900 border-2 border-border/50 rounded-xl pl-10 pr-4 text-xs font-medium outline-none" />
-                 </div>
-                 <div className="flex items-center space-x-2">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Seats:</span>
-                    <span className="text-xs font-bold text-primary">{team.length + 1}/50</span>
+        <div className="space-y-6">
+           <section className="glass-card p-8 bg-slate-900 text-white relative overflow-hidden group">
+              <div className="relative z-10 space-y-6">
+                 <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Admin Dashboard</p>
+                 <div className="flex items-end justify-between">
+                    <h2 className="text-5xl font-black text-primary">{team.length}</h2>
+                    <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Total Staff</span>
                  </div>
               </div>
+              <ShieldCheck className="absolute -bottom-8 -right-8 h-40 w-40 text-primary opacity-5" />
+           </section>
 
-              <div className="overflow-x-auto">
-                 <table className="w-full">
-                    <thead className="bg-slate-50/30 dark:bg-slate-800/10 border-b border-border">
-                       <tr>
-                          <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Member</th>
-                          <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Privilege Level</th>
-                          <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                          <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Last Activity</th>
-                          <th className="px-8 py-4"></th>
-                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                       {/* Admin (You) */}
-                       <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                          <td className="px-8 py-6">
-                             <div className="flex items-center space-x-4">
-                                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-black uppercase">{user?.name?.[0]}</div>
-                                <div>
-                                   <p className="text-sm font-bold text-foreground">{user?.name} (You)</p>
-                                   <p className="text-[10px] font-medium text-slate-500">{user?.email}</p>
-                                </div>
-                             </div>
-                          </td>
-                          <td className="px-8 py-6">
-                             <span className="text-[9px] font-black uppercase px-3 py-1 bg-primary/10 text-primary rounded-full tracking-widest border border-primary/20">Master Admin</span>
-                          </td>
-                          <td className="px-8 py-6">
-                             <div className="flex items-center space-x-2">
-                                <div className="h-1.5 w-1.5 rounded-full bg-secondary animate-pulse" />
-                                <span className="text-[10px] font-black uppercase text-secondary">Online</span>
-                             </div>
-                          </td>
-                          <td className="px-8 py-6 text-xs font-medium text-slate-500">Just Now</td>
-                          <td className="px-8 py-6 text-right">
-                             <button className="text-slate-300 hover:text-slate-600 transition-colors"><MoreVertical className="h-5 w-5" /></button>
-                          </td>
-                       </tr>
-
-                       {/* Mock Team Members */}
-                       <TeamRow name="Dr. Elena Rossi" email="rossi@hospital.org" role="Cardiologist" status="online" activity="14m ago" />
-                       <TeamRow name="Marcus Chen" email="chen.m@hospital.org" role="Technician" status="offline" activity="2h ago" />
-                       <TeamRow name="Sarah Miller" email="sarah.m@hospital.org" role="ICU Staff" status="away" activity="45m ago" />
-
-                       {team.map((member: any) => (
-                         <TeamRow
-                            key={member._id}
-                            name={member.name}
-                            email={member.email}
-                            role={member.role}
-                            status={member.status || 'offline'}
-                            activity="Never"
-                         />
-                       ))}
-                    </tbody>
-                 </table>
+           <div className="p-8 bg-primary/5 border border-primary/20 rounded-[2.5rem] space-y-4">
+              <div className="flex items-center space-x-3 text-primary">
+                 <AlertCircle className="h-4 w-4" />
+                 <h4 className="text-[10px] font-black uppercase tracking-widest">Access Protocol</h4>
               </div>
+              <p className="text-xs font-medium leading-relaxed text-slate-500">
+                Unit admins have full authority to revoke access or update staff roles in real-time.
+              </p>
            </div>
         </div>
       </div>
 
       {/* Invite Modal */}
       <AnimatePresence>
-         {showInvite && (
+        {showInvite && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-8">
-               <motion.div
-                 initial={{ opacity: 0 }}
-                 animate={{ opacity: 1 }}
-                 exit={{ opacity: 0 }}
-                 onClick={() => setShowInvite(false)}
-                 className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
-               />
-               <motion.div
-                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                 className="w-full max-w-md bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 shadow-2xl relative z-10 border border-border/50"
-               >
+               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowInvite(false)} className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" />
+               <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="w-full max-w-md bg-white dark:bg-slate-900 rounded-[3rem] p-10 shadow-3xl relative z-10 border-2 border-white/5">
                   <div className="space-y-8">
-                     <div className="space-y-2">
-                        <h3 className="text-2xl font-black tracking-tight text-foreground">Authorize Staff Member</h3>
-                        <p className="text-xs font-medium text-slate-500">Enter their institutional Google ID for direct workstation access.</p>
+                     <div className="text-center space-y-2">
+                        <div className="h-16 w-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto text-primary mb-4">
+                            <UserPlus className="h-8 w-8" />
+                        </div>
+                        <h3 className="text-2xl font-black tracking-tight text-foreground uppercase">Authorize Staff</h3>
+                        <p className="text-xs font-medium text-slate-500 uppercase tracking-widest">Add professional practitioner access</p>
                      </div>
 
                      <form onSubmit={handleInvite} className="space-y-6">
                         <div className="space-y-2">
-                           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Email Address</label>
-                           <div className="relative">
-                              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                              <input
-                                 type="email"
-                                 required
-                                 value={inviteEmail}
-                                 onChange={(e) => setInviteEmail(e.target.value)}
-                                 placeholder="colleague@hospital.org"
-                                 className="w-full h-14 bg-slate-50 dark:bg-slate-800 border-2 border-border/50 rounded-xl pl-12 pr-4 text-xs font-bold outline-none focus:border-primary"
-                              />
-                           </div>
+                           <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Google Email Address</label>
+                           <input required type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="practitioner@hospital.org" className="neuro-input" />
                         </div>
 
                         <div className="space-y-2">
-                           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Clinical Role</label>
-                           <select
-                             value={inviteRole}
-                             onChange={(e) => setInviteRole(e.target.value)}
-                             className="w-full h-14 bg-slate-50 dark:bg-slate-800 border-2 border-border/50 rounded-xl px-4 text-xs font-bold outline-none focus:border-primary appearance-none"
-                           >
+                           <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Clinical Role</label>
+                           <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value)} className="neuro-input">
+                              <option value="doctor">Medical Doctor</option>
                               <option value="technician">Clinical Technician</option>
-                              <option value="doctor">Specialist Doctor</option>
                               <option value="admin">Unit Administrator</option>
                            </select>
                         </div>
 
                         <div className="flex gap-4 pt-4">
-                           <button
-                             type="button"
-                             onClick={() => setShowInvite(false)}
-                             className="flex-1 h-14 bg-slate-100 dark:bg-slate-800 text-slate-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-200"
-                           >
-                              Cancel
-                           </button>
-                           <button
-                             type="submit"
-                             disabled={loading}
-                             className="flex-1 h-14 bg-primary text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
-                           >
-                              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><ShieldCheck className="h-4 w-4" /> Grant Access</>}
+                           <button type="button" onClick={() => setShowInvite(false)} className="flex-1 h-14 bg-slate-100 dark:bg-slate-800 text-slate-600 rounded-xl font-black text-[10px] uppercase tracking-widest">Cancel</button>
+                           <button type="submit" disabled={inviting} className="flex-1 h-14 bg-primary text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-primary/20 flex items-center justify-center gap-2">
+                              {inviting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Grant Access"}
                            </button>
                         </div>
                      </form>
                   </div>
                </motion.div>
             </div>
-         )}
+        )}
       </AnimatePresence>
-    </div>
-  );
-}
-
-function TeamRow({ name, email, role, status, activity }: any) {
-   const statusColor = {
-      online: 'bg-secondary',
-      offline: 'bg-slate-300',
-      away: 'bg-amber-400'
-   }[status as 'online' | 'offline' | 'away'] || 'bg-slate-300';
-
-   return (
-      <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-         <td className="px-8 py-6">
-            <div className="flex items-center space-x-4">
-               <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 font-bold uppercase">{name[0]}</div>
-               <div>
-                  <p className="text-sm font-bold text-foreground">{name}</p>
-                  <p className="text-[10px] font-medium text-slate-500">{email}</p>
-               </div>
-            </div>
-         </td>
-         <td className="px-8 py-6">
-            <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest">{role}</span>
-         </td>
-         <td className="px-8 py-6">
-            <div className="flex items-center space-x-2">
-               <div className={`h-1.5 w-1.5 rounded-full ${statusColor}`} />
-               <span className="text-[10px] font-black uppercase text-slate-400">{status}</span>
-            </div>
-         </td>
-         <td className="px-8 py-6 text-xs font-medium text-slate-500">{activity}</td>
-         <td className="px-8 py-6 text-right">
-            <button className="text-slate-300 hover:text-slate-600 transition-colors"><MoreVertical className="h-5 w-5" /></button>
-         </td>
-      </tr>
-   );
-}
-
-function RuleItem({ icon: Icon, label, active }: any) {
-  return (
-    <div className="flex items-center justify-between p-3 rounded-xl border border-border/50 bg-white dark:bg-slate-900">
-       <div className="flex items-center space-x-3">
-          <Icon className={cn("h-4 w-4", active ? "text-primary" : "text-slate-300")} />
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{label}</span>
-       </div>
-       <div className={cn("h-4 w-8 rounded-full relative transition-colors", active ? "bg-primary" : "bg-slate-200")}>
-          <div className={cn("absolute top-0.5 h-3 w-3 bg-white rounded-full transition-all", active ? "right-0.5" : "left-0.5")} />
-       </div>
     </div>
   );
 }

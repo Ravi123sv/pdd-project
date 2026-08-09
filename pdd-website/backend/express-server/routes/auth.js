@@ -176,4 +176,22 @@ router.post('/authorize-staff', authMiddleware, roleMiddleware(['admin']), async
     }
 });
 
+router.post('/remove-staff', authMiddleware, roleMiddleware(['admin']), async (req, res) => {
+    const { hospitalId, email } = req.body;
+    try {
+        const hospital = await Hospital.findOne({ hospitalId });
+        if (!hospital) return res.status(404).json({ message: 'Hospital hub not found' });
+
+        hospital.authorizedEmails = hospital.authorizedEmails.filter(a => a.email !== email);
+        await hospital.save();
+
+        // Also remove the user record if they've already logged in
+        await User.deleteOne({ email, hospitalId });
+
+        res.json({ success: true, message: `Access revoked for ${email}` });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 module.exports = router;

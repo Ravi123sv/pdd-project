@@ -53,14 +53,15 @@ export default function MonitorPage() {
   const [manualArtifact, setManualArtifact] = useState<{ type: string, severity: ArtifactSeverity }>({ type: 'Optimal', severity: 'none' });
   const [isEmergency, setIsEmergency] = useState(false);
   const [isAudioEnabled, setIsAudioEnabled] = useState(false);
+  const [sweepSpeed, setSweepSpeed] = useState<12.5 | 25 | 50>(25);
 
   const audioContextRef = useRef<AudioContext | null>(null);
 
   const isEEG = activePatient?.modality === 'EEG';
   const channelCount = isEEG ? 8 : 12;
 
-  // v4.0 Signal Engine: Dual Streams + Manual Stress Testing
-  const { channels, artifactStatus } = useWaveform(channelCount, isLive, isPaused, manualArtifact);
+  // v4.5 Signal Engine: Dual Streams + Manual Stress Testing + Sweep Speed
+  const { channels, artifactStatus } = useWaveform(channelCount, isLive, isPaused, manualArtifact, sweepSpeed);
 
   // Audio Pulse Handshake
   useEffect(() => {
@@ -220,21 +221,31 @@ export default function MonitorPage() {
 
             {/* AI Filter Toggles */}
             {isLive && (
-              <div className="flex items-center bg-slate-100 dark:bg-slate-900 p-1.5 rounded-2xl border border-border/50">
-                <button
-                    onClick={() => setShowRaw(!showRaw)}
-                    className={cn("px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all flex items-center gap-2", showRaw ? "bg-rose-500 text-white shadow-lg" : "text-slate-400")}
-                >
-                    {showRaw ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-                    Raw Data
-                </button>
-                <div className="w-px h-4 bg-border/50 mx-1" />
-                <button
-                    className="px-4 py-2 rounded-xl text-[9px] font-black uppercase bg-primary text-white shadow-lg flex items-center gap-2"
-                >
-                    <BrainCircuit className="h-3 w-3" />
-                    AI Filter
-                </button>
+              <div className="flex items-center gap-3">
+                  <div className="flex items-center bg-slate-100 dark:bg-slate-900 p-1.5 rounded-2xl border border-border/50">
+                    <button
+                        onClick={() => setShowRaw(!showRaw)}
+                        className={cn("px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all flex items-center gap-2", showRaw ? "bg-rose-500 text-white shadow-lg" : "text-slate-400")}
+                    >
+                        {showRaw ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                        Raw Data
+                    </button>
+                    <div className="w-px h-4 bg-border/50 mx-1" />
+                    <button
+                        className="px-4 py-2 rounded-xl text-[9px] font-black uppercase bg-primary text-white shadow-lg flex items-center gap-2"
+                    >
+                        <BrainCircuit className="h-3 w-3" />
+                        AI Filter
+                    </button>
+                  </div>
+
+                  {/* Sweep Speed Control */}
+                  <div className="flex items-center bg-slate-100 dark:bg-slate-900 p-1.5 rounded-2xl border border-border/50">
+                      <SpeedButton active={sweepSpeed === 12.5} onClick={() => setSweepSpeed(12.5)} label="12.5" />
+                      <SpeedButton active={sweepSpeed === 25} onClick={() => setSweepSpeed(25)} label="25" />
+                      <SpeedButton active={sweepSpeed === 50} onClick={() => setSweepSpeed(50)} label="50" />
+                      <span className="text-[7px] font-black text-slate-400 uppercase tracking-tighter px-2">mm/s</span>
+                  </div>
               </div>
           )}
 
@@ -511,4 +522,18 @@ function CheckItem({ label, checked }: any) {
        <span className={cn("text-[11px] font-bold tracking-tight transition-colors", checked ? "text-foreground" : "text-slate-400 group-hover:text-slate-600")}>{label}</span>
     </div>
   );
+}
+
+function SpeedButton({ active, onClick, label }: any) {
+    return (
+        <button
+            onClick={onClick}
+            className={cn(
+                "px-3 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all",
+                active ? "bg-primary text-white shadow-md" : "text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800"
+            )}
+        >
+            {label}
+        </button>
+    );
 }
