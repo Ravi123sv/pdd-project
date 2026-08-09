@@ -67,6 +67,9 @@ export default function MonitorPage() {
   const [gain, setGain] = useState<0.5 | 1 | 2 | 5>(1);
   const [dspFilters, setDspFilters] = useState<DSPFilterConfig>({ lowPass: true, highPass: true, notch: true });
 
+  const [hrv, setHrv] = useState(45);
+  const [neuralLoad, setNeuralLoad] = useState(12);
+
   const audioContextRef = useRef<AudioContext | null>(null);
 
   const isEEG = activePatient?.modality === 'EEG';
@@ -90,41 +93,21 @@ export default function MonitorPage() {
       }
   }, [isMirrorMode, mirrorPatientId, user, setActivePatient]);
 
-  // Audio Pulse Handshake
+  // Real-time Metric Simulation
   useEffect(() => {
-      if (isLive && !isPaused && isAudioEnabled) {
-          const bpm = 72;
-          const interval = (60 / bpm) * 1000;
-
-          const playBleep = () => {
-              if (!audioContextRef.current) audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-              const ctx = audioContextRef.current;
-              const osc = ctx.createOscillator();
-              const gain = ctx.createGain();
-
-              osc.type = 'sine';
-              osc.frequency.setValueAtTime(isEEG ? 440 : 880, ctx.currentTime);
-
-              gain.gain.setValueAtTime(0.1, ctx.currentTime);
-              gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.1);
-
-              osc.connect(gain);
-              gain.connect(ctx.destination);
-
-              osc.start();
-              osc.stop(ctx.currentTime + 0.1);
-          };
-
-          const timer = setInterval(playBleep, interval);
-          return () => {
-              clearInterval(timer);
-              if (audioContextRef.current) {
-                  audioContextRef.current.close();
-                  audioContextRef.current = null;
+      if (isLive && !isPaused) {
+          const interval = setInterval(() => {
+              if (activePatient?.modality === 'ECG') {
+                  // Simulate physiological HRV drift
+                  setHrv(prev => Math.max(20, Math.min(100, prev + (Math.random() - 0.5) * 5)));
+              } else if (activePatient?.modality === 'EEG') {
+                  // Simulate cognitive load shifts
+                  setNeuralLoad(prev => Math.max(5, Math.min(40, prev + (Math.random() - 0.5) * 2)));
               }
-          };
+          }, 3000);
+          return () => clearInterval(interval);
       }
-  }, [isLive, isPaused, isAudioEnabled, isEEG]);
+  }, [isLive, isPaused, activePatient]);
 
   useEffect(() => {
       if (isLive && artifactStatus.severity === 'high' && !isEmergency) {
@@ -545,9 +528,27 @@ export default function MonitorPage() {
                                </div>
                            </div>
                         </div>
-                        <div>
-                           <p className="text-[9px] font-black text-white/40 uppercase mb-2">SLA Index</p>
-                           <p className={cn("text-2xl font-black transition-all", isLive ? (artifactStatus.severity === 'high' ? "text-red-500" : "text-amber-500") : "text-white/10")}>{isLive ? (artifactStatus.severity === 'none' ? "Optimal" : (artifactStatus.severity === 'low' ? "Warning" : "Critical")) : "--"}</p>
+
+                        {/* Modality Specific Metric */}
+                        <div className="space-y-4">
+                           {activePatient?.modality === 'ECG' ? (
+                               <div>
+                                  <p className="text-[9px] font-black text-rose-400 uppercase mb-2">Autonomic HRV</p>
+                                  <p className={cn("text-2xl font-black transition-all", isLive ? "text-rose-500" : "text-white/10")}>
+                                     {isLive ? `${hrv.toFixed(0)} ms` : "--"}
+                                  </p>
+                               </div>
+                           ) : (
+                               <div>
+                                  <p className="text-[9px] font-black text-blue-400 uppercase mb-2">Neural Load</p>
+                                  <p className={cn("text-2xl font-black transition-all", isLive ? "text-blue-500" : "text-white/10")}>
+                                     {isLive ? `${neuralLoad.toFixed(1)}%` : "--"}
+                                  </p>
+                               </div>
+                           )}
+                           <p className={cn("text-[10px] font-black uppercase text-right", isLive ? (artifactStatus.severity === 'high' ? "text-red-500" : "text-amber-500") : "text-white/10")}>
+                              {isLive ? (artifactStatus.severity === 'none' ? "Optimal" : (artifactStatus.severity === 'low' ? "Warning" : "Critical")) : "--"}
+                           </p>
                         </div>
                      </div>
                   </div>
