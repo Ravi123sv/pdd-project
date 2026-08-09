@@ -18,13 +18,15 @@ import {
   Eye,
   EyeOff,
   Minimize2,
-  CheckCircle2
+  CheckCircle2,
+  Smartphone,
+  Cpu
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { motion, AnimatePresence } from "framer-motion";
 import SignalCanvas from "../../../components/SignalCanvas";
-import { useWaveform } from "../../../hooks/useWaveform";
+import { useWaveform, ArtifactSeverity } from "../../../hooks/useWaveform";
 import { api } from "../../../lib/api/client";
 import { queueForSync } from "../../../lib/offlineSync";
 
@@ -45,11 +47,14 @@ export default function MonitorPage() {
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
   const [saving, setSaving] = useState(false);
 
+  // Stress Test State
+  const [manualArtifact, setManualArtifact] = useState<{ type: string, severity: ArtifactSeverity }>({ type: 'Optimal', severity: 'none' });
+
   const isEEG = activePatient?.modality === 'EEG';
   const channelCount = isEEG ? 8 : 12;
 
-  // v3.5 Signal Engine: Dual Streams + Live Feedback
-  const { channels, artifactStatus } = useWaveform(channelCount, isLive, isPaused);
+  // v4.0 Signal Engine: Dual Streams + Manual Stress Testing
+  const { channels, artifactStatus } = useWaveform(channelCount, isLive, isPaused, manualArtifact);
 
   const labels = isEEG
     ? ['Fp1', 'Fp2', 'C3', 'C4', 'P3', 'P4', 'O1', 'O2']
@@ -78,8 +83,8 @@ export default function MonitorPage() {
           technicianEmail: user?.email,
           hospitalId: activePatient.hospitalId || user?.hospitalId || 'HOSP-DEFAULT',
           testType: activePatient.modality,
-          quality: 98.4, // Standardized SQI for simulator
-          findings: "Clinical session finalized by technician.",
+          quality: artifactStatus.severity === 'none' ? 98.4 : (artifactStatus.severity === 'low' ? 82.1 : 45.3),
+          findings: `Clinical session finalized. Final Integrity: ${artifactStatus.type}.`,
           startTime: sessionStartTime,
           durationSeconds
       };
@@ -106,7 +111,6 @@ export default function MonitorPage() {
     setAnalyzing(true);
     setAiReport(null);
     try {
-      // Use Local Backend Engine (Tester Compliant / Stealth Mode)
       const res = await api.signals.analyzeAi({
           patientName: activePatient?.name,
           modality: activePatient?.modality,
@@ -368,29 +372,47 @@ export default function MonitorPage() {
                      <div className="grid grid-cols-2 gap-6 pt-8 border-t border-white/5">
                         <div>
                            <p className="text-[9px] font-black text-white/40 uppercase mb-2">Neural SQI</p>
-                           <p className={cn("text-2xl font-black transition-all", isLive ? "text-primary" : "text-white/10")}>{isLive ? '98.8%' : "--"}</p>
+                           <p className={cn("text-2xl font-black transition-all", isLive ? "text-primary" : "text-white/10")}>{isLive ? `${(100 - (artifactStatus.severity === 'none' ? 1.2 : (artifactStatus.severity === 'low' ? 15.4 : 54.7))).toFixed(1)}%` : "--"}</p>
                         </div>
                         <div>
                            <p className="text-[9px] font-black text-white/40 uppercase mb-2">SLA Index</p>
-                           <p className={cn("text-2xl font-black transition-all", isLive ? "text-amber-500" : "text-white/10")}>{isLive ? "Optimal" : "--"}</p>
+                           <p className={cn("text-2xl font-black transition-all", isLive ? (artifactStatus.severity === 'high' ? "text-red-500" : "text-amber-500") : "text-white/10")}>{isLive ? (artifactStatus.severity === 'none' ? "Optimal" : (artifactStatus.severity === 'low' ? "Warning" : "Critical")) : "--"}</p>
                         </div>
                      </div>
                   </div>
                   <Activity className="absolute -bottom-8 -right-8 h-40 w-40 text-primary opacity-5 group-hover:scale-110 transition-transform duration-1000" />
                </section>
 
-               <div className="p-8 bg-gradient-to-br from-primary to-blue-700 rounded-[2.5rem] text-white shadow-3xl shadow-primary/30 relative overflow-hidden group">
-                  <BrainCircuit className="absolute -bottom-6 -right-6 h-32 w-32 opacity-15 group-hover:rotate-12 transition-transform duration-700" />
-                  <div className="relative z-10 space-y-4">
-                     <div className="flex items-center space-x-2">
-                        <ShieldCheck className="h-4 w-4" />
-                        <h4 className="text-[10px] font-black uppercase tracking-widest opacity-80">Encryption Node Active</h4>
-                     </div>
-                     <p className="text-xs font-bold leading-relaxed">
-                        Signal packets are currently being encrypted with AES-256 before clinical hub synchronization.
-                     </p>
-                  </div>
-               </div>
+               {/* STRESS TEST CONTROLS */}
+               {isLive && (
+                   <section className="glass-card p-6 bg-slate-50 dark:bg-slate-800/50 space-y-6">
+                      <div className="flex items-center justify-between">
+                         <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">AI Stress Tester</h3>
+                         <Zap className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="grid grid-cols-1 gap-3">
+                         <button
+                            onClick={() => setManualArtifact({ type: 'Optimal', severity: 'none' })}
+                            className={cn("w-full py-3 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all", manualArtifact.severity === 'none' ? "bg-emerald-500 text-white border-emerald-400" : "bg-white dark:bg-slate-900 text-slate-400 border-border")}
+                         >
+                            Clean Signal
+                         </button>
+                         <button
+                            onClick={() => setManualArtifact({ type: 'Muscle Tremor', severity: 'low' })}
+                            className={cn("w-full py-3 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all", manualArtifact.severity === 'low' ? "bg-amber-500 text-white border-amber-400" : "bg-white dark:bg-slate-900 text-slate-400 border-border")}
+                         >
+                            Inject Minor Noise
+                         </button>
+                         <button
+                            onClick={() => setManualArtifact({ type: 'Lead Displacement', severity: 'high' })}
+                            className={cn("w-full py-3 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all", manualArtifact.severity === 'high' ? "bg-red-600 text-white border-red-500 shadow-lg shadow-red-200" : "bg-white dark:bg-slate-900 text-slate-400 border-border")}
+                         >
+                            Inject Critical Error
+                         </button>
+                      </div>
+                      <p className="text-[8px] font-medium text-slate-500 italic text-center">Inject artifacts to verify Neural Suppressor efficiency.</p>
+                   </section>
+               )}
 
                <section className="glass-card p-6 space-y-6">
                   <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Acquisition Checklist</h3>

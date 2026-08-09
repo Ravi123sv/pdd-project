@@ -2,18 +2,21 @@
 
 import { useState, useEffect, useRef } from "react";
 
+export type ArtifactSeverity = 'low' | 'high' | 'none';
+
 /**
- * useWaveform Hook v3.5
+ * useWaveform Hook v4.0
  * Generates Dual Streams: Raw Signal (with artifacts) and AI-Filtered Signal.
  * Implements real-time detection for Lead Quality and Patient Movement.
+ * Added: Manual Artifact Injection support for clinical stress-testing.
  */
-export function useWaveform(channelCount: number, isLive: boolean, isPaused: boolean) {
+export function useWaveform(channelCount: number, isLive: boolean, isPaused: boolean, manualArtifact?: { type: string, severity: ArtifactSeverity }) {
   const [channels, setChannels] = useState<{raw: number[][], filtered: number[][]}>({
     raw: Array(channelCount).fill([]).map(() => Array(200).fill(0)),
     filtered: Array(channelCount).fill([]).map(() => Array(200).fill(0))
   });
 
-  const [artifactStatus, setArtifactStatus] = useState<{type: string, severity: 'low' | 'high' | 'none'}>({
+  const [artifactStatus, setArtifactStatus] = useState<{type: string, severity: ArtifactSeverity}>({
     type: 'Optimal',
     severity: 'none'
   });
@@ -28,17 +31,24 @@ export function useWaveform(channelCount: number, isLive: boolean, isPaused: boo
       timeRef.current += 0.02;
       const t = timeRef.current;
 
-      // Real-time Artifact Simulation Cycle
+      // --- 1. Artifact Determination ---
       let currentArtifactType = 'Optimal';
-      let currentSeverity: 'low' | 'high' | 'none' = 'none';
+      let currentSeverity: ArtifactSeverity = 'none';
 
-      const artifactCycle = Math.floor(t / 8) % 4; // Cycle every 8 seconds
-      if (artifactCycle === 1) {
-          currentArtifactType = 'Patient Movement';
-          currentSeverity = 'low';
-      } else if (artifactCycle === 2) {
-          currentArtifactType = 'Loose Lead (V2)';
-          currentSeverity = 'high';
+      if (manualArtifact && manualArtifact.severity !== 'none') {
+          // Manual Override (Stress Test)
+          currentArtifactType = manualArtifact.type;
+          currentSeverity = manualArtifact.severity;
+      } else {
+          // Automatic Cycle
+          const artifactCycle = Math.floor(t / 8) % 4; // Cycle every 8 seconds
+          if (artifactCycle === 1) {
+              currentArtifactType = 'Patient Movement';
+              currentSeverity = 'low';
+          } else if (artifactCycle === 2) {
+              currentArtifactType = 'Loose Lead (V2)';
+              currentSeverity = 'high';
+          }
       }
 
       setArtifactStatus({ type: currentArtifactType, severity: currentSeverity });
@@ -51,35 +61,31 @@ export function useWaveform(channelCount: number, isLive: boolean, isPaused: boo
           const rawChan = [...nextRaw[i]];
           const filtChan = [...nextFiltered[i]];
 
-          // --- 1. Base Signal (Clean ECG Model) ---
+          // --- 2. Base Signal (Clean ECG Model) ---
           const bpm = 72;
           const bps = bpm / 60;
           const beatPeriod = 1 / bps;
           const phase = t % beatPeriod;
           let cleanVal = 0;
 
-          // P-QRS-T complex segments
           if (phase > 0.1 && phase < 0.2) cleanVal += 2 * Math.sin((phase - 0.1) * Math.PI / 0.1);
           if (phase > 0.3 && phase < 0.35) cleanVal -= 5 * Math.sin((phase - 0.3) * Math.PI / 0.05);
           else if (phase >= 0.35 && phase < 0.4) cleanVal += 40 * Math.sin((phase - 0.35) * Math.PI / 0.05);
           else if (phase >= 0.4 && phase < 0.45) cleanVal -= 8 * Math.sin((phase - 0.4) * Math.PI / 0.05);
           if (phase > 0.6 && phase < 0.8) cleanVal += 4 * Math.sin((phase - 0.6) * Math.PI / 0.2);
 
-          // --- 2. Add Artificial Artifacts to Raw ---
+          // --- 3. Add Artificial Artifacts to Raw ---
           let noise = (Math.random() - 0.5) * 2;
 
           if (currentSeverity === 'low') {
-              // Simulating muscle tremor / minor patient movement
               noise += Math.sin(t * 40) * 12 * Math.random();
           } else if (currentSeverity === 'high') {
-              // Simulating loose lead (significant baseline wander and 50Hz hum)
               noise += Math.sin(t * 0.4) * 35 + Math.sin(t * 120) * 8;
           }
 
           const rawVal = cleanVal + noise;
 
-          // --- 3. Neural AI Filter Simulation ---
-          // Simulates 98% artifact suppression while maintaining morphology
+          // --- 4. Neural AI Filter Simulation ---
           const filteredVal = cleanVal + (noise * 0.02);
 
           rawChan.push(rawVal);
@@ -102,7 +108,7 @@ export function useWaveform(channelCount: number, isLive: boolean, isPaused: boo
     return () => {
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
     };
-  }, [isLive, isPaused, channelCount]);
+  }, [isLive, isPaused, channelCount, manualArtifact]);
 
   return { channels, artifactStatus };
 }
