@@ -254,7 +254,7 @@ export default function MonitorPage() {
               <button
                 onClick={startAcquisition}
                 disabled={isInitializing || !activePatient}
-                className="neuro-button bg-primary text-white flex items-center space-x-3 px-8 shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-40"
+                className="neuro-button bg-primary text-white flex items-center space-x-3 px-10 h-14 shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-40"
               >
                 {isInitializing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Play className="h-5 w-5 fill-white" />}
                 <span className="font-black uppercase tracking-widest text-xs">Initialize Stream</span>
@@ -264,36 +264,36 @@ export default function MonitorPage() {
                   <button
                     onClick={() => setIsAudioEnabled(!isAudioEnabled)}
                     className={cn(
-                        "neuro-button h-12 w-12 flex items-center justify-center transition-all border border-border/50",
+                        "neuro-button h-14 w-14 flex items-center justify-center transition-all border border-border/50",
                         isAudioEnabled ? "bg-primary text-white shadow-lg" : "bg-white dark:bg-slate-800 text-slate-500"
                     )}
                     title="Toggle Audio Feedback"
                   >
-                    {isAudioEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+                    {isAudioEnabled ? <Volume2 className="h-6 w-6" /> : <VolumeX className="h-6 w-6" />}
                   </button>
                   <button
                     onClick={() => setIsFullscreen(!isFullscreen)}
-                    className="neuro-button h-12 w-12 flex items-center justify-center bg-white dark:bg-slate-800 text-slate-500 hover:text-primary transition-all border border-border/50"
+                    className="neuro-button h-14 w-14 flex items-center justify-center bg-white dark:bg-slate-800 text-slate-500 hover:text-primary transition-all border border-border/50"
                     title="Fullscreen Monitoring"
                   >
-                    {isFullscreen ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
+                    {isFullscreen ? <Minimize2 className="h-6 w-6" /> : <Maximize2 className="h-6 w-6" />}
                   </button>
                   <button
                     onClick={() => setIsPaused(!isPaused)}
                     className={cn(
-                      "neuro-button flex items-center space-x-3 px-8 text-xs font-black uppercase tracking-widest transition-all active:scale-95",
+                      "neuro-button flex items-center space-x-3 px-10 h-14 text-xs font-black uppercase tracking-widest transition-all active:scale-95",
                       isPaused ? "bg-amber-500 text-white shadow-lg shadow-amber-500/20" : "bg-slate-100 dark:bg-slate-800 text-slate-600"
                     )}
                   >
-                    {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+                    {isPaused ? <Play className="h-5 w-5" /> : <Pause className="h-5 w-5" />}
                     <span>{isPaused ? "Resume" : "Freeze"}</span>
                   </button>
                   <button
                     onClick={handleCommitSession}
                     disabled={saving}
-                    className="neuro-button bg-emerald-600 text-white flex items-center space-x-2 px-8 shadow-xl shadow-emerald-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-40"
+                    className="neuro-button bg-emerald-600 text-white flex items-center space-x-2 px-10 h-14 shadow-xl shadow-emerald-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-40"
                   >
-                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                    {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <CheckCircle2 className="h-5 w-5" />}
                     <span className="font-black uppercase tracking-widest text-xs">Commit to Archive</span>
                   </button>
               </div>
@@ -356,11 +356,11 @@ export default function MonitorPage() {
 
       {/* Waveform Visualization Grid */}
       <div className={cn(
-          "flex-1 grid grid-cols-1 xl:grid-cols-4 gap-8 min-h-0",
+          "flex-1 grid grid-cols-1 lg:grid-cols-4 gap-8 min-h-0",
           !activePatient && "hidden",
-          isFullscreen && "xl:grid-cols-1"
+          isFullscreen && "lg:grid-cols-1"
       )}>
-        <div className={cn("xl:col-span-3 flex flex-col space-y-6", isFullscreen && "xl:col-span-1")}>
+        <div className={cn("lg:col-span-3 flex flex-col space-y-6", isFullscreen && "lg:col-span-1")}>
           <div className="flex-1 glass-card bg-[#03060c] relative overflow-hidden flex flex-col border-2 border-white/5 shadow-2xl">
              <div className="relative z-10 p-6 flex items-center justify-between border-b border-white/5 bg-black/40 backdrop-blur-xl">
                 <div className="flex items-center space-x-8">
@@ -387,22 +387,23 @@ export default function MonitorPage() {
                 </div>
              </div>
 
-             <div className="flex-1 p-6 relative">
+             <div className="flex-1 p-6 relative overflow-y-auto">
                 <div className={cn(
                   "grid gap-4 h-full w-full",
-                  isEEG ? "grid-cols-2 grid-rows-4" : "grid-cols-3 grid-rows-4"
+                  isEEG ? "grid-cols-1 md:grid-cols-2 grid-rows-none" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid-rows-none"
                 )}>
                    {labels.map((label, i) => (
-                      <SignalCanvas
-                        key={label}
-                        label={label}
-                        rawData={channels.raw[i]}
-                        filteredData={channels.filtered[i]}
-                        isLive={isLive}
-                        isPaused={isPaused}
-                        showRaw={showRaw}
-                        color={isEEG ? "#3B82F6" : "#10B981"}
-                      />
+                      <div key={label} className="h-48 md:h-auto min-h-[180px]">
+                        <SignalCanvas
+                            label={label}
+                            rawData={channels.raw[i]}
+                            filteredData={channels.filtered[i]}
+                            isLive={isLive}
+                            isPaused={isPaused}
+                            showRaw={showRaw}
+                            color={isEEG ? "#3B82F6" : "#10B981"}
+                        />
+                      </div>
                    ))}
                 </div>
 
@@ -529,7 +530,7 @@ function SpeedButton({ active, onClick, label }: any) {
         <button
             onClick={onClick}
             className={cn(
-                "px-3 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all",
+                "px-4 py-2.5 rounded-xl text-[10px] font-black uppercase transition-all min-w-[44px]",
                 active ? "bg-primary text-white shadow-md" : "text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800"
             )}
         >

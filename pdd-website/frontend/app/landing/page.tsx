@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -22,6 +23,11 @@ import ClinicalDisclaimer from "../../components/ClinicalDisclaimer";
 
 export default function LandingPage() {
   const router = useRouter();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+      setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0F172A] text-slate-900 dark:text-white selection:bg-primary/30 font-sans">
@@ -78,27 +84,29 @@ export default function LandingPage() {
               <div className="flex flex-col sm:flex-row gap-6 pt-4">
               <button
                 onClick={() => router.push("/auth/login")}
-                className="h-16 px-10 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-[0.3em] shadow-2xl shadow-primary/30 flex items-center justify-center space-x-4 hover:scale-105 active:scale-95 transition-all"
+                className="h-16 px-10 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-[0.3em] shadow-2xl shadow-primary/30 flex items-center justify-center space-x-4 hover:scale-105 active:scale-95 transition-all w-full sm:w-auto"
               >
                 <span>Launch Workstation</span>
                 <ArrowRight className="h-4 w-4" />
               </button>
-              <div className="flex gap-2">
-                  <a
-                    href="/pdd-project/downloads/neurosignal.apk"
-                    className="h-16 w-16 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white border-2 border-border/50 rounded-2xl flex items-center justify-center hover:bg-slate-50 transition-all"
-                    title="Download Android APK"
-                  >
-                    <Smartphone className="h-6 w-6" />
-                  </a>
-                  <a
-                    href="/pdd-project/downloads/neurosignal.exe"
-                    className="h-16 w-16 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white border-2 border-border/50 rounded-2xl flex items-center justify-center hover:bg-slate-50 transition-all"
-                    title="Download Windows EXE"
-                  >
-                    <Monitor className="h-6 w-6" />
-                  </a>
-              </div>
+              {!isMobile && (
+                  <div className="flex gap-2">
+                      <a
+                        href="/pdd-project/downloads/neurosignal.apk"
+                        className="h-16 w-16 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white border-2 border-border/50 rounded-2xl flex items-center justify-center hover:bg-slate-50 transition-all"
+                        title="Download Android APK"
+                      >
+                        <Smartphone className="h-6 w-6" />
+                      </a>
+                      <a
+                        href="/pdd-project/downloads/neurosignal.exe"
+                        className="h-16 w-16 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-white border-2 border-border/50 rounded-2xl flex items-center justify-center hover:bg-slate-50 transition-all"
+                        title="Download Windows EXE"
+                      >
+                        <Monitor className="h-6 w-6" />
+                      </a>
+                  </div>
+              )}
             </div>
 
             <div className="flex items-center space-x-8 pt-8 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
