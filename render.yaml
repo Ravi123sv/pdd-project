@@ -3,7 +3,6 @@ services:
     name: neurosignal-clinical-hub
     env: node
     plan: free
-    # Force the root directory to the backend so commands are relative to it
     rootDir: pdd-website/backend/express-server
     buildCommand: "npm install"
     startCommand: "node index.js"
@@ -16,9 +15,9 @@ services:
         sync: false
       - key: SMTP_PASS
         sync: false
+      - key: JWT_SECRET
+        sync: false
       - key: NEXT_PUBLIC_GEMINI_API_KEY
         sync: false
       - key: ENABLE_NEURAL_UPLINK
         value: "false"
-      - key: JWT_SECRET
-        value: neurosignal_clinical_secret_key_2026

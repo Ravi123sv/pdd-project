@@ -4,7 +4,11 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Hospital = require('../models/Hospital');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'neurosignal_clinical_secret_key';
+// SECURITY: Retrieve secret from environment variable ONLY.
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+    console.error("[BOOT] CRITICAL: JWT_SECRET environment variable is missing.");
+}
 
 // Institutional Onboarding: Register New Hospital
 router.post('/register-hospital', async (req, res) => {

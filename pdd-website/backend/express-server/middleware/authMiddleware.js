@@ -1,5 +1,4 @@
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET || 'neurosignal_clinical_secret_key';
 
 module.exports = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -10,8 +9,15 @@ module.exports = (req, res, next) => {
 
   const token = authHeader.split(' ')[1];
 
+  // SECURITY: JWT_SECRET MUST be provided via Environment Variable in production.
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+      console.error("[CRITICAL] JWT_SECRET environment variable is missing.");
+      return res.status(500).json({ message: "Internal server configuration error." });
+  }
+
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, secret);
     req.user = decoded;
     next();
   } catch (err) {

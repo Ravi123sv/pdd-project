@@ -5,6 +5,16 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 
+console.log("[BOOT] Node Process Initialized");
+
+// Global Crash Handler (Red-Team Monitoring)
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[CRITICAL] Unhandled Rejection at:', promise, 'reason:', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[CRITICAL] Uncaught Exception thrown:', err);
+});
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -26,38 +36,45 @@ app.get('/api/health', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.send('NeuroSignal Clinical Hub v3.5 Online');
+  res.send('NeuroSignal Clinical Hub v4.0 Online (Hardened Boot)');
 });
 
 // Database Connection Logic (Resilient)
 const MONGO_URI = process.env.MONGO_URI;
 
 if (!MONGO_URI || MONGO_URI.includes('password_placeholder')) {
-    console.error('CRITICAL: MONGO_URI not configured in environment variables.');
+    console.error('[BOOT] CRITICAL: MONGO_URI not configured.');
 } else {
+    console.log("[BOOT] Establishing Database Link...");
     mongoose.connect(MONGO_URI)
-      .then(() => console.log('NeuroSignal Hub: Clinical Atlas Node Online'))
-      .catch(err => console.error('CRITICAL: Database Handshake Failed:', err.message));
+      .then(() => console.log('[BOOT] NeuroSignal Hub: Clinical Atlas Node Online'))
+      .catch(err => console.error('[BOOT] CRITICAL: Database Handshake Failed:', err.message));
 }
 
 // Import & Use Routes
-const assetRoutes = require('./routes/assets');
-const patientRoutes = require('./routes/patients');
-const authRoutes = require('./routes/auth');
-const seedRoutes = require('./routes/seed');
-const signalRoutes = require('./routes/signals');
-const otpRoutes = require('./routes/otp');
-const sessionRoutes = require('./routes/sessions');
-const paymentRoutes = require('./routes/payments');
+console.log("[BOOT] Mounting Clinical Modules...");
+try {
+    const assetRoutes = require('./routes/assets');
+    const patientRoutes = require('./routes/patients');
+    const authRoutes = require('./routes/auth');
+    const seedRoutes = require('./routes/seed');
+    const signalRoutes = require('./routes/signals');
+    const otpRoutes = require('./routes/otp');
+    const sessionRoutes = require('./routes/sessions');
+    const paymentRoutes = require('./routes/payments');
 
-app.use('/api/assets', assetRoutes);
-app.use('/api/patients', patientRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/seed', seedRoutes);
-app.use('/api/signals', signalRoutes);
-app.use('/api/otp', otpRoutes);
-app.use('/api/sessions', sessionRoutes);
-app.use('/api/payments', paymentRoutes);
+    app.use('/api/assets', assetRoutes);
+    app.use('/api/patients', patientRoutes);
+    app.use('/api/auth', authRoutes);
+    app.use('/api/seed', seedRoutes);
+    app.use('/api/signals', signalRoutes);
+    app.use('/api/otp', otpRoutes);
+    app.use('/api/sessions', sessionRoutes);
+    app.use('/api/payments', paymentRoutes);
+    console.log("[BOOT] Clinical Modules Mounted Successfully");
+} catch (e) {
+    console.error("[BOOT] CRITICAL: Module Mounting Failed:", e.message);
+}
 
 // WebSocket Unit Handshake
 io.on('connection', (socket) => {
@@ -69,7 +86,7 @@ io.on('connection', (socket) => {
 
 // Error Handling
 app.use((err, req, res, next) => {
-  console.error(`[ERROR] ${new Date().toISOString()}:`, err.stack);
+  console.error(`[RUNTIME ERROR] ${new Date().toISOString()}:`, err.stack);
   res.status(500).json({ error: 'Internal Hub Error', message: err.message });
 });
 
@@ -77,7 +94,6 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 10000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`[BOOT] Clinical Hub Online on port ${PORT}`);
-  console.log(`[BOOT] Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`[BOOT] Node Version: ${process.version}`);
-  console.log(`[BOOT] Database Handshake Initiated...`);
+  console.log(`[BOOT] Environment: ${process.env.NODE_ENV || 'production'}`);
+  console.log(`[BOOT] Database Status: ${mongoose.connection.readyState === 1 ? 'READY' : 'PENDING'}`);
 });

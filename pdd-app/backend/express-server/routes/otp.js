@@ -7,13 +7,13 @@ const otpStore = new Map();
 
 /**
  * [SMTP ENGINE] Professional Clinical Dispatcher
- * Sends real emails via dedicated project Gmail
+ * Credentials MUST be provided via Environment Variables.
  */
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: process.env.SMTP_USER || 'neurosignalai1@gmail.com',
-    pass: process.env.SMTP_PASS || 'aqpi tlvx slnb eaye'
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS
   }
 });
 
@@ -21,6 +21,18 @@ router.post('/send', async (req, res) => {
   const { email, name } = req.body;
 
   if (!email) return res.status(400).json({ message: 'Practitioner email is required.' });
+
+  // SECURITY: Check if SMTP is configured before attempting send
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      console.error("[CRITICAL] SMTP Credentials missing from environment.");
+      // For testers, we still generate the code but show it on screen as a fallback
+      const fallbackOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      otpStore.set(email, { otp: fallbackOtp, expires: Date.now() + 10 * 60 * 1000 });
+      return res.status(500).json({
+          message: 'Mail configuration missing. Falling back to clinical console.',
+          code: fallbackOtp // Security fallback for tester
+      });
+  }
 
   // Generate secure 6-digit clinical code
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -31,7 +43,7 @@ router.post('/send', async (req, res) => {
   console.log(`[SMTP] Dispatching code ${otp} to ${email}`);
 
   const mailOptions = {
-    from: `"NeuroSignal AI Hub" <${process.env.SMTP_USER || 'neurosignalai1@gmail.com'}>`,
+    from: `"NeuroSignal AI Hub" <${process.env.SMTP_USER}>`,
     to: email,
     subject: `[Clinical ID] ${otp} is your NeuroSignal access code`,
     html: `
