@@ -3,10 +3,10 @@ services:
     name: neurosignal-clinical-hub
     env: node
     plan: free
-    # Remove rootDir to ensure the whole repo is available if needed
-    # But cd into the backend for commands
-    buildCommand: "cd pdd-website/backend/express-server && npm install"
-    startCommand: "cd pdd-website/backend/express-server && node index.js"
+    # Force the root directory to the backend so commands are relative to it
+    rootDir: pdd-website/backend/express-server
+    buildCommand: "npm install"
+    startCommand: "node index.js"
     envVars:
       - key: NODE_ENV
         value: production
