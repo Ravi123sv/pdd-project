@@ -1,150 +1,186 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Check, Hospital, Shield, Zap, Globe, ArrowLeft, Loader2 } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useStore } from "../../lib/store/useStore";
+import {
+  Zap,
+  CheckCircle2,
+  ShieldCheck,
+  Cpu,
+  BrainCircuit,
+  Activity,
+  Globe,
+  Lock,
+  ArrowRight,
+  Sparkles,
+  RefreshCw,
+  Loader2
+} from "lucide-react";
 import { useState } from "react";
 import { api } from "../../lib/api/client";
+import { motion } from "framer-motion";
 
 export default function SubscriptionsPage() {
-  const router = useRouter();
+  const { user } = useStore();
   const [loading, setLoading] = useState<string | null>(null);
 
-  const handleFreeStart = () => {
-    router.push("/auth/login");
-  };
-
-  const handleContactSales = () => {
-    router.push("/contact-sales");
-  };
-
-  const handleUpgrade = async () => {
-    setLoading('research');
+  const handleSubscribe = async (planId: string) => {
+    setLoading(planId);
     try {
-        // In a real app, you'd get the user email from state
-        const res = await api.payments.createCheckoutSession('price_research_hub', 'practitioner@example.com');
-        if (res.data.url) {
-            window.location.href = res.data.url;
-        }
+      const res = await api.payments.createCheckoutSession(planId, user?.email || "");
+      if (res.data.url) window.location.href = res.data.url;
     } catch (e) {
-        console.error("Payment Error", e);
-        alert("Payment gateway connection failed. Please try again.");
+      console.error(e);
+      alert("Payment hub connection timeout. Please try again.");
     } finally {
-        setLoading(null);
+      setLoading(null);
     }
   };
-
-  const plans = [
-    {
-      id: 'free',
-      name: "Clinical Free",
-      price: "$0",
-      description: "Ideal for solo practitioners and individual clinics during evaluation.",
-      features: ["Single User Access", "Basic Signal Processing", "5 Patients Capacity", "Community Support"],
-      button: "Get Started",
-      onClick: handleFreeStart
-    },
-    {
-      id: 'hospital',
-      name: "Hospital Enterprise",
-      price: "Custom",
-      description: "Full-scale solution for hospitals with multi-unit management.",
-      features: ["Unlimited Staff", "Advanced Gemini AI Analysis", "Infinite Patient Archive", "Priority Support", "Admin Analytics"],
-      button: "Contact Sales",
-      highlight: true,
-      onClick: handleContactSales
-    },
-    {
-      id: 'research',
-      name: "Research Hub",
-      price: "$299/mo",
-      description: "Dedicated tools for neuro-research and academic institutions.",
-      features: ["Data Export (EDF/CSV)", "Custom Algorithm Hub", "Collaborative Workspaces", "API Access"],
-      button: "Upgrade Now",
-      onClick: handleUpgrade
-    }
-  ];
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0F172A] p-8 lg:p-20">
-      <div className="max-w-7xl mx-auto space-y-16">
-        <div className="flex items-center justify-between">
-           <Link href="/auth/login" className="flex items-center space-x-3 text-slate-500 hover:text-primary transition-colors group">
-              <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
-              <span className="text-[10px] font-black uppercase tracking-widest">Back to Gateway</span>
-           </Link>
-           <div className="flex items-center space-x-3">
-              <Globe className="h-5 w-5 text-primary" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Global Clinical Network</span>
-           </div>
-        </div>
-
-        <div className="text-center space-y-6">
-           <h1 className="text-6xl font-black tracking-tight text-[#0F172A] dark:text-white">Clinical Access Plans</h1>
-           <p className="text-slate-500 font-medium max-w-2xl mx-auto">
-             Select the workstation tier that fits your clinical environment. All plans include HIPAA-compliant end-to-end encryption.
-           </p>
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0F172A] py-24 px-8 selection:bg-primary/30">
+      <div className="max-w-6xl mx-auto space-y-16">
+        <div className="text-center space-y-4 max-w-2xl mx-auto">
+          <h1 className="text-5xl font-black text-foreground tracking-tighter uppercase">Clinical Scale AI</h1>
+          <p className="text-lg font-medium text-slate-500 leading-relaxed">
+            Choose the neural logic tier that matches your unit's diagnostic requirements and data sovereignty needs.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-           {plans.map((plan, i) => (
-             <motion.div
-               key={i}
-               initial={{ opacity: 0, y: 20 }}
-               animate={{ opacity: 1, y: 0 }}
-               transition={{ delay: i * 0.1 }}
-               className={`relative p-10 rounded-[3rem] border-2 flex flex-col justify-between ${
-                 plan.highlight
-                  ? 'bg-primary border-primary shadow-2xl text-white'
-                  : 'bg-white dark:bg-slate-900 border-border/50 text-slate-900 dark:text-white'
-               }`}
-             >
-               <div className="space-y-8">
-                  <div className="flex justify-between items-start">
-                     <div>
-                        <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] mb-2 ${plan.highlight ? 'text-white/60' : 'text-primary'}`}>{plan.name}</h3>
-                        <p className={`text-4xl font-black tracking-tighter`}>{plan.price}</p>
-                     </div>
-                     {plan.highlight && <Zap className="h-6 w-6 text-white" />}
-                  </div>
+          <PlanCard
+            name="Neural Logic"
+            price="0"
+            desc="Sovereign local diagnostics for private clinics."
+            features={[
+              "100% Private Local Engine",
+              "12-Lead GPU Rendering",
+              "Patient Registry (100 MRNs)",
+              "Local PDF Reports",
+              "Standard Signal History"
+            ]}
+            icon={Cpu}
+            loading={loading === 'free'}
+            onSelect={() => handleSubscribe('free')}
+            active={!user?.subscriptionTier || user?.subscriptionTier === 'free'}
+          />
 
-                  <p className={`text-sm font-medium leading-relaxed ${plan.highlight ? 'text-white/80' : 'text-slate-500'}`}>
-                    {plan.description}
-                  </p>
+          <PlanCard
+            name="Enterprise 2.5"
+            price="149"
+            desc="Full institutional hub with cloud redundancy."
+            features={[
+              "Unlimited Patient Vault",
+              "Hybrid Stealth AI Core",
+              "Multi-Unit Red Alerts",
+              "Optical Scribe Digitization",
+              "90-Day Clinical Audit Log"
+            ]}
+            icon={BrainCircuit}
+            highlight
+            loading={loading === 'enterprise'}
+            onSelect={() => handleSubscribe('price_enterprise')}
+            active={user?.subscriptionTier === 'enterprise'}
+          />
 
-                  <div className="space-y-4">
-                     {plan.features.map((f, j) => (
-                        <div key={j} className="flex items-center space-x-3">
-                           <div className={`p-1 rounded-full ${plan.highlight ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800'}`}>
-                              <Check className={`h-3 w-3 ${plan.highlight ? 'text-white' : 'text-primary'}`} />
-                           </div>
-                           <span className="text-xs font-bold uppercase tracking-widest">{f}</span>
-                        </div>
-                     ))}
-                  </div>
-               </div>
-
-               <button
-                 onClick={plan.onClick}
-                 disabled={loading === plan.id}
-                 className={`mt-10 w-full py-5 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] transition-all active:scale-95 flex items-center justify-center gap-2 ${
-                 plan.highlight
-                  ? 'bg-white text-primary hover:shadow-xl'
-                  : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200'
-               }`}>
-                  {loading === plan.id ? <Loader2 className="h-4 w-4 animate-spin" /> : plan.button}
-               </button>
-             </motion.div>
-           ))}
+          <PlanCard
+            name="Research Node"
+            price="499"
+            desc="Advanced signal processing for study teams."
+            features={[
+              "RAW Signal Data Export",
+              "Custom Neural Training",
+              "Priority API Handshake",
+              "Bio-Feedback Audio Suite",
+              "24/7 Technical Response"
+            ]}
+            icon={Zap}
+            loading={loading === 'research'}
+            onSelect={() => handleSubscribe('price_research')}
+            active={user?.subscriptionTier === 'research'}
+          />
         </div>
 
-        <div className="text-center pt-10">
-           <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-             Institutional Licenses require domain verification. <Link href="/verify-hospital" className="text-primary hover:underline ml-2">Generate Hospital Key</Link>
-           </p>
+        {/* Comparison Footnote */}
+        <div className="max-w-3xl mx-auto p-10 bg-white dark:bg-slate-900 rounded-[3rem] border border-border/50 shadow-2xl flex flex-col md:flex-row items-center gap-8 relative overflow-hidden">
+           <div className="h-16 w-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0">
+              <ShieldCheck className="h-8 w-8" />
+           </div>
+           <div className="space-y-1 flex-1">
+              <h4 className="text-sm font-black uppercase tracking-widest text-foreground">Compliance Certified</h4>
+              <p className="text-xs font-medium text-slate-500 leading-relaxed">
+                 All subscription tiers include **E2E Signal Encryption** and **AES-256 local vault storage** as standard. We prioritize medical data sovereignty above all else.
+              </p>
+           </div>
+           <button className="text-[10px] font-black text-primary uppercase tracking-[0.2em] whitespace-nowrap hover:underline flex items-center gap-2">
+              View Legal Matrix <ArrowRight className="h-4 w-4" />
+           </button>
+           <Sparkles className="absolute -top-10 -right-10 h-32 w-32 text-primary opacity-5" />
         </div>
       </div>
     </div>
+  );
+}
+
+function PlanCard({ name, price, desc, features, icon: Icon, highlight, onSelect, loading, active }: any) {
+  return (
+    <motion.div
+        whileHover={{ y: -10 }}
+        className={`relative p-10 rounded-[3.5rem] border-2 transition-all flex flex-col h-full ${
+        highlight
+            ? 'bg-primary text-white border-primary shadow-3xl shadow-primary/30'
+            : 'bg-white dark:bg-slate-900 border-border/50 shadow-xl'
+        }`}
+    >
+      {active && (
+          <div className={`absolute -top-4 left-1/2 -translate-x-1/2 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border-2 shadow-lg ${
+              highlight ? 'bg-white text-primary border-primary' : 'bg-primary text-white border-white'
+          }`}>
+              Active Plan
+          </div>
+      )}
+
+      <div className="space-y-8 flex-1">
+        <div className="flex items-center justify-between">
+           <div className={`h-16 w-16 rounded-[1.8rem] flex items-center justify-center ${highlight ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800'}`}>
+              <Icon className={`h-8 w-8 ${highlight ? 'text-white' : 'text-primary'}`} />
+           </div>
+           <div className="text-right">
+              <p className={`text-4xl font-black tracking-tighter ${highlight ? 'text-white' : 'text-foreground'}`}>
+                 ${price}
+              </p>
+              <p className={`text-[10px] font-bold uppercase tracking-widest opacity-60 ${highlight ? 'text-white' : 'text-slate-400'}`}>Per Unit / Mo</p>
+           </div>
+        </div>
+
+        <div className="space-y-2">
+           <h3 className="text-2xl font-black tracking-tight uppercase">{name}</h3>
+           <p className={`text-xs font-medium leading-relaxed ${highlight ? 'text-white/70' : 'text-slate-500'}`}>{desc}</p>
+        </div>
+
+        <div className={`h-px w-full ${highlight ? 'bg-white/10' : 'bg-border/50'}`} />
+
+        <ul className="space-y-4">
+          {features.map((f: string, i: number) => (
+            <li key={i} className="flex items-center space-x-3">
+              <CheckCircle2 className={`h-4 w-4 shrink-0 ${highlight ? 'text-emerald-300' : 'text-emerald-500'}`} />
+              <span className={`text-[11px] font-bold tracking-tight ${highlight ? 'text-white/90' : 'text-slate-600 dark:text-slate-300'}`}>{f}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <button
+        onClick={onSelect}
+        disabled={loading || active}
+        className={`mt-10 w-full h-16 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 ${
+          highlight
+            ? 'bg-white text-primary hover:scale-105 active:scale-95 shadow-2xl'
+            : 'bg-primary text-white hover:opacity-90 active:scale-95 shadow-xl'
+        } disabled:opacity-50 disabled:scale-100`}
+      >
+        {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (active ? "Selected Node" : "Initialize Upgrade")}
+        {!loading && !active && <ArrowRight className="h-4 w-4" />}
+      </button>
+    </motion.div>
   );
 }

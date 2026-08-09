@@ -119,6 +119,32 @@ export default function ProfilePage() {
             </p>
             <button className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">Request Identity Reset</button>
           </div>
+
+          {/* Admin Security Vault */}
+          {user?.role === 'admin' && (
+              <div className="glass-card p-10 border-2 border-primary/20 bg-primary/5 space-y-8 relative overflow-hidden group">
+                  <div className="relative z-10 space-y-6">
+                     <div className="flex items-center justify-between">
+                        <h3 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] flex items-center gap-2">
+                            <ShieldCheck className="h-4 w-4" /> Institutional Security Vault
+                        </h3>
+                        <span className="text-[8px] font-black text-primary uppercase px-2 py-1 bg-white rounded-md border border-primary/10 shadow-sm">Admin Access</span>
+                     </div>
+
+                     <div className="space-y-4">
+                        <p className="text-xs font-bold text-slate-600 dark:text-slate-300">Master Clinical Key (Recovery)</p>
+                        <div className="h-16 bg-white dark:bg-slate-900 border-2 border-border/50 rounded-2xl flex items-center justify-between px-6">
+                           <p className="font-mono font-black text-xl tracking-[0.3em] text-primary">
+                              {user?.clinicalKey ? user.clinicalKey : 'NS-884920'}
+                           </p>
+                           <button className="h-10 px-4 bg-slate-100 dark:bg-slate-800 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-primary transition-all">Copy Key</button>
+                        </div>
+                        <p className="text-[9px] font-medium text-slate-400 italic">This key grants root access to the {user?.hospitalName} clinical hub. Store with extreme caution.</p>
+                     </div>
+                  </div>
+                  <Lock className="absolute -bottom-8 -right-8 h-40 w-40 text-primary opacity-5 group-hover:scale-110 transition-transform duration-1000" />
+              </div>
+          )}
         </div>
 
         <div className="space-y-8">
