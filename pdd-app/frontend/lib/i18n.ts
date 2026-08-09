@@ -22,7 +22,17 @@ const translations: any = {
     active_history: "Active History",
     longitudinal: "Longitudinal Intelligence",
     security_vault: "Institutional Security Vault",
-    protocols: "Protocol Library"
+    protocols: "Protocol Library",
+    admission: "Patient Admission",
+    mrn: "Clinical MRN",
+    patient_name: "Patient Name",
+    age: "Age / DOB",
+    modality: "Diagnostic Modality",
+    sweep_speed: "Sweep Speed",
+    gain: "Gain",
+    signal_health: "Signal Health",
+    neural_sqi: "Neural SQI",
+    baseline_overlay: "Baseline Overlay"
   },
   es: {
     dashboard: "Panel",
@@ -43,12 +53,22 @@ const translations: any = {
     active_history: "Historial Activo",
     longitudinal: "Inteligencia Longitudinal",
     security_vault: "Bóveda de Seguridad",
-    protocols: "Librería de Protocolos"
+    protocols: "Librería de Protocolos",
+    admission: "Admisión de Pacientes",
+    mrn: "MRN Clínico",
+    patient_name: "Nombre del Paciente",
+    age: "Edad / FN",
+    modality: "Modalidad Diagnóstica",
+    sweep_speed: "Velocidad de Barrido",
+    gain: "Ganancia",
+    signal_health: "Salud de la Señal",
+    neural_sqi: "SQI Neuronal",
+    baseline_overlay: "Superposición de Base"
   }
 };
 
 export function useTranslation() {
-  const { language = 'en' } = (useStore.getState() as any); // We'll add this to store
+  const { language = 'en' } = useStore();
 
   const t = (key: string) => {
     return translations[language]?.[key] || translations['en'][key] || key;

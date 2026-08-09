@@ -20,9 +20,11 @@ import { api } from "../../lib/api/client";
 
 import { useRouter } from "next/navigation";
 import { socketService } from "../../lib/api/socket";
+import { useTranslation } from "../../lib/i18n";
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { user, networkStatus, activePatient } = useStore();
   const [stats, setStats] = useState({
     sessions: 0,
@@ -193,7 +195,7 @@ export default function DashboardPage() {
           {isHospital && (
             <div className="glass-card p-8">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Multi-Unit Status</h3>
+                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('unit_status')}</h3>
                 <div className="flex items-center space-x-2 px-3 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">
                     <div className="h-1 w-1 rounded-full bg-emerald-500 animate-ping" />
                     <span className="text-[8px] font-black text-emerald-500 uppercase">Live Feed</span>
@@ -224,7 +226,7 @@ export default function DashboardPage() {
         {/* Right Sidebar */}
         <div className="space-y-8">
           <div className="glass-card p-6">
-            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 text-center">Clinical Feed</h3>
+            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 text-center">{t('clinical_feed')}</h3>
             <div className="space-y-6">
               {feed.map((item, i) => (
                 <FeedItem key={i} title={item.title} body={item.body} category={item.category} />

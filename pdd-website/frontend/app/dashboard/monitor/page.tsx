@@ -34,6 +34,7 @@ import SpectrogramCanvas from "../../../components/SpectrogramCanvas";
 import { useWaveform, ArtifactSeverity, DSPFilterConfig } from "../../../hooks/useWaveform";
 import { api } from "../../../lib/api/client";
 import { queueForSync } from "../../../lib/offlineSync";
+import { useTranslation } from "../../../lib/i18n";
 import { useSearchParams } from "next/navigation";
 import { socketService } from "../../../lib/api/socket";
 
@@ -43,6 +44,7 @@ function cn(...inputs: ClassValue[]) {
 
 export default function MonitorPage() {
   const { activePatient, setHardwareStatus, user, setActivePatient } = useStore();
+  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const isMirrorMode = searchParams.get('mode') === 'mirror';
   const mirrorPatientId = searchParams.get('patient');
@@ -270,7 +272,7 @@ export default function MonitorPage() {
                     className="neuro-button bg-white dark:bg-slate-800 text-primary border border-primary/20 flex items-center space-x-2 px-6 active:scale-95 transition-all"
                 >
                     {analyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <BrainCircuit className="h-4 w-4" />}
-                    <span className="text-[10px] font-black uppercase tracking-widest">Neural Analysis</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">{t('neural_analysis')}</span>
                 </button>
             )}
 
@@ -303,7 +305,7 @@ export default function MonitorPage() {
                         )}
                       >
                          <History className="h-3 w-3" />
-                         Baseline Overlay
+                         {t('baseline_overlay')}
                       </button>
                   )}
 
@@ -333,7 +335,7 @@ export default function MonitorPage() {
                 className="neuro-button bg-primary text-white flex items-center space-x-3 px-10 h-14 shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-40"
               >
                 {isInitializing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Play className="h-5 w-5 fill-white" />}
-                <span className="font-black uppercase tracking-widest text-xs">Initialize Stream</span>
+                <span className="font-black uppercase tracking-widest text-xs">{t('initialize')}</span>
               </button>
             ) : (
               <div className="flex items-center gap-3">
@@ -377,7 +379,7 @@ export default function MonitorPage() {
                         className="neuro-button bg-emerald-600 text-white flex items-center space-x-2 px-10 h-14 shadow-xl shadow-emerald-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-40"
                       >
                         {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-5 w-5" />}
-                        <span className="font-black uppercase tracking-widest text-xs">Commit to Archive</span>
+                        <span className="font-black uppercase tracking-widest text-xs">{t('commit')}</span>
                       </button>
                     </>
                   )}
@@ -541,11 +543,11 @@ export default function MonitorPage() {
                      <div className="grid grid-cols-2 gap-6 pt-8 border-t border-white/5">
                         <div className="space-y-4">
                            <div>
-                              <p className="text-[9px] font-black text-white/40 uppercase mb-2">Neural SQI</p>
+                              <p className="text-[9px] font-black text-white/40 uppercase mb-2">{t('neural_sqi')}</p>
                               <p className={cn("text-2xl font-black transition-all", isLive ? "text-primary" : "text-white/10")}>{isLive ? `${(100 - (artifactStatus.severity === 'none' ? 1.2 : (artifactStatus.severity === 'low' ? 15.4 : 54.7))).toFixed(1)}%` : "--"}</p>
                            </div>
                            <div className="space-y-1">
-                               <p className="text-[8px] font-black text-white/20 uppercase tracking-tighter">Signal Health</p>
+                               <p className="text-[8px] font-black text-white/20 uppercase tracking-tighter">{t('signal_health')}</p>
                                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                                    <motion.div
                                         initial={{ width: 0 }}
