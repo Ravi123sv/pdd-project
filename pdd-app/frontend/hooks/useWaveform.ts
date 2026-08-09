@@ -31,6 +31,8 @@ export function useWaveform(channelCount: number, isLive: boolean, isPaused: boo
       timeRef.current += 0.02;
       const t = timeRef.current;
 
+      const modality = isEEG ? 'EEG' : (channelCount === 12 ? 'ECG' : 'EMG');
+
       // --- 1. Artifact Determination ---
       let currentArtifactType = 'Optimal';
       let currentSeverity: ArtifactSeverity = 'none';
@@ -61,18 +63,26 @@ export function useWaveform(channelCount: number, isLive: boolean, isPaused: boo
           const rawChan = [...nextRaw[i]];
           const filtChan = [...nextFiltered[i]];
 
-          // --- 2. Base Signal (Clean ECG Model) ---
-          const bpm = 72;
-          const bps = bpm / 60;
-          const beatPeriod = 1 / bps;
-          const phase = t % beatPeriod;
+          // --- 2. Base Signal Generation ---
           let cleanVal = 0;
 
-          if (phase > 0.1 && phase < 0.2) cleanVal += 2 * Math.sin((phase - 0.1) * Math.PI / 0.1);
-          if (phase > 0.3 && phase < 0.35) cleanVal -= 5 * Math.sin((phase - 0.3) * Math.PI / 0.05);
-          else if (phase >= 0.35 && phase < 0.4) cleanVal += 40 * Math.sin((phase - 0.35) * Math.PI / 0.05);
-          else if (phase >= 0.4 && phase < 0.45) cleanVal -= 8 * Math.sin((phase - 0.4) * Math.PI / 0.05);
-          if (phase > 0.6 && phase < 0.8) cleanVal += 4 * Math.sin((phase - 0.6) * Math.PI / 0.2);
+          if (modality === 'ECG') {
+              const bpm = 72;
+              const bps = bpm / 60;
+              const beatPeriod = 1 / bps;
+              const phase = t % beatPeriod;
+              if (phase > 0.1 && phase < 0.2) cleanVal += 2 * Math.sin((phase - 0.1) * Math.PI / 0.1);
+              if (phase > 0.3 && phase < 0.35) cleanVal -= 5 * Math.sin((phase - 0.3) * Math.PI / 0.05);
+              else if (phase >= 0.35 && phase < 0.4) cleanVal += 40 * Math.sin((phase - 0.35) * Math.PI / 0.05);
+              else if (phase >= 0.4 && phase < 0.45) cleanVal -= 8 * Math.sin((phase - 0.4) * Math.PI / 0.05);
+              if (phase > 0.6 && phase < 0.8) cleanVal += 4 * Math.sin((phase - 0.6) * Math.PI / 0.2);
+          } else if (modality === 'EEG') {
+              // Simulated Alpha/Beta mix
+              cleanVal = 6 * Math.sin(t * 10 * Math.PI) + 3 * Math.sin(t * 24 * Math.PI);
+          } else if (modality === 'EMG') {
+              // Simulated Muscle Recruitment
+              cleanVal = (Math.random() - 0.5) * 15 * (1 + Math.sin(t * 2));
+          }
 
           // --- 3. Add Artificial Artifacts to Raw ---
           let noise = (Math.random() - 0.5) * 2;

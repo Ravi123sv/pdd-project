@@ -44,6 +44,7 @@ export default function Sidebar({ isCollapsed, setCollapsed }: SidebarProps) {
 
   const navItems: NavItem[] = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, section: "WORKSTATION" },
+    { href: "/dashboard/patients", label: "Patient Registry", icon: Users, section: "WORKSTATION" },
     { href: "/dashboard/assets", label: "Asset Inventory", icon: Package, section: "WORKSTATION" },
     { href: "/dashboard/monitor", label: "Signal Monitor", icon: Activity, section: "DIAGNOSTICS" },
     { href: "/dashboard/diagnostics", label: "Stability Analysis", icon: BrainCircuit, section: "DIAGNOSTICS" },
