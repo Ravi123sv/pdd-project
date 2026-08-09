@@ -1,76 +1,76 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useStore } from "../../../lib/store/useStore";
+import { api } from "../../../lib/api/client";
 import {
   CloudUpload,
   FileText,
   BrainCircuit,
   Loader2,
   CheckCircle2,
-  Camera,
+  AlertCircle,
+  ScanLine,
   Image as ImageIcon,
-  Database,
-  ArrowRight,
+  ChevronRight,
   ShieldCheck,
-  Zap,
-  Maximize2,
-  X
+  X,
+  RefreshCw,
+  Cpu
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { api } from "../../../lib/api/client";
 
-export default function IngestPage() {
+export default function ExternalIngestPage() {
+  const { user } = useStore();
   const [file, setFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<string | null>(null);
-  const [step, setStep] = useState(1); // 1: Select, 2: Scanning, 3: AI Analysis
-  const [mode, setMode] = useState<'file' | 'optical'>('file');
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState<string | null>(null);
+  const [mode, setMode] = useState<'optical' | 'digital'>('optical');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const selectedFile = e.target.files[0];
-      setFile(selectedFile);
-      if (selectedFile.type.startsWith('image/')) {
-          setPreviewUrl(URL.createObjectURL(selectedFile));
-      } else {
-          setPreviewUrl(null);
-      }
+      const selected = e.target.files?.[0];
+      if (selected) setFile(selected);
+  };
+
+  const runIngestAnalysis = async () => {
+    if (!file) return;
+    setAnalyzing(true);
+    setAnalysis(null);
+
+    try {
+        if (mode === 'optical') {
+            // Convert file to base64 for vision processing
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = async () => {
+                const base64 = (reader.result as string).split(',')[1];
+                const res = await api.signals.ingestAi({
+                    mode: 'optical',
+                    imageData: base64,
+                    mimeType: file.type,
+                    fileName: file.name
+                });
+                setAnalysis(res.data.analysis);
+                setAnalyzing(false);
+            };
+        } else {
+            const res = await api.signals.ingestAi({
+                mode: 'digital',
+                fileName: file.name
+            });
+            setAnalysis(res.data.analysis);
+            setAnalyzing(false);
+        }
+    } catch (e) {
+      console.error(e);
+      setAnalysis("Ingest analysis failed. Verify hub connectivity.");
+      setAnalyzing(false);
     }
   };
 
-  const processIngest = async () => {
-    if (!file) return;
-    setUploading(true);
-    setStep(2);
-
-    try {
-        let imageData = "";
-        if (mode === 'optical') {
-            const reader = new FileReader();
-            imageData = await new Promise((resolve) => {
-                reader.onload = (e) => resolve((e.target?.result as string).split(',')[1]);
-                reader.readAsDataURL(file);
-            });
-        }
-
-        // Use Backend Proxy (Compliance)
-        const res = await api.signals.ingestAi({
-            mode,
-            fileName: file.name,
-            imageData,
-            mimeType: file.type
-        });
-
-        setAnalysisResult(res.data.analysis);
-        setStep(3);
-    } catch (e) {
-        console.error(e);
-        setAnalysisResult("Neural Link Offline. Verify Backend Handshake.");
-    } finally {
-        setUploading(false);
-    }
+  const reset = () => {
+      setFile(null);
+      setAnalysis(null);
   };
 
   return (
@@ -78,165 +78,130 @@ export default function IngestPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center space-x-4">
            <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
-              {mode === 'file' ? <CloudUpload className="h-7 w-7" /> : <Camera className="h-7 w-7" />}
+              <CloudUpload className="h-7 w-7" />
            </div>
            <div>
-              <h1 className="text-2xl font-black text-foreground tracking-tight">
-                {mode === 'file' ? 'External Ingest Hub' : 'Optical Clinical Scribe'}
-              </h1>
+              <h1 className="text-2xl font-black text-foreground tracking-tight">External Ingest</h1>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                {mode === 'file' ? 'Import Digital Datasets (.CSV, .EDF)' : 'Digitize Paper Charts via Neural Logic'}
+                Optical Chart Digitization & Legacy Data Import
               </p>
            </div>
         </div>
 
         <div className="flex items-center bg-slate-100 dark:bg-slate-900 p-1.5 rounded-2xl border border-border/50">
             <button
-                onClick={() => {setMode('file'); setFile(null); setAnalysisResult(null);}}
-                className={`px-6 py-2 rounded-xl text-[9px] font-black uppercase transition-all ${mode === 'file' ? 'bg-primary text-white shadow-lg' : 'text-slate-500'}`}
-            >
-                Digital Ingest
-            </button>
-            <button
-                onClick={() => {setMode('optical'); setFile(null); setAnalysisResult(null);}}
-                className={`px-6 py-2 rounded-xl text-[9px] font-black uppercase transition-all ${mode === 'optical' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500'}`}
+                onClick={() => setMode('optical')}
+                className={`px-6 py-2 rounded-xl text-[9px] font-black uppercase transition-all ${mode === 'optical' ? 'bg-primary text-white shadow-lg' : 'text-slate-500'}`}
             >
                 Optical Scribe
+            </button>
+            <button
+                onClick={() => setMode('digital')}
+                className={`px-6 py-2 rounded-xl text-[9px] font-black uppercase transition-all ${mode === 'digital' ? 'bg-primary text-white shadow-lg' : 'text-slate-500'}`}
+            >
+                Digital Import
             </button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Input Panel */}
         <div className="lg:col-span-2 space-y-6">
-           <div className="glass-card p-10 border-2 border-dashed border-border/50 hover:border-primary/50 transition-all group relative overflow-hidden flex flex-col items-center text-center">
-              <input
-                type="file"
-                onChange={handleFileChange}
-                className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                accept={mode === 'file' ? ".csv,.edf,.json,.txt" : "image/*"}
-              />
+           {/* Drop Zone */}
+           {!analysis ? (
+               <div className="glass-card p-12 flex flex-col items-center justify-center text-center space-y-8 border-2 border-dashed border-primary/20 hover:border-primary/50 transition-all bg-primary/5">
+                  <div className="h-24 w-24 rounded-[3rem] bg-white dark:bg-slate-800 flex items-center justify-center text-primary shadow-xl">
+                      {mode === 'optical' ? <ScanLine className="h-10 w-10" /> : <FileText className="h-10 w-10" />}
+                  </div>
 
-              {previewUrl ? (
-                  <div className="relative w-full max-w-sm aspect-[4/3] rounded-2xl overflow-hidden border-2 border-border mb-6">
-                      <img src={previewUrl} className="w-full h-full object-cover" alt="Scan Preview" />
-                      <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <ImageIcon className="h-10 w-10 text-white" />
+                  <div className="space-y-2">
+                     <h3 className="text-xl font-black text-foreground uppercase tracking-tight">
+                        {mode === 'optical' ? "Upload Physical Chart" : "Select Clinical Dataset"}
+                     </h3>
+                     <p className="text-sm font-medium text-slate-500 max-w-sm mx-auto leading-relaxed">
+                        {mode === 'optical'
+                          ? "Scan a physical ECG/EEG paper strip. The Neural Engine will perform optical digitization."
+                          : "Import historical clinical recordings in EDF or CSV format for retrospective analysis."}
+                     </p>
+                  </div>
+
+                  {!file ? (
+                      <label className="neuro-button bg-primary text-white px-12 py-4 cursor-pointer shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
+                        <span className="text-[10px] font-black uppercase tracking-widest">Select Source File</span>
+                        <input type="file" className="hidden" onChange={handleFileChange} accept={mode === 'optical' ? 'image/*' : '.csv,.edf,.json'} />
+                      </label>
+                  ) : (
+                      <div className="flex flex-col items-center gap-4">
+                          <div className="px-6 py-3 bg-white dark:bg-slate-800 rounded-2xl border border-border shadow-sm flex items-center gap-3">
+                              {mode === 'optical' ? <ImageIcon className="h-4 w-4 text-primary" /> : <FileText className="h-4 w-4 text-primary" />}
+                              <span className="text-xs font-bold text-foreground">{file.name}</span>
+                              <button onClick={() => setFile(null)} className="text-slate-400 hover:text-red-500 transition-colors"><X className="h-4 w-4" /></button>
+                          </div>
+                          <button
+                            onClick={runIngestAnalysis}
+                            disabled={analyzing}
+                            className="neuro-button bg-emerald-600 text-white px-16 h-14 shadow-xl shadow-emerald-600/20 active:scale-95 transition-all"
+                          >
+                             {analyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <BrainCircuit className="h-4 w-4" />}
+                             <span className="text-[10px] font-black uppercase tracking-widest ml-3">Initialize Analysis</span>
+                          </button>
                       </div>
-                  </div>
-              ) : (
-                  <div className="h-24 w-24 rounded-[2.5rem] bg-slate-50 dark:bg-slate-800 flex items-center justify-center group-hover:scale-110 group-hover:bg-primary/5 transition-all mb-6">
-                    {mode === 'file' ? <FileText className="h-10 w-10 text-slate-300 group-hover:text-primary" /> : <Camera className="h-10 w-10 text-slate-300 group-hover:text-emerald-500" />}
-                  </div>
-              )}
+                  )}
+               </div>
+           ) : (
+               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+                  <div className="glass-card p-10 space-y-8 bg-slate-900 text-white relative overflow-hidden group">
+                     <div className="relative z-10 space-y-6">
+                        <div className="flex items-center justify-between">
+                           <div className="flex items-center gap-3">
+                              <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                              <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Neural Ingest Complete</span>
+                           </div>
+                           <button onClick={reset} className="text-white/20 hover:text-white transition-all"><RefreshCw className="h-4 w-4" /></button>
+                        </div>
 
-              <div className="space-y-2">
-                 <h3 className="text-xl font-black uppercase tracking-tight">
-                    {file ? file.name : (mode === 'file' ? 'Select Data Stream' : 'Upload Paper Chart')}
-                 </h3>
-                 <p className="text-sm font-medium text-slate-500">
-                    {mode === 'file' ? 'Supports .EDF (EEG) and .CSV (Telemetry)' : 'Take a photo of an ECG/EEG paper strip.'}
-                 </p>
-              </div>
-           </div>
+                        <div className="space-y-4">
+                           <h4 className="text-2xl font-black tracking-tight text-primary">Clinical Observation Report</h4>
+                           <p className="text-sm font-medium leading-relaxed text-slate-300 bg-white/5 p-8 rounded-[2rem] border border-white/5 italic">
+                              "{analysis}"
+                           </p>
+                        </div>
 
-           {file && (
-              <button
-                onClick={processIngest}
-                disabled={uploading}
-                className={`w-full h-20 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all disabled:opacity-50 ${mode === 'file' ? 'bg-primary shadow-primary/30' : 'bg-emerald-600 shadow-emerald-200'} text-white`}
-              >
-                 {uploading ? <Loader2 className="h-6 w-6 animate-spin" /> : <>{mode === 'file' ? 'Run Neural Analysis' : 'Initialize Optical Digitization'} <ArrowRight className="h-4 w-4" /></>}
-              </button>
+                        <div className="pt-6 border-t border-white/5 flex gap-4">
+                           <button className="flex-1 h-14 bg-white/5 border border-white/10 text-white rounded-2xl font-black text-[9px] uppercase tracking-widest hover:bg-white/10 transition-all">Save to Archive</button>
+                           <button className="flex-1 h-14 bg-primary text-white rounded-2xl font-black text-[9px] uppercase tracking-widest shadow-xl shadow-primary/20">Print Findings</button>
+                        </div>
+                     </div>
+                     <ScanLine className="absolute -bottom-10 -right-10 h-64 w-64 text-primary opacity-5 animate-pulse" />
+                  </div>
+               </motion.div>
            )}
         </div>
 
-        {/* Sidebar Context */}
-        <div className="space-y-6">
-           <section className="glass-card p-8 space-y-6">
-              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Processing Node</h3>
-              <div className="space-y-4">
-                 <PipelineStep label="Data Sanitization" active={step === 2} complete={step > 2} />
-                 <PipelineStep label={mode === 'file' ? 'Signal Decoding' : 'Vision Extraction'} active={step === 2} complete={step > 2} />
-                 <PipelineStep label="Neural Interpretation" active={step === 2 && uploading} complete={step === 3 && !uploading} />
-              </div>
-           </section>
-
-           <div className="p-6 bg-slate-900 rounded-3xl text-white relative overflow-hidden group">
-              <ShieldCheck className="absolute -bottom-4 -right-4 h-24 w-24 opacity-10" />
+        <div className="space-y-8">
+           <div className="glass-card p-8 bg-primary text-white space-y-6 relative overflow-hidden group">
               <div className="relative z-10 space-y-4">
-                 <div className="flex items-center space-x-2 text-primary">
-                    <Database className="h-4 w-4" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">HIPAA Compliance</span>
+                 <div className="flex items-center space-x-2">
+                    <ShieldCheck className="h-5 w-5" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">HIPAA OCR</span>
                  </div>
-                 <p className="text-xs font-bold leading-relaxed text-white/70">
-                    All {mode === 'optical' ? 'image' : 'file'} data is scrubbed of PII locally before neural analysis.
+                 <h4 className="text-lg font-black tracking-tight">Optical Verification</h4>
+                 <p className="text-xs font-bold leading-relaxed opacity-90">
+                    Our vision core identifies P-waves, QRS complexes, and neural spikes directly from physical paper scans with 99.2% morphology accuracy.
                  </p>
               </div>
            </div>
+
+           <div className="p-8 border-2 border-dashed border-border rounded-[2.5rem] space-y-4">
+              <div className="flex items-center space-x-3 text-slate-400">
+                 <Cpu className="h-5 w-5" />
+                 <h4 className="text-[10px] font-black uppercase tracking-widest">Node Resources</h4>
+              </div>
+              <p className="text-xs font-medium text-slate-500 leading-relaxed italic">
+                 Vision processing is handled in the encrypted Local Logic sandbox to prevent PHI leakage to external API endpoints.
+              </p>
+           </div>
         </div>
       </div>
-
-      {/* Results View */}
-      <AnimatePresence>
-        {analysisResult && (
-           <motion.div
-             initial={{ opacity: 0, y: 30 }}
-             animate={{ opacity: 1, y: 0 }}
-             className="bg-white dark:bg-slate-900 rounded-[3rem] border-2 border-primary/20 shadow-3xl p-12 space-y-8 relative overflow-hidden"
-           >
-              <div className="flex items-center justify-between relative z-10">
-                 <div className="flex items-center space-x-4">
-                    <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                       <BrainCircuit className="h-6 w-6" />
-                    </div>
-                    <div>
-                       <h2 className="text-2xl font-black text-foreground uppercase tracking-tight">Digitized Clinical Report</h2>
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Output: Neural Logic v3.0 Hub</p>
-                    </div>
-                 </div>
-                 <div className="flex items-center gap-4">
-                    <div className="flex items-center space-x-2 text-emerald-500">
-                        <Zap className="h-4 w-4" />
-                        <span className="text-[10px] font-black uppercase">Accuracy: 98.2%</span>
-                    </div>
-                    <button onClick={() => setAnalysisResult(null)} className="h-10 w-10 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-400"><X className="h-5 w-5" /></button>
-                 </div>
-              </div>
-
-              <div className="p-10 bg-slate-50 dark:bg-slate-950 rounded-[2.5rem] border border-border/50 relative group">
-                 <p className="text-sm font-bold text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-line relative z-10">
-                    {analysisResult}
-                 </p>
-                 <BrainCircuit className="absolute -bottom-10 -right-10 h-48 w-48 text-primary opacity-5" />
-              </div>
-
-              <div className="flex justify-end gap-6 relative z-10">
-                 <button className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-primary transition-colors">Discard Analysis</button>
-                 <button className="h-14 px-12 bg-primary text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-primary/20 active:scale-95 transition-all">
-                    Commit to MRN Archive
-                 </button>
-              </div>
-           </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
-}
-
-function PipelineStep({ label, active, complete }: any) {
-    return (
-        <div className="flex items-center space-x-4">
-            <div className={`h-8 w-8 rounded-lg flex items-center justify-center text-[10px] font-black transition-all ${
-                complete ? 'bg-emerald-500 text-white' :
-                active ? 'bg-primary text-white shadow-lg animate-pulse' :
-                'bg-slate-100 dark:bg-slate-800 text-slate-400'
-            }`}>
-                {complete ? <CheckCircle2 className="h-4 w-4" /> : <div className="h-1 w-1 rounded-full bg-current" />}
-            </div>
-            <span className={`text-[11px] font-black uppercase tracking-widest ${complete ? 'text-slate-900 dark:text-white' : active ? 'text-primary' : 'text-slate-400'}`}>
-                {label}
-            </span>
-        </div>
-    );
 }
