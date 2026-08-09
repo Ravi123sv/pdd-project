@@ -4,9 +4,16 @@ import { useState, useEffect, useRef } from "react";
 
 export type ArtifactSeverity = 'low' | 'high' | 'none';
 
+export interface DSPFilterConfig {
+    lowPass: boolean;  // 35Hz suppression
+    highPass: boolean; // 0.5Hz baseline wander suppression
+    notch: boolean;    // 50/60Hz mains noise suppression
+}
+
 /**
- * useWaveform Hook v4.5
+ * useWaveform Hook v5.0
  * Generates Dual Streams: Raw Signal (with artifacts) and AI-Filtered Signal.
+ * Added: DSP Filter Suite (Low-Pass, High-Pass, Notch).
  * Added: Sweep Speed control (12.5, 25, 50 mm/s) for diagnostic fidelity.
  * Added: Manual Artifact Injection support for clinical stress-testing.
  */
@@ -15,7 +22,8 @@ export function useWaveform(
     isLive: boolean,
     isPaused: boolean,
     manualArtifact?: { type: string, severity: ArtifactSeverity },
-    sweepSpeed: 12.5 | 25 | 50 = 25
+    sweepSpeed: 12.5 | 25 | 50 = 25,
+    dspFilters: DSPFilterConfig = { lowPass: true, highPass: true, notch: true }
 ) {
   const [channels, setChannels] = useState<{raw: number[][], filtered: number[][]}>({
     raw: Array(channelCount).fill([]).map(() => Array(200).fill(0)),
@@ -34,19 +42,15 @@ export function useWaveform(
     if (!isLive || isPaused) return;
 
     const update = () => {
-      // Adjusted time increment based on Sweep Speed (Clinical Standard)
       const speedFactor = sweepSpeed / 25;
       const deltaT = 0.02 * speedFactor;
       timeRef.current += deltaT;
 
-      // Prevent floating point drift/overflow on shift-long sessions
       if (timeRef.current > 3600) timeRef.current = 0;
-
       const t = timeRef.current;
 
       const modality = channelCount === 8 ? 'EEG' : (channelCount === 12 ? 'ECG' : 'EMG');
 
-      // --- 1. Artifact Determination ---
       let currentArtifactType = 'Optimal';
       let currentSeverity: ArtifactSeverity = 'none';
 
@@ -74,7 +78,7 @@ export function useWaveform(
           const rawChan = [...nextRaw[i]];
           const filtChan = [...nextFiltered[i]];
 
-          // --- 2. Base Signal Generation ---
+          // --- 1. Base Signal Generation ---
           let cleanVal = 0;
 
           if (modality === 'ECG') {
@@ -93,15 +97,30 @@ export function useWaveform(
               cleanVal = (Math.random() - 0.5) * 15 * (1 + Math.sin(t * 2));
           }
 
-          // --- 3. Add Artificial Artifacts to Raw ---
+          // --- 2. Add Artificial Artifacts to Raw ---
           let noise = (Math.random() - 0.5) * 2;
-          if (currentSeverity === 'low') noise += Math.sin(t * 40) * 12 * Math.random();
-          else if (currentSeverity === 'high') noise += Math.sin(t * 0.4) * 35 + Math.sin(t * 120) * 8;
+
+          // High-Freq Noise (EMG interference)
+          const hfNoise = Math.sin(t * 150) * (currentSeverity === 'high' ? 12 : 1);
+          // Baseline Wander (0.1Hz)
+          const bwNoise = Math.sin(t * 0.2) * (currentSeverity === 'high' ? 30 : 0.5);
+          // Mains Hum (50Hz)
+          const mainsNoise = Math.sin(t * 100 * Math.PI) * (currentSeverity === 'high' ? 8 : 0.2);
+
+          if (currentSeverity === 'low') noise += hfNoise * 5;
+          else if (currentSeverity === 'high') noise += hfNoise * 10 + bwNoise + mainsNoise;
 
           const rawVal = cleanVal + noise;
 
-          // --- 4. Neural AI Filter Simulation ---
-          const filteredVal = cleanVal + (noise * 0.02);
+          // --- 3. Neural DSP Filter Chain ---
+          let filteredVal = rawVal;
+
+          if (dspFilters.lowPass) filteredVal -= (hfNoise * 0.95);
+          if (dspFilters.highPass) filteredVal -= (bwNoise * 0.98);
+          if (dspFilters.notch) filteredVal -= (mainsNoise * 0.99);
+
+          // Final Neural Smoothing (Residual Noise Suppression)
+          filteredVal = cleanVal + ((filteredVal - cleanVal) * 0.1);
 
           rawChan.push(rawVal);
           filtChan.push(filteredVal);
@@ -123,7 +142,7 @@ export function useWaveform(
     return () => {
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
     };
-  }, [isLive, isPaused, channelCount, manualArtifact, sweepSpeed]);
+  }, [isLive, isPaused, channelCount, manualArtifact, sweepSpeed, dspFilters]);
 
   return { channels, artifactStatus };
 }

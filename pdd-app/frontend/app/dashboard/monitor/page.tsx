@@ -29,7 +29,7 @@ import { twMerge } from "tailwind-merge";
 import { motion, AnimatePresence } from "framer-motion";
 import SignalCanvas from "../../../components/SignalCanvas";
 import SpectrogramCanvas from "../../../components/SpectrogramCanvas";
-import { useWaveform, ArtifactSeverity } from "../../../hooks/useWaveform";
+import { useWaveform, ArtifactSeverity, DSPFilterConfig } from "../../../hooks/useWaveform";
 import { api } from "../../../lib/api/client";
 import { queueForSync } from "../../../lib/offlineSync";
 import { useSearchParams } from "next/navigation";
@@ -61,14 +61,15 @@ export default function MonitorPage() {
   const [isEmergency, setIsEmergency] = useState(false);
   const [isAudioEnabled, setIsAudioEnabled] = useState(false);
   const [sweepSpeed, setSweepSpeed] = useState<12.5 | 25 | 50>(25);
+  const [dspFilters, setDspFilters] = useState<DSPFilterConfig>({ lowPass: true, highPass: true, notch: true });
 
   const audioContextRef = useRef<AudioContext | null>(null);
 
   const isEEG = activePatient?.modality === 'EEG';
   const channelCount = isEEG ? 8 : 12;
 
-  // v4.5 Signal Engine: Dual Streams + Manual Stress Testing + Sweep Speed
-  const { channels, artifactStatus } = useWaveform(channelCount, isLive, isPaused, manualArtifact, sweepSpeed);
+  // v5.0 Signal Engine: Dual Streams + Manual Stress Testing + Sweep Speed + DSP
+  const { channels, artifactStatus } = useWaveform(channelCount, isLive, isPaused, manualArtifact, sweepSpeed, dspFilters);
 
   // Mirror Handshake
   useEffect(() => {
@@ -557,6 +558,21 @@ export default function MonitorPage() {
                    </section>
                )}
 
+               {/* DSP FILTER SUITE */}
+               {isLive && (
+                   <section className="glass-card p-6 bg-slate-50 dark:bg-slate-800/50 space-y-6">
+                      <div className="flex items-center justify-between">
+                         <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">DSP Filter Suite</h3>
+                         <Settings className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="space-y-3">
+                         <FilterToggle label="Low-Pass (35Hz)" active={dspFilters.lowPass} onClick={() => setDspFilters({...dspFilters, lowPass: !dspFilters.lowPass})} />
+                         <FilterToggle label="High-Pass (0.5Hz)" active={dspFilters.highPass} onClick={() => setDspFilters({...dspFilters, highPass: !dspFilters.highPass})} />
+                         <FilterToggle label="Notch Filter (50Hz)" active={dspFilters.notch} onClick={() => setDspFilters({...dspFilters, notch: !dspFilters.notch})} />
+                      </div>
+                   </section>
+               )}
+
                <section className="glass-card p-6 space-y-6">
                   <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Acquisition Checklist</h3>
                   <div className="space-y-4">
@@ -623,6 +639,23 @@ function SpeedButton({ active, onClick, label }: any) {
             )}
         >
             {label}
+        </button>
+    );
+}
+
+function FilterToggle({ label, active, onClick }: any) {
+    return (
+        <button
+            onClick={onClick}
+            className={cn(
+                "w-full flex items-center justify-between p-3 rounded-xl border transition-all",
+                active ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600" : "bg-white dark:bg-slate-900 border-border text-slate-400"
+            )}
+        >
+            <span className="text-[9px] font-black uppercase tracking-widest">{label}</span>
+            <div className={cn("h-4 w-4 rounded-full border-2 flex items-center justify-center", active ? "bg-emerald-500 border-emerald-500" : "border-slate-300")}>
+                {active && <Check className="h-3 w-3 text-white" />}
+            </div>
         </button>
     );
 }
