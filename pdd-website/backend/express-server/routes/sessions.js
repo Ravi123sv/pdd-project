@@ -17,6 +17,18 @@ router.get('/:hospitalId', async (req, res) => {
   }
 });
 
+// Get ACTIVE sessions only (Dashboard feed)
+router.get('/active/:hospitalId', async (req, res) => {
+    try {
+        const sessions = await Session.find({ hospitalId: req.params.hospitalId, status: 'active' })
+            .populate('patient', 'name patientId department')
+            .limit(5);
+        res.json(sessions);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 // Create new session
 router.post('/', async (req, res) => {
   try {

@@ -12,7 +12,8 @@ import {
   AlertCircle,
   ChevronRight,
   Play,
-  LayoutDashboard as Hub
+  LayoutDashboard as Hub,
+  Loader2
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { api } from "../../lib/api/client";
@@ -29,6 +30,7 @@ export default function DashboardPage() {
     assets: 0
   });
   const [feed, setFeed] = useState<any[]>([]);
+  const [activeUnits, setActiveUnits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const isHospital = user?.userType === 'hospital';
@@ -50,10 +52,11 @@ export default function DashboardPage() {
         const hospitalId = user.hospitalId || 'HOSP-DEFAULT';
 
         // Parallel requests
-        const [patientsRes, assetsRes, sessionsRes, teamRes] = await Promise.all([
+        const [patientsRes, assetsRes, sessionsRes, activeRes, teamRes] = await Promise.all([
           api.patients.getAll(hospitalId),
           api.assets.getAll(hospitalId),
           api.sessions.getAll(hospitalId),
+          api.sessions.getActive(hospitalId),
           isHospital ? api.auth.getTeam(hospitalId) : Promise.resolve({ data: [] })
         ]);
 
@@ -62,6 +65,8 @@ export default function DashboardPage() {
           assets: assetsRes.data.length,
           team: teamRes.data.length
         });
+
+        setActiveUnits(activeRes.data);
 
         // Generate dynamic feed from real session data
         const sessionFeed = sessionsRes.data.slice(0, 3).map((s: any) => ({
@@ -83,6 +88,9 @@ export default function DashboardPage() {
     };
 
     fetchData();
+    // Refresh active units every 30 seconds
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
   }, [user, isHospital]);
 
   return (
@@ -160,11 +168,28 @@ export default function DashboardPage() {
 
           {isHospital && (
             <div className="glass-card p-8">
-              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Multi-Unit Status</h3>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Multi-Unit Status</h3>
+                <div className="flex items-center space-x-2 px-3 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">
+                    <div className="h-1 w-1 rounded-full bg-emerald-500 animate-ping" />
+                    <span className="text-[8px] font-black text-emerald-500 uppercase">Live Feed</span>
+                </div>
+              </div>
+
               <div className="space-y-6">
-                 <UnitRow name="Emergency Unit" status="3 Active Sessions" active />
-                 <UnitRow name="Neurology Lab" status="1 Active Session" active />
-                 <UnitRow name="ICU West Wing" status="No Activity" />
+                 {activeUnits.length > 0 ? activeUnits.map((unit, i) => (
+                    <UnitRow
+                        key={unit._id}
+                        name={unit.metadata?.department || "Emergency Unit"}
+                        status={`${unit.patient?.name} - ${unit.testType} Active`}
+                        active
+                    />
+                 )) : (
+                    <div className="py-12 text-center opacity-30">
+                        <Activity className="h-10 w-10 mx-auto mb-4 text-slate-400" />
+                        <p className="text-[10px] font-black uppercase tracking-widest">All units standby</p>
+                    </div>
+                 )}
               </div>
             </div>
           )}

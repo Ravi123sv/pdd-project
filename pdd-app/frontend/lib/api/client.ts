@@ -95,6 +95,7 @@ export const api = {
   },
   sessions: {
     getAll: (hospitalId: string) => apiClient.get(`/sessions/${hospitalId}`),
+    getActive: (hospitalId: string) => apiClient.get(`/sessions/active/${hospitalId}`),
     create: (data: any) => apiClient.post('/sessions', data),
     syncSessionSQL: (data: any) => apiClient.post('/sessions/sync-session', data),
     update: (id: string, data: any) => apiClient.put(`/sessions/${id}`, data),
