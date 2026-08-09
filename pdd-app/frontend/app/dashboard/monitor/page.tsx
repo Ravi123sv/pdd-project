@@ -500,9 +500,21 @@ export default function MonitorPage() {
                      </div>
 
                      <div className="grid grid-cols-2 gap-6 pt-8 border-t border-white/5">
-                        <div>
-                           <p className="text-[9px] font-black text-white/40 uppercase mb-2">Neural SQI</p>
-                           <p className={cn("text-2xl font-black transition-all", isLive ? "text-primary" : "text-white/10")}>{isLive ? `${(100 - (artifactStatus.severity === 'none' ? 1.2 : (artifactStatus.severity === 'low' ? 15.4 : 54.7))).toFixed(1)}%` : "--"}</p>
+                        <div className="space-y-4">
+                           <div>
+                              <p className="text-[9px] font-black text-white/40 uppercase mb-2">Neural SQI</p>
+                              <p className={cn("text-2xl font-black transition-all", isLive ? "text-primary" : "text-white/10")}>{isLive ? `${(100 - (artifactStatus.severity === 'none' ? 1.2 : (artifactStatus.severity === 'low' ? 15.4 : 54.7))).toFixed(1)}%` : "--"}</p>
+                           </div>
+                           <div className="space-y-1">
+                               <p className="text-[8px] font-black text-white/20 uppercase tracking-tighter">Signal Health</p>
+                               <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                   <motion.div
+                                        initial={{ width: 0 }}
+                                        animate={{ width: isLive ? (artifactStatus.severity === 'none' ? '100%' : (artifactStatus.severity === 'low' ? '65%' : '20%')) : 0 }}
+                                        className={cn("h-full transition-colors", artifactStatus.severity === 'none' ? 'bg-emerald-500' : (artifactStatus.severity === 'low' ? 'bg-amber-500' : 'bg-red-500'))}
+                                   />
+                               </div>
+                           </div>
                         </div>
                         <div>
                            <p className="text-[9px] font-black text-white/40 uppercase mb-2">SLA Index</p>

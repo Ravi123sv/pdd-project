@@ -17,7 +17,9 @@ import {
   TrendingUp,
   X,
   ShieldCheck,
-  BrainCircuit
+  BrainCircuit,
+  Heart,
+  Pulse
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -238,40 +240,58 @@ export default function PatientDirectoryPage() {
                   <div className="flex-1 overflow-y-auto p-10 space-y-10 scrollbar-hide">
                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                         {/* Longitudinal Trends */}
-                        <div className="lg:col-span-2 space-y-6">
-                           <div className="flex items-center justify-between">
-                              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                 <TrendingUp className="h-4 w-4 text-primary" /> Longitudinal Intelligence (SQI)
-                              </h3>
-                              <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest px-3 py-1 bg-emerald-500/10 rounded-full">System Verified</span>
+                        <div className="lg:col-span-2 space-y-8">
+                           <div className="space-y-6">
+                               <div className="flex items-center justify-between">
+                                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                     <TrendingUp className="h-4 w-4 text-primary" /> Longitudinal Stability (SQI)
+                                  </h3>
+                                  <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest px-3 py-1 bg-emerald-500/10 rounded-full">System Verified</span>
+                               </div>
+
+                               <div className="h-48 bg-slate-50 dark:bg-slate-950/50 rounded-[2.5rem] border-2 border-border/50 p-6 flex items-end justify-between relative overflow-hidden">
+                                  {getPatientSessions(selectedForDetail._id).length > 0 ? (
+                                      <div className="flex items-end gap-3 h-full w-full justify-around relative z-10">
+                                          {getPatientSessions(selectedForDetail._id).map((s, i) => (
+                                              <div key={i} className="group relative flex flex-col items-center flex-1">
+                                                  <div className="w-full bg-primary/20 hover:bg-primary transition-all rounded-t-xl" style={{ height: `${s.quality}%` }} />
+                                                  <p className="text-[7px] font-black text-slate-500 mt-2 uppercase">{new Date(s.startTime).toLocaleDateString()}</p>
+                                              </div>
+                                          ))}
+                                      </div>
+                                  ) : (
+                                      <div className="flex-1 flex flex-col items-center justify-center text-center opacity-30">
+                                          <p className="text-xs font-black uppercase tracking-widest">No historical SQI data</p>
+                                      </div>
+                                  )}
+                               </div>
                            </div>
 
-                           <div className="h-64 bg-slate-50 dark:bg-slate-950/50 rounded-[2.5rem] border-2 border-border/50 p-8 flex items-end justify-between relative overflow-hidden">
-                              {/* Simple Bar Chart for Stability History */}
-                              {getPatientSessions(selectedForDetail._id).length > 0 ? (
-                                  <div className="flex items-end gap-3 h-full w-full justify-around relative z-10">
-                                      {getPatientSessions(selectedForDetail._id).map((s, i) => (
-                                          <div key={i} className="group relative flex flex-col items-center flex-1">
-                                              <div
-                                                className="w-full bg-primary/20 hover:bg-primary transition-all rounded-t-xl"
-                                                style={{ height: `${s.quality}%` }}
-                                              />
-                                              <p className="text-[8px] font-black text-slate-500 mt-2 uppercase">{new Date(s.startTime).toLocaleDateString()}</p>
+                           <div className="space-y-6">
+                               <div className="flex items-center justify-between">
+                                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                     <Heart className="h-4 w-4 text-rose-500" /> Autonomic Variability (HRV)
+                                  </h3>
+                                  <span className="text-[9px] font-bold text-rose-500 uppercase tracking-widest px-3 py-1 bg-rose-500/10 rounded-full">Neural Trend</span>
+                               </div>
 
-                                              {/* Tooltip */}
-                                              <div className="absolute -top-12 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white px-3 py-1 rounded text-[9px] font-black whitespace-nowrap z-20">
-                                                  SQI: {s.quality}% • {s.testType}
+                               <div className="h-48 bg-slate-50 dark:bg-slate-950/50 rounded-[2.5rem] border-2 border-border/50 p-6 flex items-center justify-around relative overflow-hidden">
+                                  <div className="flex items-center gap-1 h-full w-full justify-around relative z-10">
+                                      {[42, 38, 55, 48, 62, 58, 70].map((v, i) => (
+                                          <div key={i} className="flex flex-col items-center gap-2 flex-1">
+                                              <div className="w-2 bg-rose-500/20 rounded-full h-24 relative overflow-hidden">
+                                                  <motion.div
+                                                    initial={{ height: 0 }}
+                                                    animate={{ height: `${v}%` }}
+                                                    className="absolute bottom-0 left-0 right-0 bg-rose-500 rounded-full"
+                                                  />
                                               </div>
+                                              <span className="text-[8px] font-black text-rose-400">{v}ms</span>
                                           </div>
                                       ))}
                                   </div>
-                              ) : (
-                                  <div className="flex-1 flex flex-col items-center justify-center text-center space-y-4 opacity-30">
-                                      <Activity className="h-10 w-10 text-slate-400" />
-                                      <p className="text-xs font-black uppercase tracking-widest">No longitudinal data points found</p>
-                                  </div>
-                              )}
-                              <BrainCircuit className="absolute -bottom-8 -right-8 h-48 w-48 text-primary opacity-5" />
+                                  <Activity className="absolute -bottom-8 -right-8 h-48 w-48 text-rose-500 opacity-5" />
+                               </div>
                            </div>
                         </div>
 
