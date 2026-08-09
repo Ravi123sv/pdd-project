@@ -22,7 +22,9 @@ import {
   Smartphone,
   Cpu,
   Volume2,
-  VolumeX
+  VolumeX,
+  FileText,
+  Check
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -55,6 +57,7 @@ export default function MonitorPage() {
   const [aiReport, setAiReport] = useState<string | null>(null);
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
   const [saving, setSaving] = useState(false);
+  const [annotations, setAnnotations] = useState<any[]>([]);
 
   // Stress Test State
   const [manualArtifact, setManualArtifact] = useState<{ type: string, severity: ArtifactSeverity }>({ type: 'Optimal', severity: 'none' });
@@ -156,6 +159,7 @@ export default function MonitorPage() {
   const startAcquisition = () => {
     if (!activePatient) return;
     setIsInitializing(true);
+    setAnnotations([]);
     setTimeout(() => {
       setIsInitializing(false);
       setIsLive(true);
@@ -183,7 +187,8 @@ export default function MonitorPage() {
           findings: `Clinical session finalized. Final Integrity: ${artifactStatus.type}.`,
           startTime: sessionStartTime,
           durationSeconds,
-          waveformSnapshot: snapshot
+          waveformSnapshot: snapshot,
+          annotations: annotations
       };
 
       try {
@@ -222,6 +227,16 @@ export default function MonitorPage() {
     }
   };
 
+  const handleAddAnnotation = (label: string) => {
+      if (!isLive || isPaused) return;
+      const newNote = {
+          timestamp: new Date(),
+          label: label,
+          technician: user?.name
+      };
+      setAnnotations([...annotations, newNote]);
+  };
+
   return (
     <div className={cn(
         "flex flex-col h-full space-y-6 animate-in fade-in duration-700 pb-12 relative",
@@ -232,6 +247,7 @@ export default function MonitorPage() {
       {isEmergency && (
           <div className="absolute inset-0 border-[12px] border-red-600/20 pointer-events-none animate-pulse z-[1000]" />
       )}
+
       {/* Control Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center space-x-4">
@@ -446,6 +462,7 @@ export default function MonitorPage() {
                    {labels.map((label, i) => (
                       <div key={label} className="h-48 md:h-auto min-h-[180px]">
                         <SignalCanvas
+                            key={label}
                             label={label}
                             rawData={channels.raw[i]}
                             filteredData={channels.filtered[i]}
@@ -528,7 +545,7 @@ export default function MonitorPage() {
                </section>
 
                {/* STRESS TEST CONTROLS */}
-               {isLive && (
+               {isLive && !isMirrorMode && (
                    <section className="glass-card p-6 bg-slate-50 dark:bg-slate-800/50 space-y-6">
                       <div className="flex items-center justify-between">
                          <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">AI Stress Tester</h3>
@@ -569,6 +586,33 @@ export default function MonitorPage() {
                          <FilterToggle label="Low-Pass (35Hz)" active={dspFilters.lowPass} onClick={() => setDspFilters({...dspFilters, lowPass: !dspFilters.lowPass})} />
                          <FilterToggle label="High-Pass (0.5Hz)" active={dspFilters.highPass} onClick={() => setDspFilters({...dspFilters, highPass: !dspFilters.highPass})} />
                          <FilterToggle label="Notch Filter (50Hz)" active={dspFilters.notch} onClick={() => setDspFilters({...dspFilters, notch: !dspFilters.notch})} />
+                      </div>
+                   </section>
+               )}
+
+               {/* CLINICAL TAGS */}
+               {isLive && !isMirrorMode && (
+                   <section className="glass-card p-6 bg-slate-50 dark:bg-slate-800/50 space-y-6">
+                      <div className="flex items-center justify-between">
+                         <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Clinical Tags</h3>
+                         <FileText className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                         <TagButton label="Arrhythmia" onClick={() => handleAddAnnotation('Arrhythmia Detected')} />
+                         <TagButton label="Neural Spike" onClick={() => handleAddAnnotation('Neural Spike')} />
+                         <TagButton label="Artifact" onClick={() => handleAddAnnotation('Movement Artifact')} />
+                         <TagButton label="Stabilized" onClick={() => handleAddAnnotation('Signal Stabilized')} />
+                      </div>
+                      <div className="pt-2">
+                         <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest mb-2">Recent Annotations ({annotations.length})</p>
+                         <div className="space-y-2 max-h-24 overflow-y-auto scrollbar-hide border-t border-border/30 pt-2">
+                            {annotations.length > 0 ? annotations.slice(-3).reverse().map((a, i) => (
+                                <div key={i} className="flex items-center justify-between text-[9px] font-bold text-foreground">
+                                    <span className="truncate">{a.label}</span>
+                                    <span className="text-slate-400">{new Date(a.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'})}</span>
+                                </div>
+                            )) : <p className="text-[8px] text-slate-400 italic">No events tagged.</p>}
+                         </div>
                       </div>
                    </section>
                )}
@@ -620,15 +664,6 @@ function CheckItem({ label, checked }: any) {
   );
 }
 
-function SpectralStat({ label, value, color }: any) {
-    return (
-        <div className="p-3 bg-white/5 rounded-xl border border-white/5">
-            <p className="text-[7px] font-black text-white/40 uppercase tracking-widest mb-1">{label}</p>
-            <p className={cn("text-[10px] font-black uppercase", color)}>{value}</p>
-        </div>
-    );
-}
-
 function SpeedButton({ active, onClick, label }: any) {
     return (
         <button
@@ -644,7 +679,7 @@ function SpeedButton({ active, onClick, label }: any) {
 }
 
 function FilterToggle({ label, active, onClick }: any) {
-    return (
+  return (
         <button
             onClick={onClick}
             className={cn(
@@ -657,5 +692,25 @@ function FilterToggle({ label, active, onClick }: any) {
                 {active && <Check className="h-3 w-3 text-white" />}
             </div>
         </button>
+    );
+}
+
+function TagButton({ label, onClick }: any) {
+    return (
+        <button
+            onClick={onClick}
+            className="py-2.5 px-3 bg-white dark:bg-slate-900 border border-border rounded-xl text-[8px] font-black uppercase tracking-widest text-slate-500 hover:border-primary hover:text-primary transition-all active:scale-95"
+        >
+            {label}
+        </button>
+    );
+}
+
+function SpectralStat({ label, value, color }: any) {
+    return (
+        <div className="p-3 bg-white/5 rounded-xl border border-white/5">
+            <p className="text-[7px] font-black text-white/40 uppercase tracking-widest mb-1">{label}</p>
+            <p className={cn("text-[10px] font-black uppercase", color)}>{value}</p>
+        </div>
     );
 }

@@ -13,7 +13,12 @@ const SessionSchema = new mongoose.Schema({
   startTime: { type: Date, required: true },
   endTime: { type: Date },
   status: { type: String, enum: ['active', 'completed', 'discarded'], default: 'active' },
-  waveformSnapshot: [Number], // Representative sample
+  waveformSnapshot: [Number],
+  annotations: [{
+    timestamp: Date,
+    label: String,
+    technician: String
+  }],
   metadata: {
     deviceId: String,
     department: String
