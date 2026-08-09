@@ -4,6 +4,9 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Hospital = require('../models/Hospital');
 
+const authMiddleware = require('../middleware/authMiddleware');
+const roleMiddleware = require('../middleware/roleMiddleware');
+
 // SECURITY: Retrieve secret from environment variable ONLY.
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
@@ -116,10 +119,15 @@ router.get('/profile/:uid', async (req, res) => {
     }
 });
 
-router.get('/hospital-team/:hospitalId', async (req, res) => {
+router.get('/hospital-team/:hospitalId', authMiddleware, async (req, res) => {
     try {
         const hospital = await Hospital.findOne({ hospitalId: req.params.hospitalId });
         if (!hospital) return res.status(404).json({ message: 'Hospital not found' });
+
+        // Ensure user belongs to this hospital
+        if (req.user.hospitalId !== req.params.hospitalId && req.user.role !== 'admin') {
+             return res.status(403).json({ message: 'Unauthorized hospital context.' });
+        }
 
         const users = await User.find({ hospitalId: req.params.hospitalId });
 
@@ -149,7 +157,7 @@ router.get('/hospital-team/:hospitalId', async (req, res) => {
     }
 });
 
-router.post('/authorize-staff', async (req, res) => {
+router.post('/authorize-staff', authMiddleware, roleMiddleware(['admin']), async (req, res) => {
     const { hospitalId, email, role } = req.body;
     try {
         const hospital = await Hospital.findOne({ hospitalId });

@@ -20,7 +20,9 @@ import {
   Minimize2,
   CheckCircle2,
   Smartphone,
-  Cpu
+  Cpu,
+  Volume2,
+  VolumeX
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -50,12 +52,45 @@ export default function MonitorPage() {
   // Stress Test State
   const [manualArtifact, setManualArtifact] = useState<{ type: string, severity: ArtifactSeverity }>({ type: 'Optimal', severity: 'none' });
   const [isEmergency, setIsEmergency] = useState(false);
+  const [isAudioEnabled, setIsAudioEnabled] = useState(false);
+
+  const audioContextRef = useRef<AudioContext | null>(null);
 
   const isEEG = activePatient?.modality === 'EEG';
   const channelCount = isEEG ? 8 : 12;
 
   // v4.0 Signal Engine: Dual Streams + Manual Stress Testing
   const { channels, artifactStatus } = useWaveform(channelCount, isLive, isPaused, manualArtifact);
+
+  // Audio Pulse Handshake
+  useEffect(() => {
+      if (isLive && !isPaused && isAudioEnabled) {
+          const bpm = 72;
+          const interval = (60 / bpm) * 1000;
+
+          const playBleep = () => {
+              if (!audioContextRef.current) audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+              const ctx = audioContextRef.current;
+              const osc = ctx.createOscillator();
+              const gain = ctx.createGain();
+
+              osc.type = 'sine';
+              osc.frequency.setValueAtTime(isEEG ? 440 : 880, ctx.currentTime);
+
+              gain.gain.setValueAtTime(0.1, ctx.currentTime);
+              gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.1);
+
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+
+              osc.start();
+              osc.stop(ctx.currentTime + 0.1);
+          };
+
+          const timer = setInterval(playBleep, interval);
+          return () => clearInterval(timer);
+      }
+  }, [isLive, isPaused, isAudioEnabled, isEEG]);
 
   useEffect(() => {
       if (isLive && artifactStatus.severity === 'high' && !isEmergency) {
@@ -215,6 +250,16 @@ export default function MonitorPage() {
               </button>
             ) : (
               <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setIsAudioEnabled(!isAudioEnabled)}
+                    className={cn(
+                        "neuro-button h-12 w-12 flex items-center justify-center transition-all border border-border/50",
+                        isAudioEnabled ? "bg-primary text-white shadow-lg" : "bg-white dark:bg-slate-800 text-slate-500"
+                    )}
+                    title="Toggle Audio Feedback"
+                  >
+                    {isAudioEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+                  </button>
                   <button
                     onClick={() => setIsFullscreen(!isFullscreen)}
                     className="neuro-button h-12 w-12 flex items-center justify-center bg-white dark:bg-slate-800 text-slate-500 hover:text-primary transition-all border border-border/50"

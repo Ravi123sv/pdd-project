@@ -5,8 +5,10 @@ const Asset = require('../models/Asset');
 const Hospital = require('../models/Hospital');
 const User = require('../models/User');
 const Session = require('../models/Session');
+const authMiddleware = require('../middleware/authMiddleware');
+const roleMiddleware = require('../middleware/roleMiddleware');
 
-router.post('/', async (req, res) => {
+router.post('/', authMiddleware, roleMiddleware(['admin']), async (req, res) => {
   const { hospitalId } = req.body;
 
   if (!hospitalId) return res.status(400).json({ message: 'hospitalId is required' });

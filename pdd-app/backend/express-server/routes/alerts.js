@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Alert = require('../models/Alert');
 const authMiddleware = require('../middleware/authMiddleware');
+const roleMiddleware = require('../middleware/roleMiddleware');
 
 // Protect all alert routes
 router.use(authMiddleware);
@@ -42,8 +43,8 @@ router.post('/read-all/:hospitalId', async (req, res) => {
     }
 });
 
-// Clear history
-router.delete('/:hospitalId', async (req, res) => {
+// Clear history - Admin Only
+router.delete('/:hospitalId', roleMiddleware(['admin']), async (req, res) => {
     try {
         await Alert.deleteMany({ hospitalId: req.params.hospitalId });
         res.json({ success: true });
