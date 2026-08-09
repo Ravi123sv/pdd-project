@@ -10,14 +10,15 @@ interface SignalCanvasProps {
   isLive: boolean;
   isPaused: boolean;
   showRaw?: boolean;
+  gain?: number; // Amplitude scaling factor (standard medical gain)
 }
 
 /**
- * SignalCanvas Component v4.0
+ * SignalCanvas Component v4.5
  * Optimized High-Performance GPU Rendering
- * Implements Batch-Path rendering and Frame-Rate stabilization for clinical workstations.
+ * Implements Batch-Path rendering, Frame-Rate stabilization, and Variable Gain scaling.
  */
-export default function SignalCanvas({ label, rawData, filteredData, color = "#10B981", isLive, isPaused, showRaw = true }: SignalCanvasProps) {
+export default function SignalCanvas({ label, rawData, filteredData, color = "#10B981", isLive, isPaused, showRaw = true, gain = 1 }: SignalCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const frameId = useRef<number>();
@@ -44,7 +45,7 @@ export default function SignalCanvas({ label, rawData, filteredData, color = "#1
         const width = rect.width;
         const height = rect.height;
         const midY = height / 2;
-        const yScale = height / 150;
+        const yScale = (height / 150) * gain;
 
         // Draw opaque background (Faster than clearRect with alpha: false)
         ctx.fillStyle = "#050810";

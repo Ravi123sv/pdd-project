@@ -64,6 +64,7 @@ export default function MonitorPage() {
   const [isEmergency, setIsEmergency] = useState(false);
   const [isAudioEnabled, setIsAudioEnabled] = useState(false);
   const [sweepSpeed, setSweepSpeed] = useState<12.5 | 25 | 50>(25);
+  const [gain, setGain] = useState<0.5 | 1 | 2 | 5>(1);
   const [dspFilters, setDspFilters] = useState<DSPFilterConfig>({ lowPass: true, highPass: true, notch: true });
 
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -304,6 +305,14 @@ export default function MonitorPage() {
                       <SpeedButton active={sweepSpeed === 50} onClick={() => setSweepSpeed(50)} label="50" />
                       <span className="text-[7px] font-black text-slate-400 uppercase tracking-tighter px-2">mm/s</span>
                   </div>
+
+                  <div className="flex items-center bg-slate-100 dark:bg-slate-900 p-1.5 rounded-2xl border border-border/50">
+                      <SpeedButton active={gain === 0.5} onClick={() => setGain(0.5)} label="x0.5" />
+                      <SpeedButton active={gain === 1} onClick={() => setGain(1)} label="x1" />
+                      <SpeedButton active={gain === 2} onClick={() => setGain(2)} label="x2" />
+                      <SpeedButton active={gain === 5} onClick={() => setGain(5)} label="x5" />
+                      <span className="text-[7px] font-black text-slate-400 uppercase tracking-tighter px-2">Gain</span>
+                  </div>
               </div>
           )}
 
@@ -470,6 +479,7 @@ export default function MonitorPage() {
                             isPaused={isPaused}
                             showRaw={showRaw}
                             color={isEEG ? "#3B82F6" : "#10B981"}
+                            gain={gain}
                         />
                       </div>
                    ))}
