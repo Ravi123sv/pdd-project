@@ -28,6 +28,7 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { motion, AnimatePresence } from "framer-motion";
 import SignalCanvas from "../../../components/SignalCanvas";
+import SpectrogramCanvas from "../../../components/SpectrogramCanvas";
 import { useWaveform, ArtifactSeverity } from "../../../hooks/useWaveform";
 import { api } from "../../../lib/api/client";
 import { queueForSync } from "../../../lib/offlineSync";
@@ -565,6 +566,23 @@ export default function MonitorPage() {
                      <CheckItem label="Lead-Set Integrated" checked={isLive && artifactStatus.severity === 'none'} />
                   </div>
                </section>
+
+               {/* EEG SPECTRAL ANALYSIS (Dynamic) */}
+               {isLive && isEEG && (
+                   <section className="glass-card p-6 space-y-6 bg-[#03060c] border-blue-500/20">
+                      <div className="flex items-center justify-between">
+                         <h3 className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Neural Spectrum</h3>
+                         <BrainCircuit className="h-4 w-4 text-blue-500" />
+                      </div>
+                      <div className="h-40 w-full">
+                         <SpectrogramCanvas data={channels.filtered[0]} isLive={isLive && !isPaused} />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                         <SpectralStat label="Alpha (8-12Hz)" value="High" color="text-emerald-500" />
+                         <SpectralStat label="Beta (13-30Hz)" value="Moderate" color="text-blue-500" />
+                      </div>
+                   </section>
+               )}
             </div>
         )}
       </div>
@@ -584,6 +602,15 @@ function CheckItem({ label, checked }: any) {
        <span className={cn("text-[11px] font-bold tracking-tight transition-colors", checked ? "text-foreground" : "text-slate-400 group-hover:text-slate-600")}>{label}</span>
     </div>
   );
+}
+
+function SpectralStat({ label, value, color }: any) {
+    return (
+        <div className="p-3 bg-white/5 rounded-xl border border-white/5">
+            <p className="text-[7px] font-black text-white/40 uppercase tracking-widest mb-1">{label}</p>
+            <p className={cn("text-[10px] font-black uppercase", color)}>{value}</p>
+        </div>
+    );
 }
 
 function SpeedButton({ active, onClick, label }: any) {
