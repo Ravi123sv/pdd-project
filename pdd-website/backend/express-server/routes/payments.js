@@ -15,8 +15,8 @@ router.post('/create-checkout-session', async (req, res) => {
         },
       ],
       mode: 'subscription',
-      success_url: `https://ravi123sv.github.io/pdd-project/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `https://ravi123sv.github.io/pdd-project/subscriptions`,
+      success_url: `https://ravi123sv.github.io/pdd-project/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `https://ravi123sv.github.io/pdd-project/checkout/cancel`,
       customer_email: email,
     });
 
