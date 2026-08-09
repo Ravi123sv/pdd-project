@@ -49,12 +49,27 @@ export default function MonitorPage() {
 
   // Stress Test State
   const [manualArtifact, setManualArtifact] = useState<{ type: string, severity: ArtifactSeverity }>({ type: 'Optimal', severity: 'none' });
+  const [isEmergency, setIsEmergency] = useState(false);
 
   const isEEG = activePatient?.modality === 'EEG';
   const channelCount = isEEG ? 8 : 12;
 
   // v4.0 Signal Engine: Dual Streams + Manual Stress Testing
   const { channels, artifactStatus } = useWaveform(channelCount, isLive, isPaused, manualArtifact);
+
+  useEffect(() => {
+      if (isLive && artifactStatus.severity === 'high' && !isEmergency) {
+          setIsEmergency(true);
+          // Auto-broadcast alert to hub
+          socketService.emit('clinical_alert', {
+              patientId: activePatient?.id,
+              type: 'Signal Integrity Failure',
+              severity: 'CRITICAL'
+          });
+      } else if (artifactStatus.severity !== 'high' && isEmergency) {
+          setIsEmergency(false);
+      }
+  }, [artifactStatus.severity, isLive, isEmergency, activePatient]);
 
   const labels = isEEG
     ? ['Fp1', 'Fp2', 'C3', 'C4', 'P3', 'P4', 'O1', 'O2']
@@ -131,9 +146,14 @@ export default function MonitorPage() {
 
   return (
     <div className={cn(
-        "flex flex-col h-full space-y-6 animate-in fade-in duration-700 pb-12",
-        isFullscreen && "fixed inset-0 z-[500] bg-[#F8FAFC] dark:bg-[#0F172A] p-6 pb-6 h-screen w-screen space-y-4"
+        "flex flex-col h-full space-y-6 animate-in fade-in duration-700 pb-12 relative",
+        isFullscreen && "fixed inset-0 z-[500] bg-[#F8FAFC] dark:bg-[#0F172A] p-6 pb-6 h-screen w-screen space-y-4",
+        isEmergency && "bg-red-50/10"
     )}>
+      {/* Emergency Global Border */}
+      {isEmergency && (
+          <div className="absolute inset-0 border-[12px] border-red-600/20 pointer-events-none animate-pulse z-[1000]" />
+      )}
       {/* Control Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center space-x-4">
