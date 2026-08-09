@@ -3,18 +3,19 @@ services:
     name: neurosignal-clinical-hub
     env: node
     plan: free
-    rootDir: pdd-website/backend/express-server
-    buildCommand: "npm install"
-    startCommand: "node index.js"
+    # Remove rootDir to ensure the whole repo is available if needed
+    # But cd into the backend for commands
+    buildCommand: "cd pdd-website/backend/express-server && npm install"
+    startCommand: "cd pdd-website/backend/express-server && node index.js"
     envVars:
       - key: NODE_ENV
         value: production
       - key: MONGO_URI
         sync: false
       - key: SMTP_USER
-        value: neurosignalai1@gmail.com
+        sync: false
       - key: SMTP_PASS
-        value: aqpi tlvx slnb eaye
+        sync: false
       - key: NEXT_PUBLIC_GEMINI_API_KEY
         sync: false
       - key: ENABLE_NEURAL_UPLINK

@@ -24,13 +24,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
       - name: Install dependencies
         run: npm install
         working-directory: pdd-website/frontend
       - name: Build with Next.js
-        run: npx next build
+        run: npm run build
         working-directory: pdd-website/frontend
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

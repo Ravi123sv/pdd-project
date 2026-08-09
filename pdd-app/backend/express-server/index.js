@@ -30,6 +30,7 @@ const seedRoutes = require('./routes/seed');
 const signalRoutes = require('./routes/signals');
 const otpRoutes = require('./routes/otp');
 const sessionRoutes = require('./routes/sessions');
+const paymentRoutes = require('./routes/payments');
 
 app.use('/api/assets', assetRoutes);
 app.use('/api/patients', patientRoutes);
@@ -38,6 +39,7 @@ app.use('/api/seed', seedRoutes);
 app.use('/api/signals', signalRoutes);
 app.use('/api/otp', otpRoutes);
 app.use('/api/sessions', sessionRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // Clinical Health Node
 app.get('/api/health', (req, res) => {
