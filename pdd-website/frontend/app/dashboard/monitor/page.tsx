@@ -58,6 +58,8 @@ export default function MonitorPage() {
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
   const [saving, setSaving] = useState(false);
   const [annotations, setAnnotations] = useState<any[]>([]);
+  const [baselineWave, setBaselineWave] = useState<number[] | null>(null);
+  const [showBaseline, setShowBaseline] = useState(false);
 
   // Stress Test State
   const [manualArtifact, setManualArtifact] = useState<{ type: string, severity: ArtifactSeverity }>({ type: 'Optimal', severity: 'none' });
@@ -144,6 +146,17 @@ export default function MonitorPage() {
     if (!activePatient) return;
     setIsInitializing(true);
     setAnnotations([]);
+
+    // Fetch Baseline from Archive
+    const fetchBaseline = async () => {
+        try {
+            const res = await api.sessions.getAll(user?.hospitalId || 'HOSP-DEFAULT');
+            const past = res.data.filter((s: any) => s.patientId === activePatient.id && s.waveformSnapshot?.length > 0);
+            if (past.length > 0) setBaselineWave(past[0].waveformSnapshot);
+        } catch (e) { console.error(e); }
+    };
+    fetchBaseline();
+
     setTimeout(() => {
       setIsInitializing(false);
       setIsLive(true);
@@ -280,6 +293,19 @@ export default function MonitorPage() {
                         AI Filter
                     </button>
                   </div>
+
+                  {baselineWave && (
+                      <button
+                        onClick={() => setShowBaseline(!showBaseline)}
+                        className={cn(
+                            "px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all flex items-center gap-2 border-2",
+                            showBaseline ? "bg-white text-primary border-primary shadow-lg" : "bg-slate-100 dark:bg-slate-900 text-slate-400 border-transparent"
+                        )}
+                      >
+                         <History className="h-3 w-3" />
+                         Baseline Overlay
+                      </button>
+                  )}
 
                   {/* Sweep Speed Control */}
                   <div className="flex items-center bg-slate-100 dark:bg-slate-900 p-1.5 rounded-2xl border border-border/50">
@@ -463,6 +489,7 @@ export default function MonitorPage() {
                             showRaw={showRaw}
                             color={isEEG ? "#3B82F6" : "#10B981"}
                             gain={gain}
+                            baselineData={showBaseline && baselineWave ? baselineWave : undefined}
                         />
                       </div>
                    ))}

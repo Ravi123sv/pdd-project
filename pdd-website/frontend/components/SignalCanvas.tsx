@@ -11,14 +11,15 @@ interface SignalCanvasProps {
   isPaused: boolean;
   showRaw?: boolean;
   gain?: number; // Amplitude scaling factor (standard medical gain)
+  baselineData?: number[]; // Historical snapshot for visual comparison
 }
 
 /**
- * SignalCanvas Component v4.5
+ * SignalCanvas Component v5.0
  * Optimized High-Performance GPU Rendering
- * Implements Batch-Path rendering, Frame-Rate stabilization, and Variable Gain scaling.
+ * Implements Batch-Path rendering, Variable Gain, and Baseline Morphology Overlay.
  */
-export default function SignalCanvas({ label, rawData, filteredData, color = "#10B981", isLive, isPaused, showRaw = true, gain = 1 }: SignalCanvasProps) {
+export default function SignalCanvas({ label, rawData, filteredData, color = "#10B981", isLive, isPaused, showRaw = true, gain = 1, baselineData }: SignalCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const frameId = useRef<number>();
@@ -67,7 +68,24 @@ export default function SignalCanvas({ label, rawData, filteredData, color = "#1
 
         const step = width / (dataLen - 1);
 
-        // 2. RAW SIGNAL TRACE
+        // 2. BASELINE MORPHOLOGY OVERLAY (Ghost Trace)
+        if (baselineData && baselineData.length > 1) {
+            ctx.beginPath();
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.15)"; // Ghost white
+            ctx.setLineDash([5, 5]); // Dashed for baseline
+            ctx.lineWidth = 1;
+            const bStep = width / (baselineData.length - 1);
+            for (let i = 0; i < baselineData.length; i++) {
+                const x = i * bStep;
+                const y = midY - (baselineData[i] * yScale);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.setLineDash([]); // Reset for main trace
+        }
+
+        // 3. RAW SIGNAL TRACE
         if (showRaw && rawData && rawData.length > 0) {
             ctx.beginPath();
             ctx.strokeStyle = "rgba(244, 63, 94, 0.4)";
