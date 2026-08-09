@@ -89,7 +89,13 @@ export default function MonitorPage() {
           };
 
           const timer = setInterval(playBleep, interval);
-          return () => clearInterval(timer);
+          return () => {
+              clearInterval(timer);
+              if (audioContextRef.current) {
+                  audioContextRef.current.close();
+                  audioContextRef.current = null;
+              }
+          };
       }
   }, [isLive, isPaused, isAudioEnabled, isEEG]);
 

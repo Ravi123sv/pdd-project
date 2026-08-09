@@ -38,6 +38,10 @@ export function useWaveform(
       const speedFactor = sweepSpeed / 25;
       const deltaT = 0.02 * speedFactor;
       timeRef.current += deltaT;
+
+      // Prevent floating point drift/overflow on shift-long sessions
+      if (timeRef.current > 3600) timeRef.current = 0;
+
       const t = timeRef.current;
 
       const modality = channelCount === 8 ? 'EEG' : (channelCount === 12 ? 'ECG' : 'EMG');
