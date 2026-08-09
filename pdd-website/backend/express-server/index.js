@@ -76,5 +76,8 @@ app.use((err, req, res, next) => {
 // Port Binding (Render standard)
 const PORT = process.env.PORT || 10000;
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Clinical Hub Active on port ${PORT}`);
+  console.log(`[BOOT] Clinical Hub Online on port ${PORT}`);
+  console.log(`[BOOT] Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`[BOOT] Node Version: ${process.version}`);
+  console.log(`[BOOT] Database Handshake Initiated...`);
 });
