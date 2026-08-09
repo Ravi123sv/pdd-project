@@ -73,6 +73,7 @@ export const api = {
   },
   system: {
     seed: (hospitalId: string) => apiClient.post('/seed', { hospitalId }),
+    health: () => apiClient.get('/health'),
   },
   assets: {
     getAll: (hospitalId: string) => apiClient.get(`/assets/${hospitalId}`),
