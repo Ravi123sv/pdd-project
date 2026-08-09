@@ -94,6 +94,12 @@ export const api = {
     send: (email: string, name: string) => apiClient.post('/otp/send', { email, name }),
     verify: (email: string, otp: string) => apiClient.post('/otp/verify', { email, otp }),
   },
+  alerts: {
+    getAll: (hospitalId: string) => apiClient.get(`/alerts/${hospitalId}`),
+    create: (data: any) => apiClient.post('/alerts', data),
+    readAll: (hospitalId: string) => apiClient.post(`/alerts/read-all/${hospitalId}`),
+    clear: (hospitalId: string) => apiClient.delete(`/alerts/${hospitalId}`),
+  },
   sessions: {
     getAll: (hospitalId: string) => apiClient.get(`/sessions/${hospitalId}`),
     getActive: (hospitalId: string) => apiClient.get(`/sessions/active/${hospitalId}`),

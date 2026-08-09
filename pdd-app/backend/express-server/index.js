@@ -62,6 +62,7 @@ try {
     const otpRoutes = require('./routes/otp');
     const sessionRoutes = require('./routes/sessions');
     const paymentRoutes = require('./routes/payments');
+    const alertRoutes = require('./routes/alerts');
 
     app.use('/api/assets', assetRoutes);
     app.use('/api/patients', patientRoutes);
@@ -71,6 +72,7 @@ try {
     app.use('/api/otp', otpRoutes);
     app.use('/api/sessions', sessionRoutes);
     app.use('/api/payments', paymentRoutes);
+    app.use('/api/alerts', alertRoutes);
     console.log("[BOOT] Clinical Modules Mounted Successfully");
 } catch (e) {
     console.error("[BOOT] CRITICAL: Module Mounting Failed:", e.message);
