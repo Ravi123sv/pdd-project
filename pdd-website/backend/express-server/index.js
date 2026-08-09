@@ -15,6 +15,11 @@ process.on('uncaughtException', (err) => {
   console.error('[CRITICAL] Uncaught Exception thrown:', err);
 });
 
+// SECURITY: Early verify of production secrets
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+    console.error("[BOOT] CRITICAL FAILURE: JWT_SECRET environment variable is missing. Authentication will fail.");
+}
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {

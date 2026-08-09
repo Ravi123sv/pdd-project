@@ -6,8 +6,9 @@ import { ThemeProvider } from "../components/ThemeProvider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "NeuroSignal App | Clinical Handheld",
-  description: "Mobile clinical node for the NeuroSignal Enterprise AI hub. Real-time patient monitoring and diagnostic telemetry.",
+  title: "NeuroSignal Enterprise AI | Clinical Workstation",
+  description: "The unified high-fidelity workstation for neurologists and cardiologists. Real-time ECG/EEG monitoring, neural logic analysis, and professional clinical archiving.",
+  keywords: ["ECG", "EEG", "EMG", "Clinical Workstation", "Medical AI", "Signal Analysis", "NeuroSignal"],
   manifest: "/manifest.json",
   icons: {
       icon: "https://ravi123sv.github.io/pdd-project/assets/icon/app_icon.svg"

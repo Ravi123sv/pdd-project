@@ -100,7 +100,8 @@ export default function LoginPage() {
           router.push("/dashboard");
       }, 1500);
     } catch (err: any) {
-      setError("ACCESS DENIED: Credentials not verified by Clinical Hub.");
+      const msg = err.response?.data?.message || "ACCESS DENIED: Credentials not verified by Clinical Hub.";
+      setError(msg.toUpperCase());
     } finally {
       setLoading(false);
     }

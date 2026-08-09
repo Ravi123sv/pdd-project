@@ -21,8 +21,9 @@ export default function RootPage() {
     // Initial Splash Timer
     const timer = setTimeout(() => {
       setIsLoading(false);
-      // APP COMPLIANCE: Direct Onboarding/Login for Mobile version
-      router.push("/onboarding");
+      if (isStandalone) {
+        router.push("/onboarding");
+      }
     }, 2500);
 
     return () => clearTimeout(timer);

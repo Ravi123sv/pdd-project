@@ -38,6 +38,7 @@ export default function DiagnosticsPage() {
   // Backend Health State
   const [hubHealth, setHubHealth] = useState<any>(null);
   const [checkingHub, setCheckingHub] = useState(true);
+  const [seeding, setSeeding] = useState(false);
 
   useEffect(() => {
     const checkHealth = async () => {
@@ -76,6 +77,21 @@ export default function DiagnosticsPage() {
       }, 3000);
   };
 
+  const handleSeedHub = async () => {
+      if (!user?.hospitalId) return;
+      if (!confirm("[TESTER WARNING] This will wipe and re-populate the current hospital hub with clinical demo data. Proceed?")) return;
+      setSeeding(true);
+      try {
+          await api.system.seed(user.hospitalId);
+          alert("Handshake Successful: Clinical Hub seeded with demo MRNs and assets.");
+          window.location.reload();
+      } catch (e) {
+          alert("Seeding failed. Verify admin role privileges.");
+      } finally {
+          setSeeding(false);
+      }
+  };
+
   return (
     <div className="space-y-8 max-w-5xl mx-auto pb-12 animate-in fade-in duration-700">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -91,14 +107,24 @@ export default function DiagnosticsPage() {
            </div>
         </div>
 
-        <button
-            onClick={startFullScan}
-            disabled={scanning}
-            className="neuro-button bg-primary text-white flex items-center space-x-3 px-8 shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
-        >
-          {scanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-          <span className="text-[10px] font-black uppercase tracking-widest">{scanning ? "Analyzing Core..." : "Initialize Full Audit"}</span>
-        </button>
+        <div className="flex gap-4">
+            <button
+                onClick={handleSeedHub}
+                disabled={seeding}
+                className="neuro-button bg-slate-100 dark:bg-slate-800 text-primary border border-primary/20 flex items-center space-x-3 px-8 shadow-sm"
+            >
+                {seeding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Database className="h-4 w-4" />}
+                <span className="text-[10px] font-black uppercase tracking-widest">Seed Test Hub</span>
+            </button>
+            <button
+                onClick={startFullScan}
+                disabled={scanning}
+                className="neuro-button bg-primary text-white flex items-center space-x-3 px-8 shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+            >
+                {scanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                <span className="text-[10px] font-black uppercase tracking-widest">{scanning ? "Analyzing Core..." : "Initialize Full Audit"}</span>
+            </button>
+        </div>
       </div>
 
       {/* Backend Status Banner */}

@@ -55,16 +55,17 @@ export default function LoginPage() {
   }, [isAuthenticated, router, checkSession]);
 
   const handleGoogleLogin = async () => {
+    console.log("[LOGIN] Initializing Handshake...");
     setLoading(true);
     setError(null);
     try {
       const result = await signInWithPopup(auth, googleProvider);
-      if (!result.user) throw new Error("Verification failed.");
+      if (!result.user) throw new Error("ID retrieval failed.");
 
       setGoogleUser(result.user);
 
       if (loginMode === 'individual') {
-          // STRICT REAL-TIME MODE: No fallback code displayed
+          // Primary: Dispatch real-time link
           await sendSignInLinkToEmail(auth, result.user.email!, actionCodeSettings);
           window.localStorage.setItem('emailForSignIn', result.user.email!);
           setStep(2);
@@ -72,7 +73,7 @@ export default function LoginPage() {
           setStep(2);
       }
     } catch (err: any) {
-      setError("Handshake Error: Check Google ID authorization.");
+      setError("Secure Handshake Failed. Verify clinical Google ID authorization.");
     } finally {
       setLoading(false);
     }
@@ -99,7 +100,8 @@ export default function LoginPage() {
           router.push("/dashboard");
       }, 1500);
     } catch (err: any) {
-      setError("ACCESS DENIED: Credentials not verified by Clinical Hub.");
+      const msg = err.response?.data?.message || "ACCESS DENIED: Credentials not verified by Clinical Hub.";
+      setError(msg.toUpperCase());
     } finally {
       setLoading(false);
     }
