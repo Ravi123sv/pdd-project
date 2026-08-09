@@ -16,7 +16,8 @@ import {
   ShieldCheck,
   RefreshCw,
   Eye,
-  X
+  X,
+  Printer
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import SignalCanvas from "../../../components/SignalCanvas";
@@ -71,6 +72,10 @@ export default function ArchivePage() {
     }
   };
 
+  const handlePrint = () => {
+      window.print();
+  };
+
   const runBaselineComparison = async () => {
     if (!selectedSession || !baselineSession) return;
     setComparing(true);
@@ -95,7 +100,8 @@ export default function ArchivePage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-12">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Hide on print */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 print:hidden">
         <div className="flex items-center space-x-4">
            <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
               <FolderArchive className="h-7 w-7" />
@@ -109,9 +115,9 @@ export default function ArchivePage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[calc(100vh-280px)]">
-        {/* Left: Session List */}
-        <div className="lg:col-span-1 flex flex-col space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[calc(100vh-280px)] print:block print:h-auto">
+        {/* Left: Session List (Hidden on print) */}
+        <div className="lg:col-span-1 flex flex-col space-y-4 print:hidden">
            <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
@@ -154,7 +160,7 @@ export default function ArchivePage() {
         </div>
 
         {/* Right: Session Detail & Playback */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 print:col-span-3">
            <AnimatePresence mode="wait">
               {selectedSession ? (
                 <motion.div
@@ -162,12 +168,12 @@ export default function ArchivePage() {
                    initial={{ opacity: 0, x: 20 }}
                    animate={{ opacity: 1, x: 0 }}
                    exit={{ opacity: 0, x: -20 }}
-                   className="h-full bg-white dark:bg-slate-900 rounded-[3rem] border-2 border-border/50 shadow-2xl flex flex-col overflow-hidden"
+                   className="h-full bg-white dark:bg-slate-900 rounded-[3rem] border-2 border-border/50 shadow-2xl flex flex-col overflow-hidden print:shadow-none print:border-0 print:rounded-none"
                 >
                    {/* Detail Header */}
-                   <div className="p-8 border-b border-border flex items-center justify-between bg-white dark:bg-slate-900 z-10">
+                   <div className="p-8 border-b border-border flex items-center justify-between bg-white dark:bg-slate-900 z-10 print:px-0">
                       <div className="flex items-center space-x-4">
-                         <div className="h-12 w-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+                         <div className="h-12 w-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 print:hidden">
                             <Activity className="h-6 w-6" />
                          </div>
                          <div>
@@ -175,7 +181,7 @@ export default function ArchivePage() {
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Diagnostic Session Detailed Report</p>
                          </div>
                       </div>
-                      <div className="flex gap-3">
+                      <div className="flex gap-3 print:hidden">
                          <button
                            onClick={() => setShowPlayback(!showPlayback)}
                            className={`h-12 px-6 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 ${showPlayback ? 'bg-rose-500 text-white shadow-lg shadow-rose-200' : 'bg-slate-100 dark:bg-slate-800 text-slate-600'}`}
@@ -183,47 +189,41 @@ export default function ArchivePage() {
                             <Eye className="h-4 w-4" />
                             {showPlayback ? "Close Playback" : "Neural Playback"}
                          </button>
-                         <button className="h-12 w-12 rounded-xl border border-border flex items-center justify-center text-slate-400 hover:text-primary transition-all">
-                            <Download className="h-5 w-5" />
+                         <button
+                            onClick={handlePrint}
+                            className="h-12 px-6 bg-primary text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20 flex items-center gap-2"
+                         >
+                            <Printer className="h-4 w-4" /> Print Report
                          </button>
                       </div>
                    </div>
 
                    {/* Detail Content */}
-                   <div className="flex-1 overflow-y-auto p-10 space-y-10 scrollbar-hide">
+                   <div className="flex-1 overflow-y-auto p-10 space-y-10 scrollbar-hide print:px-0 print:pt-4">
 
-                      {/* Playback Overlay */}
-                      <AnimatePresence>
-                        {showPlayback && (
-                            <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                exit={{ opacity: 0, height: 0 }}
-                                className="overflow-hidden"
-                            >
-                                <div className="p-8 bg-[#03060c] rounded-[2.5rem] border-2 border-primary/20 space-y-6">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                                            <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Neural Signal Reconstruction</span>
-                                        </div>
-                                        <span className="text-[9px] font-black text-primary uppercase">Snapshot ID: {selectedSession._id.slice(-8)}</span>
+                      {/* Playback Overlay (Always shown in print if active) */}
+                      {(showPlayback || typeof window !== 'undefined' && window.matchMedia('print').matches) && (
+                            <div className="p-8 bg-[#03060c] rounded-[2.5rem] border-2 border-primary/20 space-y-6 print:bg-white print:border-slate-200 print:rounded-2xl">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-2 w-2 rounded-full bg-primary animate-pulse print:hidden" />
+                                        <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] print:text-slate-900">Neural Signal Reconstruction</span>
                                     </div>
-                                    <div className="h-64">
-                                        <SignalCanvas
-                                            label="Lead II (Historical)"
-                                            filteredData={selectedSession.waveformSnapshot?.length > 0 ? selectedSession.waveformSnapshot : Array(100).fill(0).map((_, i) => Math.sin(i * 0.2) * 20)}
-                                            isLive={false}
-                                            isPaused={true}
-                                            showRaw={false}
-                                            color="#3B82F6"
-                                        />
-                                    </div>
-                                    <p className="text-[9px] font-bold text-white/20 uppercase tracking-widest text-center italic">Historical telemetry accurately reconstructed from encrypted vault.</p>
+                                    <span className="text-[9px] font-black text-primary uppercase">Snapshot ID: {selectedSession._id.slice(-8)}</span>
                                 </div>
-                            </motion.div>
-                        )}
-                      </AnimatePresence>
+                                <div className="h-64 print:h-48">
+                                    <SignalCanvas
+                                        label="Lead II (Historical)"
+                                        filteredData={selectedSession.waveformSnapshot?.length > 0 ? selectedSession.waveformSnapshot : Array(100).fill(0).map((_, i) => Math.sin(i * 0.2) * 20)}
+                                        isLive={false}
+                                        isPaused={true}
+                                        showRaw={false}
+                                        color="#3B82F6"
+                                    />
+                                </div>
+                                <p className="text-[9px] font-bold text-white/20 uppercase tracking-widest text-center italic print:text-slate-400">Historical telemetry reconstructed for clinical audit.</p>
+                            </div>
+                      )}
 
                       {/* Grid Stats */}
                       <div className="grid grid-cols-3 gap-6">
@@ -237,16 +237,16 @@ export default function ArchivePage() {
                          <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
                             <FileText className="h-3 w-3" /> Technical Findings
                          </h5>
-                         <div className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-border/50">
-                            <p className="text-sm font-medium text-slate-600 dark:text-slate-300 leading-relaxed">
-                               {selectedSession.findings || "No manual findings recorded for this session. Use the Local Logic Unit to generate an automated clinical summary."}
+                         <div className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-border/50 print:bg-white">
+                            <p className="text-sm font-medium text-slate-600 dark:text-slate-300 leading-relaxed print:text-slate-900">
+                               {selectedSession.findings || "No manual findings recorded for this session."}
                             </p>
                          </div>
                       </div>
 
                       {/* AI Summary */}
                       <div className="space-y-6">
-                         <div className="flex items-center justify-between">
+                         <div className="flex items-center justify-between print:hidden">
                             <h5 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] flex items-center gap-2">
                                <BrainCircuit className="h-4 w-4" /> Local Logic Summary
                             </h5>
@@ -262,64 +262,28 @@ export default function ArchivePage() {
                             )}
                          </div>
 
-                         {selectedSession.aiSummary ? (
-                            <div className="p-8 bg-primary/5 border-2 border-primary/20 rounded-[2.5rem] relative overflow-hidden group">
-                               <BrainCircuit className="absolute -bottom-8 -right-8 h-40 w-40 text-primary opacity-5 group-hover:rotate-12 transition-transform duration-700" />
-                               <p className="text-sm font-bold text-slate-700 dark:text-slate-200 leading-relaxed relative z-10 whitespace-pre-line">
+                         {selectedSession.aiSummary && (
+                            <div className="p-8 bg-primary/5 border-2 border-primary/20 rounded-[2.5rem] relative overflow-hidden group print:bg-white print:border-slate-200">
+                               <BrainCircuit className="absolute -bottom-8 -right-8 h-40 w-40 text-primary opacity-5 group-hover:rotate-12 transition-transform duration-700 print:hidden" />
+                               <h5 className="hidden print:block text-[10px] font-black uppercase mb-2">Automated Diagnostic Summary</h5>
+                               <p className="text-sm font-bold text-slate-700 dark:text-slate-200 leading-relaxed relative z-10 whitespace-pre-line print:text-slate-900 print:font-medium">
                                   {selectedSession.aiSummary}
                                 </p>
-                            </div>
-                         ) : (
-                            <div className="h-40 border-2 border-dashed border-border rounded-[2.5rem] flex flex-col items-center justify-center text-center space-y-4 opacity-40">
-                               <AlertCircle className="h-8 w-8 text-slate-400" />
-                               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">No local analysis requested yet.</p>
                             </div>
                          )}
                       </div>
 
-                      {/* Baseline Comparison Section */}
-                      <div className="pt-10 border-t border-border space-y-8">
-                         <div className="flex items-center justify-between">
-                            <div>
-                               <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Longitudinal Analysis</h5>
-                               <h4 className="text-lg font-black text-foreground">Neural Signature Comparison</h4>
-                            </div>
-                            <button
-                                onClick={runBaselineComparison}
-                                disabled={comparing || !baselineSession}
-                                className="neuro-button bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-[10px] px-8 disabled:opacity-30"
-                            >
-                                {comparing ? <Loader2 className="h-4 w-4 animate-spin" /> : "Run Delta Analysis"}
-                            </button>
+                      {/* Footer Signature (Print Only) */}
+                      <div className="hidden print:flex justify-between pt-20 border-t border-slate-200">
+                         <div className="space-y-1">
+                            <p className="text-[10px] font-black uppercase">Clinician Signature</p>
+                            <div className="h-10 w-48 border-b border-slate-300" />
+                            <p className="text-[8px] font-bold text-slate-400">Dr. {user?.name}</p>
                          </div>
-
-                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-4">
-                               <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-4">Select Baseline Node</p>
-                               <select
-                                 onChange={(e) => setBaselineSession(sessions.find(s => s._id === e.target.value))}
-                                 className="w-full h-16 bg-slate-50 dark:bg-slate-800 border-2 border-border/50 rounded-2xl px-6 text-xs font-bold outline-none focus:border-primary transition-all appearance-none"
-                               >
-                                  <option value="">Choose Historical Session...</option>
-                                  {sessions.filter(s => s._id !== selectedSession._id).map(s => (
-                                      <option key={s._id} value={s._id}>{new Date(s.startTime).toLocaleDateString()} - {s.testType} ({s.quality}%)</option>
-                                  ))}
-                               </select>
-                            </div>
-
-                            <AnimatePresence>
-                               {comparisonResult && (
-                                  <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="p-6 bg-amber-50 dark:bg-amber-950/20 border-2 border-amber-200 dark:border-amber-800 rounded-[2rem]">
-                                     <div className="flex items-center gap-3 mb-3 text-amber-600">
-                                        <ShieldCheck className="h-5 w-5" />
-                                        <span className="text-[9px] font-black uppercase tracking-widest">Local Predictive Output</span>
-                                     </div>
-                                     <p className="text-xs font-bold leading-relaxed text-slate-700 dark:text-slate-200 italic whitespace-pre-line">
-                                        {comparisonResult}
-                                     </p>
-                                  </motion.div>
-                               )}
-                            </AnimatePresence>
+                         <div className="text-right space-y-1">
+                            <p className="text-[10px] font-black uppercase">Institutional Verification</p>
+                            <p className="text-[12px] font-black text-primary">NEUROSIGNAL ENTERPRISE v4.0</p>
+                            <p className="text-[8px] font-bold text-slate-400">{new Date().toLocaleString()}</p>
                          </div>
                       </div>
                    </div>
@@ -344,11 +308,11 @@ export default function ArchivePage() {
 
 function DetailStat({ icon: Icon, label, value }: any) {
     return (
-        <div className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-border/50">
-            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-2">
-                <Icon className="h-3 w-3" /> {label}
+        <div className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-border/50 print:bg-white print:p-2">
+            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-2 print:text-slate-500">
+                <Icon className="h-3 w-3 print:hidden" /> {label}
             </p>
-            <p className="text-lg font-black text-foreground">{value}</p>
+            <p className="text-lg font-black text-foreground print:text-sm">{value}</p>
         </div>
     );
 }
