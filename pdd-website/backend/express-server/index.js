@@ -11,12 +11,36 @@ const io = new Server(server, {
   cors: { origin: "*" }
 });
 
-const path = require('path');
-
 app.use(cors());
 app.use(express.json());
 
-// 1. API ROUTES
+// Clinical Health Node
+app.get('/api/health', (req, res) => {
+    const dbState = mongoose.connection.readyState === 1 ? 'Connected' : 'Connecting/Disconnected';
+    res.json({
+        status: 'Operational',
+        db: dbState,
+        node: process.env.NODE_ENV || 'production',
+        timestamp: new Date()
+    });
+});
+
+app.get('/', (req, res) => {
+  res.send('NeuroSignal Clinical Hub v3.5 Online');
+});
+
+// Database Connection Logic (Resilient)
+const MONGO_URI = process.env.MONGO_URI;
+
+if (!MONGO_URI || MONGO_URI.includes('password_placeholder')) {
+    console.error('CRITICAL: MONGO_URI not configured in environment variables.');
+} else {
+    mongoose.connect(MONGO_URI)
+      .then(() => console.log('NeuroSignal Hub: Clinical Atlas Node Online'))
+      .catch(err => console.error('CRITICAL: Database Handshake Failed:', err.message));
+}
+
+// Import & Use Routes
 const assetRoutes = require('./routes/assets');
 const patientRoutes = require('./routes/patients');
 const authRoutes = require('./routes/auth');
@@ -34,35 +58,6 @@ app.use('/api/signals', signalRoutes);
 app.use('/api/otp', otpRoutes);
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/payments', paymentRoutes);
-
-// 2. UNIFIED FRONTEND SERVING (Cloud Only)
-if (process.env.NODE_ENV === 'production') {
-    // Serve static files from the Next.js 'out' directory
-    const frontendPath = path.join(__dirname, '../../frontend/out');
-    app.use(express.static(frontendPath));
-
-    // Catch-all route to serve the frontend for any non-API request
-    app.get('*', (req, res) => {
-        if (!req.path.startsWith('/api')) {
-            res.sendFile(path.join(frontendPath, 'index.html'));
-        }
-    });
-} else {
-    // Clinical Health Node (Development)
-    app.get('/api/health', (req, res) => {
-        const dbState = mongoose.connection.readyState === 1 ? 'Connected' : 'Connecting/Disconnected';
-        res.json({
-            status: 'Operational',
-            db: dbState,
-            node: 'development',
-            timestamp: new Date()
-        });
-    });
-
-    app.get('/', (req, res) => {
-      res.send('NeuroSignal Clinical Hub v2.5 Online (Dev Mode)');
-    });
-}
 
 // WebSocket Unit Handshake
 io.on('connection', (socket) => {

@@ -4,7 +4,6 @@ const mongoose = require('mongoose');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
-const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
@@ -40,22 +39,20 @@ app.use('/api/signals', signalRoutes);
 app.use('/api/otp', otpRoutes);
 app.use('/api/sessions', sessionRoutes);
 
-// 2. UNIFIED FRONTEND SERVING (Cloud Only)
-if (process.env.NODE_ENV === 'production') {
-    // Serve static files from the Next.js 'out' directory
-    const frontendPath = path.join(__dirname, '../../frontend/out');
-    app.use(express.static(frontendPath));
+// Clinical Health Node
+app.get('/api/health', (req, res) => {
+    const dbState = mongoose.connection.readyState === 1 ? 'Connected' : 'Connecting/Disconnected';
+    res.json({
+        status: 'Operational',
+        db: dbState,
+        node: process.env.NODE_ENV || 'production',
+        timestamp: new Date()
+    });
+});
 
-    app.get('*', (req, res) => {
-        if (!req.path.startsWith('/api')) {
-            res.sendFile(path.join(frontendPath, 'index.html'));
-        }
-    });
-} else {
-    app.get('/', (req, res) => {
-      res.send('NeuroSignal Clinical Hub v2.5 Online (App Mode)');
-    });
-}
+app.get('/', (req, res) => {
+  res.send('NeuroSignal Clinical Hub v3.5 Online');
+});
 
 // WebSocket Unit Handshake
 io.on('connection', (socket) => {
