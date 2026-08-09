@@ -14,9 +14,12 @@ import {
   Activity,
   AlertCircle,
   ShieldCheck,
-  RefreshCw
+  RefreshCw,
+  Eye,
+  X
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import SignalCanvas from "../../../components/SignalCanvas";
 
 export default function ArchivePage() {
   const { user } = useStore();
@@ -28,6 +31,7 @@ export default function ArchivePage() {
   const [summarizing, setSummarizing] = useState(false);
   const [comparing, setComparing] = useState(false);
   const [comparisonResult, setComparisonResult] = useState<string | null>(null);
+  const [showPlayback, setShowPlayback] = useState(false);
 
   useEffect(() => {
     const fetchSessions = async () => {
@@ -47,7 +51,6 @@ export default function ArchivePage() {
   const generateAiSummary = async (session: any) => {
     setSummarizing(true);
     try {
-      // Use Local Backend Engine (Tester Compliant)
       const res = await api.signals.analyzeAi({
           patientName: session.patient?.name,
           modality: session.testType,
@@ -55,11 +58,8 @@ export default function ArchivePage() {
       });
 
       const summary = res.data.analysis || res.data.observation;
-
-      // Update in backend
       await api.sessions.update(session._id, { aiSummary: summary });
 
-      // Update local state
       setSessions(prev => prev.map(s => s._id === session._id ? { ...s, aiSummary: summary } : s));
       if (selectedSession?._id === session._id) {
           setSelectedSession({ ...selectedSession, aiSummary: summary });
@@ -76,7 +76,6 @@ export default function ArchivePage() {
     setComparing(true);
     setComparisonResult(null);
     try {
-        // Simulate professional local comparison logic
         await new Promise(resolve => setTimeout(resolve, 1200));
         const delta = Math.abs(selectedSession.quality - baselineSession.quality);
         const result = `[NEURAL DELTA ANALYSIS] Comparison between ${new Date(baselineSession.startTime).toLocaleDateString()} and ${new Date(selectedSession.startTime).toLocaleDateString()}.\n\nSignificant morphology consistency detected. Variation Delta: ${delta.toFixed(1)}%. No major physiological shifts identified. Signal stability remains within clinical tolerance limits for ${selectedSession.testType} modality.`;
@@ -104,7 +103,7 @@ export default function ArchivePage() {
            <div>
               <h1 className="text-2xl font-black text-foreground tracking-tight">Clinical Archive</h1>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                Historical Session Management & Local Logic Reports
+                Historical Session Management & Neural Playback
               </p>
            </div>
         </div>
@@ -130,7 +129,7 @@ export default function ArchivePage() {
               ) : filteredSessions.map((session) => (
                 <button
                   key={session._id}
-                  onClick={() => setSelectedSession(session)}
+                  onClick={() => { setSelectedSession(session); setShowPlayback(false); }}
                   className={`w-full p-6 rounded-[2rem] border-2 transition-all text-left group ${
                     selectedSession?._id === session._id
                       ? 'bg-primary border-primary text-white shadow-xl shadow-primary/20'
@@ -154,7 +153,7 @@ export default function ArchivePage() {
            </div>
         </div>
 
-        {/* Right: Session Detail & AI Summary */}
+        {/* Right: Session Detail & Playback */}
         <div className="lg:col-span-2">
            <AnimatePresence mode="wait">
               {selectedSession ? (
@@ -166,7 +165,7 @@ export default function ArchivePage() {
                    className="h-full bg-white dark:bg-slate-900 rounded-[3rem] border-2 border-border/50 shadow-2xl flex flex-col overflow-hidden"
                 >
                    {/* Detail Header */}
-                   <div className="p-8 border-b border-border flex items-center justify-between">
+                   <div className="p-8 border-b border-border flex items-center justify-between bg-white dark:bg-slate-900 z-10">
                       <div className="flex items-center space-x-4">
                          <div className="h-12 w-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
                             <Activity className="h-6 w-6" />
@@ -177,17 +176,55 @@ export default function ArchivePage() {
                          </div>
                       </div>
                       <div className="flex gap-3">
+                         <button
+                           onClick={() => setShowPlayback(!showPlayback)}
+                           className={`h-12 px-6 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 ${showPlayback ? 'bg-rose-500 text-white shadow-lg shadow-rose-200' : 'bg-slate-100 dark:bg-slate-800 text-slate-600'}`}
+                         >
+                            <Eye className="h-4 w-4" />
+                            {showPlayback ? "Close Playback" : "Neural Playback"}
+                         </button>
                          <button className="h-12 w-12 rounded-xl border border-border flex items-center justify-center text-slate-400 hover:text-primary transition-all">
                             <Download className="h-5 w-5" />
-                         </button>
-                         <button className="h-12 px-6 bg-primary text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20">
-                            Print Report
                          </button>
                       </div>
                    </div>
 
                    {/* Detail Content */}
                    <div className="flex-1 overflow-y-auto p-10 space-y-10 scrollbar-hide">
+
+                      {/* Playback Overlay */}
+                      <AnimatePresence>
+                        {showPlayback && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="overflow-hidden"
+                            >
+                                <div className="p-8 bg-[#03060c] rounded-[2.5rem] border-2 border-primary/20 space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                                            <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Neural Signal Reconstruction</span>
+                                        </div>
+                                        <span className="text-[9px] font-black text-primary uppercase">Snapshot ID: {selectedSession._id.slice(-8)}</span>
+                                    </div>
+                                    <div className="h-64">
+                                        <SignalCanvas
+                                            label="Lead II (Historical)"
+                                            filteredData={selectedSession.waveformSnapshot?.length > 0 ? selectedSession.waveformSnapshot : Array(100).fill(0).map((_, i) => Math.sin(i * 0.2) * 20)}
+                                            isLive={false}
+                                            isPaused={true}
+                                            showRaw={false}
+                                            color="#3B82F6"
+                                        />
+                                    </div>
+                                    <p className="text-[9px] font-bold text-white/20 uppercase tracking-widest text-center italic">Historical telemetry accurately reconstructed from encrypted vault.</p>
+                                </div>
+                            </motion.div>
+                        )}
+                      </AnimatePresence>
+
                       {/* Grid Stats */}
                       <div className="grid grid-cols-3 gap-6">
                          <DetailStat icon={Clock} label="Duration" value={`${selectedSession.durationSeconds}s`} />

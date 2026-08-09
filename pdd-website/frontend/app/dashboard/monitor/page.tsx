@@ -78,6 +78,9 @@ export default function MonitorPage() {
 
       const durationSeconds = Math.floor((new Date().getTime() - sessionStartTime.getTime()) / 1000);
 
+      // Capture waveform snapshot (latest 100 points of lead II or channel 2)
+      const snapshot = channels.filtered[1] || [];
+
       const sessionData = {
           patientId: activePatient.id,
           technicianEmail: user?.email,
@@ -86,7 +89,8 @@ export default function MonitorPage() {
           quality: artifactStatus.severity === 'none' ? 98.4 : (artifactStatus.severity === 'low' ? 82.1 : 45.3),
           findings: `Clinical session finalized. Final Integrity: ${artifactStatus.type}.`,
           startTime: sessionStartTime,
-          durationSeconds
+          durationSeconds,
+          waveformSnapshot: snapshot
       };
 
       try {
