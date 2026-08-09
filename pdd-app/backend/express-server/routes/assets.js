@@ -1,33 +1,41 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db_local');
+const Asset = require('../models/Asset');
+const authMiddleware = require('../middleware/authMiddleware');
+
+// Apply protection to all asset management routes
+router.use(authMiddleware);
 
 // Get all assets for a hospital
 router.get('/:hospitalId', async (req, res) => {
   try {
-    const assets = await db.assets.find({ hospitalId: req.params.hospitalId });
+    const assets = await Asset.find({ hospitalId: req.params.hospitalId });
     res.json(assets);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// Report malfunction
+// Report asset malfunction
 router.post('/malfunction/:id', async (req, res) => {
-  try {
-    const asset = await db.assets.update(
-        { _id: req.params.id },
-        {
-            $set: { status: 'ERROR', type: 'error' },
-            $push: { maintenanceLogs: { action: 'Malfunction Reported: ' + req.body.issue, technician: req.body.technician, date: new Date() } }
-        },
-        { returnUpdatedDocs: true }
-    );
-    if (!asset) return res.status(404).json({ message: 'Asset not found' });
-    res.json(asset);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
+    try {
+        const { issue, technician } = req.body;
+        if (!issue) return res.status(400).json({ message: 'Issue description is required for malfunction logs.' });
+
+        const asset = await Asset.findByIdAndUpdate(req.params.id, {
+            status: 'ERROR',
+            type: 'error',
+            metadata: {
+                lastError: issue,
+                reportedBy: technician,
+                reportedAt: new Date()
+            }
+        }, { new: true });
+
+        res.json({ success: true, asset });
+    } catch (err) {
+        res.status(400).json({ message: 'Failed to update asset status.' });
+    }
 });
 
 module.exports = router;

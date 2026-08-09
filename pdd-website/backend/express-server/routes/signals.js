@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const authMiddleware = require('../middleware/authMiddleware');
+
+// Protect all AI and signal processing routes
+router.use(authMiddleware);
 
 /**
  * [HYBRID STEALTH ENGINE]
