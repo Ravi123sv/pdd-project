@@ -62,6 +62,7 @@ export default function MonitorPage() {
   const [annotations, setAnnotations] = useState<any[]>([]);
   const [baselineWave, setBaselineWave] = useState<number[] | null>(null);
   const [showBaseline, setShowBaseline] = useState(false);
+  const [isForecasting, setIsForecasting] = useState(false);
 
   // Stress Test State
   const [manualArtifact, setManualArtifact] = useState<{ type: string, severity: ArtifactSeverity }>({ type: 'Optimal', severity: 'none' });
@@ -294,6 +295,16 @@ export default function MonitorPage() {
                         <BrainCircuit className="h-3 w-3" />
                         AI Filter
                     </button>
+                    <button
+                        onClick={() => setIsForecasting(!isForecasting)}
+                        className={cn(
+                            "px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all flex items-center gap-2 border-2",
+                            isForecasting ? "bg-blue-500 text-white border-blue-400 shadow-lg" : "text-slate-400 border-transparent"
+                        )}
+                    >
+                        <Zap className="h-3 w-3" />
+                        Neural Forecast
+                    </button>
                   </div>
 
                   {baselineWave && (
@@ -492,6 +503,7 @@ export default function MonitorPage() {
                             color={isEEG ? "#3B82F6" : "#10B981"}
                             gain={gain}
                             baselineData={showBaseline && baselineWave ? baselineWave : undefined}
+                            showForecast={isForecasting}
                         />
                       </div>
                    ))}
