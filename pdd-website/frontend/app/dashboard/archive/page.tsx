@@ -203,7 +203,7 @@ export default function ArchivePage() {
 
                       {/* Playback Overlay (Always shown in print if active) */}
                       {(showPlayback || typeof window !== 'undefined' && window.matchMedia('print').matches) && (
-                            <div className="p-8 bg-[#03060c] rounded-[2.5rem] border-2 border-primary/20 space-y-6 print:bg-white print:border-slate-200 print:rounded-2xl">
+                            <div className="p-8 bg-[#03060c] rounded-[2.5rem] border-2 border-primary/20 space-y-8 print:bg-white print:border-slate-200 print:rounded-2xl">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <div className="h-2 w-2 rounded-full bg-primary animate-pulse print:hidden" />
@@ -211,16 +211,33 @@ export default function ArchivePage() {
                                     </div>
                                     <span className="text-[9px] font-black text-primary uppercase">Snapshot ID: {selectedSession._id.slice(-8)}</span>
                                 </div>
-                                <div className="h-64 print:h-48">
-                                    <SignalCanvas
-                                        label="Lead II (Historical)"
-                                        filteredData={selectedSession.waveformSnapshot?.length > 0 ? selectedSession.waveformSnapshot : Array(100).fill(0).map((_, i) => Math.sin(i * 0.2) * 20)}
-                                        isLive={false}
-                                        isPaused={true}
-                                        showRaw={false}
-                                        color="#3B82F6"
-                                    />
+
+                                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                                    <div className="lg:col-span-3 h-64 print:h-48">
+                                        <SignalCanvas
+                                            label="Lead II (Historical)"
+                                            filteredData={selectedSession.waveformSnapshot?.length > 0 ? selectedSession.waveformSnapshot : Array(100).fill(0).map((_, i) => Math.sin(i * 0.2) * 20)}
+                                            isLive={false}
+                                            isPaused={true}
+                                            showRaw={false}
+                                            color="#3B82F6"
+                                        />
+                                    </div>
+                                    <div className="space-y-4 print:hidden">
+                                        <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Temporal Events</p>
+                                        <div className="space-y-3 max-h-56 overflow-y-auto scrollbar-hide">
+                                            {selectedSession.annotations?.length > 0 ? selectedSession.annotations.map((a: any, i: number) => (
+                                                <div key={i} className="p-3 bg-white/5 rounded-xl border border-white/5 space-y-1">
+                                                    <p className="text-[9px] font-black text-primary uppercase">{a.label}</p>
+                                                    <p className="text-[7px] text-white/40">{new Date(a.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</p>
+                                                </div>
+                                            )) : (
+                                                <p className="text-[8px] text-white/20 italic">No markers tagged.</p>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
+
                                 <p className="text-[9px] font-bold text-white/20 uppercase tracking-widest text-center italic print:text-slate-400">Historical telemetry reconstructed for clinical audit.</p>
                             </div>
                       )}
