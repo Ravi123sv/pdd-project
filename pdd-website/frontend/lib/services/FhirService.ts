@@ -1,82 +1,84 @@
 /**
- * FhirService v1.0
- * Standardized HL7 FHIR Bundle Generator for Clinical Interoperability.
- * Compliant with FHIR R4 (v4.0.1) standard.
+ * FhirService.ts
+ * Implements HL7 FHIR v4.0.1 Data Interoperability for NeuroSignal Hub.
  */
-export const FhirService = {
-    /**
-     * Generates a FHIR DiagnosticReport bundle for an ECG/EEG session.
-     */
-    generateDiagnosticReport: (session: any) => {
-        const patientName = session.patient?.name || "Unknown Patient";
-        const patientId = session.patient?.patientId || "MRN-0000";
-
-        return {
+export class FhirService {
+    static generateBundle(session: any) {
+        const bundle = {
             resourceType: "Bundle",
-            type: "document",
+            type: "collection",
             timestamp: new Date().toISOString(),
             entry: [
                 {
+                    fullUrl: `urn:uuid:patient-${session.patient?.patientId}`,
                     resource: {
                         resourceType: "Patient",
-                        id: patientId.replace(/[^a-zA-Z0-9]/g, ""),
-                        identifier: [{ system: "urn:oid:1.2.36.146.595.217.0.1", value: patientId }],
-                        name: [{ text: patientName }]
+                        identifier: [{ system: "http://neurosignal.org/mrn", value: session.patient?.patientId }],
+                        name: [{ text: session.patient?.name }],
+                        managingOrganization: { display: session.hospitalId }
                     }
                 },
                 {
+                    fullUrl: `urn:uuid:observation-${session._id}`,
                     resource: {
-                        resourceType: "DiagnosticReport",
+                        resourceType: "Observation",
                         status: "final",
-                        category: [
-                            {
-                                coding: [
-                                    {
-                                        system: "http://terminology.hl7.org/CodeSystem/v2-0074",
-                                        code: session.testType === 'EEG' ? "EEG" : "ECG",
-                                        display: session.testType
-                                    }
-                                ]
-                            }
-                        ],
+                        category: [{
+                            coding: [{
+                                system: "http://terminology.hl7.org/CodeSystem/observation-category",
+                                code: "exam",
+                                display: "Exam"
+                            }]
+                        }],
                         code: {
-                            coding: [
-                                {
-                                    system: "http://loinc.org",
-                                    code: session.testType === 'EEG' ? "11503-0" : "34534-8",
-                                    display: `${session.testType} Diagnostic Report`
-                                }
-                            ]
+                            coding: [{
+                                system: "http://loinc.org",
+                                code: session.testType === 'ECG' ? "8601-7" : "34534-8",
+                                display: session.testType
+                            }]
                         },
-                        subject: { reference: `Patient/${patientId.replace(/[^a-zA-Z0-9]/g, "")}` },
+                        subject: { reference: `urn:uuid:patient-${session.patient?.patientId}` },
                         effectiveDateTime: session.startTime,
-                        issued: new Date().toISOString(),
-                        conclusion: session.aiSummary || "Normal morphology identified.",
-                        presentedForm: [
-                            {
-                                contentType: "application/json",
-                                title: `Neural Logic Analysis - ${session.testType}`
-                            }
-                        ]
+                        valueQuantity: {
+                            value: session.quality,
+                            unit: "%",
+                            system: "http://unitsofmeasure.org",
+                            code: "%"
+                        },
+                        note: [{ text: session.findings || "Clinical session finalized via NeuroSignal Hub." }]
                     }
                 }
             ]
         };
-    },
 
-    /**
-     * Converts session data to a downloadable CSV format for researchers.
-     */
-    convertToCSV: (session: any) => {
-        const headers = ["Timestamp", "Patient_MRN", "Modality", "Quality_SQI", "Findings"];
-        const row = [
-            new Date(session.startTime).toISOString(),
-            session.patient?.patientId,
-            session.testType,
-            session.quality,
-            `"${session.findings?.replace(/"/g, '""')}"`
-        ];
-
-        return [headers.join(","), row.join(",")].join("\n");
+        return JSON.stringify(bundle, null, 2);
     }
-};
+
+    static download(session: any) {
+        const data = this.generateBundle(session);
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `FHIR_BUNDLE_${session.patient?.patientId}_${session._id.slice(-6)}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+    }
+
+    static downloadCSV(session: any) {
+        const headers = "Timestamp,Value_uV,Channel\n";
+        const snapshot = session.waveformSnapshot || [];
+        const rows = snapshot.map((val: number, i: number) => {
+            const time = new Date(new Date(session.startTime).getTime() + (i * 20)).toISOString();
+            return `${time},${val.toFixed(2)},Lead_II`;
+        }).join('\n');
+
+        const blob = new Blob([headers + rows], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `SIGNAL_DATA_${session.patient?.patientId}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+    }
+}

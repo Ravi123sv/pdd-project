@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import SignalCanvas from "../../../components/SignalCanvas";
+import { FhirService } from "../../../lib/services/FhirService";
 
 export default function ExportVaultPage() {
   const { user } = useStore();
@@ -108,8 +109,8 @@ export default function ExportVaultPage() {
                         </div>
 
                         <div className="grid grid-cols-2 gap-3 pt-4 border-t border-border/50">
-                            <ExportButton label="FHIR JSON" icon={FileJson} />
-                            <ExportButton label="DATA CSV" icon={FileSpreadsheet} />
+                            <ExportButton label="FHIR JSON" icon={FileJson} onClick={() => FhirService.download(s)} />
+                            <ExportButton label="DATA CSV" icon={FileSpreadsheet} onClick={() => FhirService.downloadCSV(s)} />
                         </div>
                     </motion.div>
                   ))}
@@ -258,9 +259,12 @@ export default function ExportVaultPage() {
   );
 }
 
-function ExportButton({ label, icon: Icon }: any) {
+function ExportButton({ label, icon: Icon, onClick }: any) {
     return (
-        <button className="flex items-center justify-center gap-2 p-4 bg-slate-50 dark:bg-slate-800/50 border border-border rounded-xl hover:bg-primary/5 hover:border-primary/30 transition-all group">
+        <button
+            onClick={onClick}
+            className="flex items-center justify-center gap-2 p-4 bg-slate-50 dark:bg-slate-800/50 border border-border rounded-xl hover:bg-primary/5 hover:border-primary/30 transition-all group"
+        >
             <Icon className="h-4 w-4 text-slate-400 group-hover:text-primary" />
             <span className="text-[9px] font-black text-slate-500 group-hover:text-foreground uppercase tracking-widest">{label}</span>
         </button>
