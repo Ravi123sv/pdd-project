@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useStore } from "../lib/store/useStore";
+import { useTranslation } from "../lib/i18n";
 import {
   LayoutDashboard,
   Activity,
@@ -40,24 +41,25 @@ interface NavItem {
 
 export default function Sidebar({ isCollapsed, setCollapsed }: SidebarProps) {
   const pathname = usePathname();
-  const { user, logout } = useStore();
+  const { user, logout, language, setLanguage } = useStore();
+  const { t } = useTranslation();
 
   const navItems: NavItem[] = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, section: "WORKSTATION" },
-    { href: "/dashboard/notifications", label: "Notification Center", icon: Bell, section: "WORKSTATION" },
-    { href: "/dashboard/patients", label: "Patient Registry", icon: Users, section: "WORKSTATION" },
+    { href: "/dashboard", label: t('dashboard'), icon: LayoutDashboard, section: "WORKSTATION" },
+    { href: "/dashboard/notifications", label: t('notifications'), icon: Bell, section: "WORKSTATION" },
+    { href: "/dashboard/patients", label: t('patients'), icon: Users, section: "WORKSTATION" },
     { href: "/dashboard/assets", label: "Asset Inventory", icon: Package, section: "WORKSTATION" },
-    { href: "/dashboard/monitor", label: "Signal Monitor", icon: Activity, section: "DIAGNOSTICS" },
+    { href: "/dashboard/monitor", label: t('monitor'), icon: Activity, section: "DIAGNOSTICS" },
     { href: "/dashboard/diagnostics", label: "Stability Analysis", icon: BrainCircuit, section: "DIAGNOSTICS" },
-    { href: "/dashboard/protocols", label: "Protocol Library", icon: BookOpen, section: "DIAGNOSTICS" },
-    { href: "/dashboard/archive", label: "Clinical Archive", icon: FolderArchive, section: "DATA MANAGEMENT" },
+    { href: "/dashboard/protocols", label: t('protocols'), icon: BookOpen, section: "DIAGNOSTICS" },
+    { href: "/dashboard/archive", label: t('archive'), icon: FolderArchive, section: "DATA MANAGEMENT" },
     { href: "/dashboard/ingest", label: "External Ingest", icon: CloudUpload, section: "DATA MANAGEMENT", userTypes: ['hospital'] },
-    { href: "/dashboard/export", label: "Export Vault", icon: FileDown, section: "DATA MANAGEMENT" },
+    { href: "/dashboard/export", label: t('export'), icon: FileDown, section: "DATA MANAGEMENT" },
     { href: "/dashboard/team", label: "Team Management", icon: Users, section: "ADMINISTRATION", userTypes: ['hospital'], roles: ['admin'] },
     { href: "/dashboard/profile", label: "My Profile", icon: User, section: "SYSTEM" },
     { href: "/subscriptions", label: "Subscriptions", icon: Zap, section: "SYSTEM" },
     { href: "/dashboard/security", label: "Security Center", icon: Shield, section: "SYSTEM" },
-    { href: "/dashboard/settings", label: "System Settings", icon: Settings2, section: "SYSTEM" },
+    { href: "/dashboard/settings", label: t('settings'), icon: Settings2, section: "SYSTEM" },
   ];
 
   const sections = [...new Set(navItems.map(i => i.section))];
@@ -145,9 +147,26 @@ export default function Sidebar({ isCollapsed, setCollapsed }: SidebarProps) {
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-border/50 shrink-0">
+      <div className="p-4 border-t border-border/50 shrink-0 space-y-4">
         {!isCollapsed && (
-          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-3 flex items-center space-x-3 mb-4">
+            <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                <button
+                    onClick={() => setLanguage('en')}
+                    className={cn("flex-1 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all", language === 'en' ? "bg-white dark:bg-slate-700 text-primary shadow-sm" : "text-slate-400")}
+                >
+                    EN
+                </button>
+                <button
+                    onClick={() => setLanguage('es')}
+                    className={cn("flex-1 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all", language === 'es' ? "bg-white dark:bg-slate-700 text-primary shadow-sm" : "text-slate-400")}
+                >
+                    ES
+                </button>
+            </div>
+        )}
+
+        {!isCollapsed && (
+          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-3 flex items-center space-x-3">
             <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-black uppercase shrink-0">
               {user?.name?.[0]}
             </div>

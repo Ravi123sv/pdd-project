@@ -18,6 +18,7 @@ interface AppState {
   networkStatus: 'Connected' | 'Offline';
   latencyMs: number;
   activePatient: any | null;
+  language: 'en' | 'es';
   settings: {
       backendUrl: string;
       aiEnabled: boolean;
@@ -30,6 +31,7 @@ interface AppState {
   setHardwareStatus: (status: boolean) => void;
   setNetworkStatus: (status: 'Connected' | 'Offline', latency?: number) => void;
   setActivePatient: (patient: any) => void;
+  setLanguage: (lang: 'en' | 'es') => void;
   setSettings: (settings: Partial<AppState['settings']>) => void;
   logout: () => void;
   checkSession: () => void;
@@ -43,6 +45,7 @@ export const useStore = create<AppState>((set, get) => ({
   networkStatus: 'Connected',
   latencyMs: 0,
   activePatient: null,
+  language: 'en',
   settings: {
       backendUrl: process.env.NEXT_PUBLIC_API_URL || 'https://neurosignal-clinical-hub.onrender.com/api',
       aiEnabled: true,
@@ -62,6 +65,7 @@ export const useStore = create<AppState>((set, get) => ({
   setNavIndex: (index) => set({ currentNavIndex: index }),
   setHardwareStatus: (status) => set({ isHardwareConnected: status }),
   setNetworkStatus: (status, latency = 0) => set({ networkStatus: status, latencyMs: latency }),
+  setLanguage: (lang) => set({ language: lang }),
 
   setActivePatient: (patient) => {
       set({ activePatient: patient });
