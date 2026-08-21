@@ -5,7 +5,7 @@ module.exports = (allowedRoles) => {
     }
 
     if (!allowedRoles.includes(req.user.role)) {
-        console.warn(`[SECURITY] Access Denied for UID ${req.user.id}. Required: ${allowedRoles}, Current: ${req.user.role}`);
+        console.warn(`[SECURITY] Access Denied for UID ${req.user.id || 'unknown'}. Required: ${allowedRoles}, Current: ${req.user.role}`);
         return res.status(403).json({
             message: `Forbidden: This operation requires ${allowedRoles.join(' or ')} privileges.`
         });
