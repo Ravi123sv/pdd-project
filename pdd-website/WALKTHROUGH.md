@@ -38,3 +38,10 @@ The submission-ready content is private and located in:
 **System Status**: PLATINUM MASTER (v6.5)
 **Release Date**: August 2026
 © 2026 NeuroSignal Enterprise AI.
+
+## ?? 7. Mobile-First Clinical Features (v6.7)
+- **Single-Lead Focus**: In the monitor, tap any individual waveform to expand it to full-screen. This is designed for high-fidelity morphology inspection on handheld devices.
+- **Tactile Ergonomics**: All UI elements meet the 44px minimum touch-target standard for rapid clinical use.
+- **Capacitor Integration**: The ecosystem is pre-configured for native Android/iOS deployment using 
+pm run static and 
+pm run sync.
