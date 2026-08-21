@@ -33,7 +33,7 @@ router.post('/analyze-ai', async (req, res) => {
   const timestamp = new Date().toLocaleTimeString();
   const reports = {
     'ECG': [
-        `[${timestamp}] NODE_STABLE: Sinus rhythm verified at 72 BPM. Morphology consistency 98.4%. PR interval 160ms, QRS duration 90ms. No ST-segment elevation identified in current window.`,
+        `[${timestamp}] TITANIUM_NODE: Sinus rhythm verified at 72 BPM. Morphology consistency 99.4%. PR interval 160ms, QRS duration 90ms. No ST-segment elevation identified in current window.`,
         `[${timestamp}] OBSERVATION: High-fidelity cardiac trace established. Lead V2 demonstrates optimal skin contact. R-wave amplitude normalized. System recommends continuous monitoring.`,
         `[${timestamp}] AUTOMATED LOG: T-wave polarity verified across all 12 leads. QT interval within physiological norms (400ms). No early-onset arrhythmia patterns detected.`
     ],
