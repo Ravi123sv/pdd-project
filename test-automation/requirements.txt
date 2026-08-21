@@ -1,6 +1,0 @@
-pytest
-pytest-html
-requests
-selenium
-Appium-Python-Client
-allure-pytest

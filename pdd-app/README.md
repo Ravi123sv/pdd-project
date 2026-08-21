@@ -32,3 +32,8 @@ The **Universal Patent Specification** is finalized and located in:
 
 ---
 © 2026 NeuroSignal Enterprise AI. All Rights Reserved.
+
+## ? New in v6.8 (Titanium Master)
+- **Haptic Alerts**: Native tactile feedback for critical clinical events (Mobile only).
+- **Offline Sync**: Robust 'sync-session' logic for clinical data mobility.
+- **Single-Lead Focus**: High-fidelity morphology inspection for handheld monitors.
