@@ -41,7 +41,10 @@ export default function ProfilePage() {
             <div className="h-24 w-24 rounded-[2rem] bg-primary flex items-center justify-center text-white text-4xl font-black shadow-2xl shadow-primary/20">
                {user?.name?.[0]}
             </div>
-            <button className="absolute -bottom-2 -right-2 h-10 w-10 bg-white dark:bg-slate-800 border-2 border-border rounded-xl flex items-center justify-center text-slate-400 hover:text-primary transition-all shadow-lg">
+            <button
+                onClick={() => alert("Optical Scribe: Camera interface is preparing for biometric verification.")}
+                className="absolute -bottom-2 -right-2 h-10 w-10 bg-white dark:bg-slate-800 border-2 border-border rounded-xl flex items-center justify-center text-slate-400 hover:text-primary transition-all shadow-lg"
+            >
                 <Camera className="h-5 w-5" />
             </button>
           </div>
@@ -117,7 +120,12 @@ export default function ProfilePage() {
             <p className="text-sm font-medium text-slate-500 leading-relaxed">
                Credential rotation is managed by your Institutional Hub administrator. To request a role change or clinical key reset, please contact the unit head.
             </p>
-            <button className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">Request Identity Reset</button>
+            <button
+                onClick={() => alert("Security Protocol: Verification request sent to Institutional Hub.")}
+                className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline"
+            >
+                Request Identity Reset
+            </button>
           </div>
 
           {/* Admin Security Vault */}

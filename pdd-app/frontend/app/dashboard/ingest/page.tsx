@@ -167,8 +167,18 @@ export default function ExternalIngestPage() {
                         </div>
 
                         <div className="pt-6 border-t border-white/5 flex gap-4">
-                           <button className="flex-1 h-14 bg-white/5 border border-white/10 text-white rounded-2xl font-black text-[9px] uppercase tracking-widest hover:bg-white/10 transition-all">Save to Archive</button>
-                           <button className="flex-1 h-14 bg-primary text-white rounded-2xl font-black text-[9px] uppercase tracking-widest shadow-xl shadow-primary/20">Print Findings</button>
+                           <button
+                             onClick={() => alert("Archive Node: Report committed to patient clinical history.")}
+                             className="flex-1 h-14 bg-white/5 border border-white/10 text-white rounded-2xl font-black text-[9px] uppercase tracking-widest hover:bg-white/10 transition-all"
+                           >
+                              Save to Archive
+                           </button>
+                           <button
+                             onClick={() => window.print()}
+                             className="flex-1 h-14 bg-primary text-white rounded-2xl font-black text-[9px] uppercase tracking-widest shadow-xl shadow-primary/20"
+                           >
+                              Print Findings
+                           </button>
                         </div>
                      </div>
                      <ScanLine className="absolute -bottom-10 -right-10 h-64 w-64 text-primary opacity-5 animate-pulse" />

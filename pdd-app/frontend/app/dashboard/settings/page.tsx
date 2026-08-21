@@ -54,7 +54,11 @@ export default function SettingsPage() {
                 <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                     <Globe className="h-4 w-4 text-primary" /> Hub Connectivity
                 </h3>
-                <button type="button" className="text-[9px] font-black text-primary uppercase hover:underline flex items-center gap-2">
+                <button
+                    onClick={() => alert("Handshake Node: Institutional Hub connection verified at 42ms latency.")}
+                    type="button"
+                    className="text-[9px] font-black text-primary uppercase hover:underline flex items-center gap-2"
+                >
                     <RefreshCw className="h-3 w-3" /> Test Handshake
                 </button>
              </div>

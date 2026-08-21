@@ -35,7 +35,7 @@ import { useWaveform, ArtifactSeverity, DSPFilterConfig } from "../../../hooks/u
 import { api } from "../../../lib/api/client";
 import { queueForSync } from "../../../lib/offlineSync";
 import { useTranslation } from "../../../lib/i18n";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { socketService } from "../../../lib/api/socket";
 
 function cn(...inputs: ClassValue[]) {
@@ -43,6 +43,7 @@ function cn(...inputs: ClassValue[]) {
 }
 
 export default function MonitorPage() {
+  const router = useRouter();
   const { activePatient, setHardwareStatus, user, setActivePatient } = useStore();
   const { t } = useTranslation();
   const searchParams = useSearchParams();
@@ -52,6 +53,7 @@ export default function MonitorPage() {
   const [isPaused, setIsPaused] = useState(false);
   const [isLive, setIsLive] = useState(isMirrorMode);
   const [showRaw, setShowRaw] = useState(true);
+  const [aiFilterEnabled, setAiFilterEnabled] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
   const [heartRate, setHeartRate] = useState(0);
@@ -118,12 +120,7 @@ export default function MonitorPage() {
       if (isLive && artifactStatus.severity === 'high' && !isEmergency) {
           setIsEmergency(true);
           // 1. Live Socket Broadcast
-          socketService.emit('clinical_alert', {
-              patientId: activePatient?.id,
-              type: 'Signal Integrity Failure',
-              severity: 'CRITICAL',
-              text: `CRITICAL: Signal Integrity Failure for Patient ${activePatient?.id}. Check lead placement immediately.`
-          });
+          socketService.sendMessage('clinical_alert', user?.name || 'System', `CRITICAL: Signal Integrity Failure for Patient ${activePatient?.id}. Check lead placement immediately.`);
 
           // 2. Persistent Backend Log (Auditor Proof)
           api.alerts.create({
@@ -290,7 +287,8 @@ export default function MonitorPage() {
                     </button>
                     <div className="w-px h-4 bg-border/50 mx-1" />
                     <button
-                        className="px-4 py-2 rounded-xl text-[9px] font-black uppercase bg-primary text-white shadow-lg flex items-center gap-2"
+                        onClick={() => setAiFilterEnabled(!aiFilterEnabled)}
+                        className={cn("px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all flex items-center gap-2", aiFilterEnabled ? "bg-primary text-white shadow-lg" : "text-slate-400")}
                     >
                         <BrainCircuit className="h-3 w-3" />
                         AI Filter
@@ -444,7 +442,7 @@ export default function MonitorPage() {
               <p className="text-sm text-slate-500 font-medium max-w-sm mx-auto leading-relaxed">No clinical handshake detected. Please admit a patient to the current node to initialize telemetry acquisition.</p>
            </div>
            <button
-             onClick={() => window.location.href = '/dashboard/admission'}
+             onClick={() => router.push('/dashboard/admission')}
              className="neuro-button h-16 bg-primary text-white text-[11px] font-black tracking-[0.3em] uppercase px-16 shadow-3xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all"
            >
              Proceed to Admission
@@ -480,8 +478,8 @@ export default function MonitorPage() {
                      <div className="h-2 w-2 rounded-full bg-blue-500" />
                      <span className="text-[9px] font-black uppercase tracking-widest text-white/60">Unit: {activePatient?.hospitalId || 'LOCAL-01'}</span>
                   </div>
-                  <button onClick={() => alert("Calibration Node: Standardized at 25mm/s (IFCN Standard)")} className="text-white/20 hover:text-white transition-all"><Settings className="h-4.5 w-4.5" /></button>
-                  <button onClick={() => alert("LOCAL CACHE: Preparing telemetry snapshot for clinical handover.")} className="text-white/20 hover:text-white transition-all"><Download className="h-4.5 w-4.5" /></button>
+                  <button onClick={() => alert("Calibration Node: Standardized at 25mm/s (IFCN Standard).")} className="text-white/20 hover:text-white transition-all"><Settings className="h-4.5 w-4.5" /></button>
+                  <button onClick={() => alert("LOCAL CACHE: Telemetry snapshot for clinical handover is ready for download.")} className="text-white/20 hover:text-white transition-all"><Download className="h-4.5 w-4.5" /></button>
                 </div>
              </div>
 
@@ -496,7 +494,7 @@ export default function MonitorPage() {
                             key={label}
                             label={label}
                             rawData={channels.raw[i]}
-                            filteredData={channels.filtered[i]}
+                            filteredData={aiFilterEnabled ? channels.filtered[i] : channels.raw[i]}
                             isLive={isLive}
                             isPaused={isPaused}
                             showRaw={showRaw}

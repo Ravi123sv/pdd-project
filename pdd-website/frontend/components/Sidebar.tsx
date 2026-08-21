@@ -16,7 +16,10 @@ import {
   FileDown,
   BrainCircuit,
   Settings2,
-  Zap
+  Zap,
+  Bell,
+  Package,
+  BookOpen
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";

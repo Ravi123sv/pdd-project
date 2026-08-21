@@ -99,7 +99,10 @@ export default function AssetsHubPage() {
                 <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">All Units Verified</span>
             </div>
-            <button className="neuro-button bg-primary text-white flex items-center space-x-2 px-6 shadow-xl shadow-primary/20">
+            <button
+                onClick={() => alert("Hardware Registration Node: Please connect the unit via USB/Serial to initialize handshake.")}
+                className="neuro-button bg-primary text-white flex items-center space-x-2 px-6 shadow-xl shadow-primary/20"
+            >
                 <Plus className="h-4 w-4" />
                 <span className="text-[10px] font-black uppercase tracking-widest">Register Hardware</span>
             </button>
@@ -157,7 +160,10 @@ export default function AssetsHubPage() {
                     className="w-full h-14 bg-white dark:bg-slate-900 border-2 border-border/50 rounded-2xl pl-12 pr-4 text-xs font-bold outline-none focus:border-primary transition-all"
                  />
               </div>
-              <button className="h-14 w-14 rounded-2xl bg-white dark:bg-slate-900 border-2 border-border/50 flex items-center justify-center text-slate-400 hover:text-primary transition-all">
+              <button
+                onClick={() => alert("Filter Node: Multi-criteria filtering logic is active.")}
+                className="h-14 w-14 rounded-2xl bg-white dark:bg-slate-900 border-2 border-border/50 flex items-center justify-center text-slate-400 hover:text-primary transition-all"
+              >
                  <Filter className="h-5 w-5" />
               </button>
            </div>

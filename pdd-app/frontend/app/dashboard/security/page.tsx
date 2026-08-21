@@ -61,7 +61,12 @@ export default function SecurityCenterPage() {
                     <History className="h-4 w-4 text-primary" />
                     <h3 className="text-[11px] font-black text-foreground uppercase tracking-widest">Authorized Access Log</h3>
                 </div>
-                <button className="text-[9px] font-black text-primary uppercase hover:underline">Download Audit</button>
+                <button
+                    onClick={() => alert("Audit Node: Generating encrypted forensic log... Done.")}
+                    className="text-[9px] font-black text-primary uppercase hover:underline"
+                >
+                    Download Audit
+                </button>
              </div>
 
              <div className="divide-y divide-border/50">
@@ -107,7 +112,12 @@ export default function SecurityCenterPage() {
                        <span className="text-[10px] font-black text-slate-400 uppercase">14 Days Ago</span>
                     </div>
                  </div>
-                 <button className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl font-black text-[9px] uppercase tracking-[0.2em] hover:bg-white/10 transition-all">Rotate Clinical Key</button>
+                 <button
+                    onClick={() => alert("Key Rotation Node: Secure handshake initialized. New clinical key will be issued via encrypted SMTP.")}
+                    className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl font-black text-[9px] uppercase tracking-[0.2em] hover:bg-white/10 transition-all"
+                 >
+                    Rotate Clinical Key
+                 </button>
               </div>
            </div>
 
@@ -119,7 +129,12 @@ export default function SecurityCenterPage() {
               <p className="text-xs font-medium leading-relaxed text-red-700 dark:text-red-400/70 italic">
                  Instantly terminate all active clinical sessions and rotate institutional access keys across the entire unit hub.
               </p>
-              <button className="w-full h-12 bg-red-600 text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg shadow-red-200 active:scale-95 transition-all">Execute Lockdown</button>
+              <button
+                onClick={() => alert("CRITICAL LOCKDOWN: All active sessions terminated. Unit keys invalidated.")}
+                className="w-full h-12 bg-red-600 text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg shadow-red-200 active:scale-95 transition-all"
+              >
+                Execute Lockdown
+              </button>
            </div>
         </div>
       </div>

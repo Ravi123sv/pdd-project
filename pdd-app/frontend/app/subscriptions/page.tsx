@@ -111,7 +111,10 @@ export default function SubscriptionsPage() {
                  All subscription tiers include **E2E Signal Encryption** and **AES-256 local vault storage** as standard. We prioritize medical data sovereignty above all else.
               </p>
            </div>
-           <button className="text-[10px] font-black text-primary uppercase tracking-[0.2em] whitespace-nowrap hover:underline flex items-center gap-2">
+           <button
+             onClick={() => alert("Legal Matrix Node: HIPAA and GDPR compliance documents are available for institutional review.")}
+             className="text-[10px] font-black text-primary uppercase tracking-[0.2em] whitespace-nowrap hover:underline flex items-center gap-2"
+           >
               View Legal Matrix <ArrowRight className="h-4 w-4" />
            </button>
            <Sparkles className="absolute -top-10 -right-10 h-32 w-32 text-primary opacity-5" />

@@ -1,0 +1,54 @@
+name: Platinum Master - E2E & Security Audit
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  functional_audit:
+    name: Functional E2E (Selenium & Appium)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Install Testing Tools
+        run: |
+          npm install selenium-webdriver webdriverio
+          
+      - name: Run Web Audit (Selenium)
+        run: node selenium-tests/tests/login-tests.js
+        
+      - name: Upload Functional Matrices
+        uses: actions/upload-artifact@v4
+        with:
+          name: functional-verification-matrices
+          path: |
+            selenium-tests/Web_Clinical_Verification_Matrix.csv
+            appium-tests/Mobile_Clinical_Verification_Matrix.csv
+
+  security_red_team:
+    name: Red-Team Security & Load Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static Security Scan (SAST)
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/nodejs
+            
+      - name: Upload Security Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: institutional-security-reports
+          path: |
+             Vulnerability_Test_Results/security-review.md
+             Vulnerability_Test_Results/Institutional_Load_Verification.csv

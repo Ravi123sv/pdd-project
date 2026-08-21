@@ -162,7 +162,10 @@ export default function ProtocolsPage() {
 
                      <div className="flex gap-4 pt-4">
                         <button onClick={() => setSelectedProtocol(null)} className="flex-1 h-14 bg-slate-100 dark:bg-slate-800 text-slate-600 rounded-xl font-black text-[10px] uppercase tracking-widest">Close Guide</button>
-                        <button className="flex-1 h-14 bg-primary text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-primary/20 flex items-center justify-center gap-2">
+                        <button
+                           onClick={() => alert("Protocol Node: PDF guide is being generated for this standard.")}
+                           className="flex-1 h-14 bg-primary text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-primary/20 flex items-center justify-center gap-2"
+                        >
                            <FileText className="h-4 w-4" /> Download PDF Guide
                         </button>
                      </div>
