@@ -2,14 +2,21 @@ import axios from 'axios';
 
 // Environment-aware API resolution
 const getApiBaseUrl = () => {
+  // 1. Explicit production override (Render)
+  if (process.env.NODE_ENV === 'production') {
+      return 'https://neurosignal-clinical-hub.onrender.com/api';
+  }
+
+  // 2. Manual environment variable override
   if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
 
+  // 3. Local fallback with hostname intelligence
   if (typeof window !== 'undefined') {
     const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    // Production Cloud Hub: neurosignal-clinical-hub.onrender.com
     return isLocal ? 'http://localhost:5000/api' : 'https://neurosignal-clinical-hub.onrender.com/api';
   }
-  return process.env.NODE_ENV === 'production' ? 'https://neurosignal-clinical-hub.onrender.com/api' : 'http://localhost:5000/api';
+
+  return 'http://localhost:5000/api';
 };
 
 const API_BASE_URL = getApiBaseUrl();

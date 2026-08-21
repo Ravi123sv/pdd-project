@@ -148,6 +148,27 @@ export default function DashboardPage() {
         <StatCard label="NETWORK" value={networkStatus || "Clinical-Net"} icon={Wifi} color="text-amber-500" />
       </div>
 
+      {/* Cloud Connectivity Status (Production Bridge) */}
+      <div className="flex items-center gap-4 px-8 py-4 bg-slate-100 dark:bg-slate-900/50 rounded-2xl border border-border/50">
+          <div className="flex items-center gap-2">
+              <Globe className="h-4 w-4 text-primary" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Cloud Backbone:</span>
+          </div>
+          <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5 px-3 py-1 bg-white dark:bg-slate-800 rounded-lg border border-border/50 shadow-sm">
+                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[8px] font-black text-foreground">RENDER HUB</span>
+              </div>
+              <div className="flex items-center gap-1.5 px-3 py-1 bg-white dark:bg-slate-800 rounded-lg border border-border/50 shadow-sm">
+                  <div className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
+                  <span className="text-[8px] font-black text-foreground">PAGES FRONTEND</span>
+              </div>
+          </div>
+          <p className="ml-auto text-[8px] font-bold text-slate-400 uppercase italic">
+              Distributed Cloud Architecture v4.3.8 (Titanium Separated)
+          </p>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content Area */}
         <div className="lg:col-span-2 space-y-8">
