@@ -60,6 +60,15 @@ export const useStore = create<AppState>((set, get) => ({
           user.hospitalName = "Private Clinic";
       }
       set({ isAuthenticated, user });
+
+      // PERSISTENCE LOCK: Ensure session is locked to disk on update
+      if (typeof window !== 'undefined') {
+          if (isAuthenticated && user) {
+              localStorage.setItem('user_session', JSON.stringify({ user }));
+          } else {
+              localStorage.removeItem('user_session');
+          }
+      }
   },
 
   setNavIndex: (index) => set({ currentNavIndex: index }),
