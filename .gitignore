@@ -20,6 +20,17 @@ dist/
 .idea/
 .vscode/
 
+# Dependencies
+node_modules/
+.next/
+dist/
+out/
+build/
+
+# IDE
+.idea/
+.vscode/
+
 # Project Specific
 .artifacts/
 .aiexclude
@@ -27,5 +38,7 @@ dist/
 *patent.md
 documentation/*Patent.md
 project/pdd-web/node_modules/
+*.zip
+*.log
 project/pdd-web/.next/
 project/pdd-web/tf-env/

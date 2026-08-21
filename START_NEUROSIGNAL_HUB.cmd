@@ -17,9 +17,24 @@ call npm run install:all
 
 echo.
 echo [3/3] BOOTING CLINICAL BACKEND AND WORKSTATION...
-echo System is initializing. Hub will be available on port 5000.
+echo Hub will be available on port 5000.
 echo Frontend will be available on port 3000.
 echo.
-call npm run launch:hub
 
+:: Start the hub concurrently
+start /b cmd /c "npm run launch:hub"
+
+echo Waiting for Clinical Hub Handshake...
+:loop
+powershell -Command "$status = try { (Invoke-WebRequest -Uri http://localhost:5000/api/health -UseBasicParsing).StatusCode } catch { 0 }; if ($status -eq 200) { exit 0 } else { exit 1 }"
+if %errorlevel% equ 0 (
+    echo.
+    echo ✅ CLINICAL HUB ONLINE. Ready for diagnostic signals.
+    echo 🌐 Access Workstation at: http://localhost:3000
+    goto :end
+)
+timeout /t 2 /nobreak >nul
+goto :loop
+
+:end
 pause
