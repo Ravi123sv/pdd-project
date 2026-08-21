@@ -1,4 +1,4 @@
-ï»¿"use client";
+"use client";
 
 import { useStore } from "../../lib/store/useStore";
 import { useEffect, useState } from "react";
@@ -13,10 +13,19 @@ import {
   ChevronRight,
   Play,
   LayoutDashboard as Hub,
-  Loader2
+  Loader2,
+  Globe,
+  ShieldCheck,
+  Maximize2,
+  Bell,
+  Zap,
+  Smartphone
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { api } from "../../lib/api/client";
+import SignalCanvas from "../../components/SignalCanvas";
+import { useWaveform } from "../../hooks/useWaveform";
+import { cn } from "../../lib/utils";
 
 import { useRouter } from "next/navigation";
 import { socketService } from "../../lib/api/socket";
@@ -118,8 +127,8 @@ export default function DashboardPage() {
           </h1>
           <p className="text-white/70 font-medium max-w-lg">
             {isHospital
-              ? `Managing ${user?.hospitalName} â€¢ Active Clinical Environment`
-              : "Standalone Session Mode â€¢ Encrypted Local Processing"}
+              ? `Managing ${user?.hospitalName} • Active Clinical Environment`
+              : "Standalone Session Mode • Encrypted Local Processing"}
           </p>
         </div>
 
@@ -215,28 +224,28 @@ export default function DashboardPage() {
 
           {isHospital && (
             <div className="glass-card p-8">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('unit_status')}</h3>
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                   <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('unit_status')}</h3>
+                   <p className="text-sm font-black text-foreground">Unit-Wide Command Center</p>
+                </div>
                 <div className="flex items-center space-x-2 px-3 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">
                     <div className="h-1 w-1 rounded-full bg-emerald-500 animate-ping" />
-                    <span className="text-[8px] font-black text-emerald-500 uppercase">Live Feed</span>
+                    <span className="text-[8px] font-black text-emerald-500 uppercase">Hub Sync Active</span>
                 </div>
               </div>
 
-              <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  {activeUnits.length > 0 ? activeUnits.map((unit, i) => (
-                    <UnitRow
+                    <CommandCenterTile
                         key={unit._id}
-                        name={unit.patient?.name || "Patient Acquisition"}
-                        status={`${unit.testType} - Live Stream`}
-                        active
-                        bpm={unit.testType === 'ECG' ? 72 : null}
+                        unit={unit}
                         onMirror={() => router.push(`/dashboard/monitor?mode=mirror&patient=${unit.patient?.patientId}`)}
                     />
                  )) : (
-                    <div className="py-12 text-center opacity-30">
-                        <Activity className="h-10 w-10 mx-auto mb-4 text-slate-400" />
-                        <p className="text-[10px] font-black uppercase tracking-widest">All units standby</p>
+                    <div className="md:col-span-2 py-20 text-center opacity-30 border-2 border-dashed border-border rounded-[2rem]">
+                        <Activity className="h-12 w-12 mx-auto mb-4 text-slate-400" />
+                        <p className="text-xs font-black uppercase tracking-widest">All units awaiting admission handshake</p>
                     </div>
                  )}
               </div>
@@ -297,6 +306,63 @@ export default function DashboardPage() {
   );
 }
 
+function CommandCenterTile({ unit, onMirror }: any) {
+  const isECG = unit.testType === 'ECG';
+  // Reduced data for mini view
+  const { channels } = useWaveform(1, true, false, undefined, 25);
+  const [alert, setAlert] = useState(false);
+
+  // Simulated Alert Bus logic for multi-room demonstration
+  useEffect(() => {
+    if (Math.random() > 0.98) setAlert(true);
+    const timer = setTimeout(() => setAlert(false), 5000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <div className={cn(
+        "p-6 rounded-[2.5rem] border-2 transition-all duration-500 flex flex-col space-y-4 group",
+        alert ? "bg-red-500/5 border-red-500 shadow-[0_0_30px_rgba(239,68,68,0.1)]" : "bg-slate-50 dark:bg-slate-900/50 border-border/50 hover:border-primary/30"
+    )}>
+      <div className="flex items-center justify-between">
+         <div className="flex items-center gap-3">
+            <div className={cn("h-8 w-8 rounded-xl flex items-center justify-center", isECG ? "bg-emerald-500/10 text-emerald-500" : "bg-blue-500/10 text-blue-500")}>
+               <MonitorHeart className="h-4 w-4" />
+            </div>
+            <div>
+               <p className="text-xs font-black text-foreground truncate max-w-[100px]">{unit.patient?.name}</p>
+               <p className="text-[8px] font-black text-slate-400 uppercase">MRN: {unit.patient?.patientId}</p>
+            </div>
+         </div>
+         {alert && <AlertCircle className="h-4 w-4 text-red-500 animate-bounce" />}
+         {!alert && <button onClick={onMirror} className="text-slate-300 hover:text-primary transition-all opacity-0 group-hover:opacity-100"><Maximize2 className="h-4 w-4" /></button>}
+      </div>
+
+      <div className="h-24 bg-black rounded-2xl border border-white/5 overflow-hidden relative">
+         <SignalCanvas
+            label=""
+            filteredData={channels.filtered[0]}
+            isLive={true}
+            isPaused={false}
+            showRaw={false}
+            color={alert ? "#EF4444" : (isECG ? "#10B981" : "#3B82F6")}
+         />
+         {alert && <div className="absolute inset-0 bg-red-500/10 animate-pulse pointer-events-none" />}
+      </div>
+
+      <div className="flex items-center justify-between pt-2 border-t border-border/30">
+         <div className="flex items-center gap-1.5">
+            <div className={cn("h-1.5 w-1.5 rounded-full", alert ? "bg-red-500" : "bg-emerald-500 animate-pulse")} />
+            <span className={cn("text-[8px] font-black uppercase", alert ? "text-red-500" : "text-slate-400")}>
+                {alert ? "CRITICAL ALERT" : `${unit.testType} ACTIVE`}
+            </span>
+         </div>
+         {isECG && <span className="text-[9px] font-black text-emerald-500">72 BPM</span>}
+      </div>
+    </div>
+  );
+}
+
 function StatCard({ label, value, icon: Icon, color }: any) {
   return (
     <motion.div
@@ -340,7 +406,7 @@ function UnitRow({ name, status, active, onMirror, bpm }: any) {
 function FeedItem({ title, body, category }: any) {
   return (
     <div className="space-y-1">
-      <span className="text-[8px] font-black text-primary uppercase tracking-widest">{category} â€¢ {title}</span>
+      <span className="text-[8px] font-black text-primary uppercase tracking-widest">{category} • {title}</span>
       <p className="text-xs font-medium text-slate-600 dark:text-slate-400 leading-relaxed truncate">{body}</p>
     </div>
   );
