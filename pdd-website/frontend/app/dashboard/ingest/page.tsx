@@ -19,6 +19,8 @@ import {
   Cpu
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import SignalCanvas from "../../../components/SignalCanvas";
+import { SignalParser } from "../../../lib/services/SignalParser";
 
 export default function ExternalIngestPage() {
   const { user } = useStore();
@@ -26,10 +28,18 @@ export default function ExternalIngestPage() {
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [mode, setMode] = useState<'optical' | 'digital'>('optical');
+  const [ingestedSignal, setIngestedSignal] = useState<number[] | null>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
       const selected = e.target.files?.[0];
-      if (selected) setFile(selected);
+      if (selected) {
+          setFile(selected);
+          // If digital, parse immediately for preview
+          if (mode === 'digital' && (selected.name.endsWith('.csv') || selected.name.endsWith('.json'))) {
+              const signal = await SignalParser.parseCSV(selected);
+              setIngestedSignal(signal.slice(0, 200));
+          }
+      }
   };
 
   const runIngestAnalysis = async () => {
@@ -127,22 +137,35 @@ export default function ExternalIngestPage() {
                   {!file ? (
                       <label className="neuro-button bg-primary text-white px-12 py-4 cursor-pointer shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
                         <span className="text-[10px] font-black uppercase tracking-widest">Select Source File</span>
-                        <input type="file" className="hidden" onChange={handleFileChange} accept={mode === 'optical' ? 'image/*' : '.csv,.edf,.json'} />
+                        <input type="file" className="hidden" onChange={handleFileChange} accept={mode === 'optical' ? 'image/*' : '.csv,.json'} />
                       </label>
                   ) : (
-                      <div className="flex flex-col items-center gap-4">
+                      <div className="flex flex-col items-center gap-6 w-full">
                           <div className="px-6 py-3 bg-white dark:bg-slate-800 rounded-2xl border border-border shadow-sm flex items-center gap-3">
                               {mode === 'optical' ? <ImageIcon className="h-4 w-4 text-primary" /> : <FileText className="h-4 w-4 text-primary" />}
                               <span className="text-xs font-bold text-foreground">{file.name}</span>
-                              <button onClick={() => setFile(null)} className="text-slate-400 hover:text-red-500 transition-colors"><X className="h-4 w-4" /></button>
+                              <button onClick={() => { setFile(null); setIngestedSignal(null); }} className="text-slate-400 hover:text-red-500 transition-colors"><X className="h-4 w-4" /></button>
                           </div>
+
+                          {ingestedSignal && (
+                              <div className="w-full h-40 bg-black rounded-3xl overflow-hidden border-2 border-primary/20">
+                                  <SignalCanvas
+                                    label="Digital Preview"
+                                    filteredData={ingestedSignal}
+                                    isLive={false}
+                                    isPaused={true}
+                                    color="#3B82F6"
+                                  />
+                              </div>
+                          )}
+
                           <button
                             onClick={runIngestAnalysis}
                             disabled={analyzing}
                             className="neuro-button bg-emerald-600 text-white px-16 h-14 shadow-xl shadow-emerald-600/20 active:scale-95 transition-all"
                           >
                              {analyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <BrainCircuit className="h-4 w-4" />}
-                             <span className="text-[10px] font-black uppercase tracking-widest ml-3">Initialize Analysis</span>
+                             <span className="text-[10px] font-black uppercase tracking-widest ml-3">Initialize Ingest</span>
                           </button>
                       </div>
                   )}

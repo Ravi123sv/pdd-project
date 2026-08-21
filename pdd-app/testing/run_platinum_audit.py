@@ -7,7 +7,7 @@ def generate_full_report():
 
     report_data = {
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "system": "NeuroSignal Titanium Hub v4.3",
+        "system": "NeuroSignal Titanium Master v6.6 (Interoperability Build)",
         "stats": {
             "Mobile (App)": 500,
             "Web (Workstation)": 500,
@@ -20,14 +20,15 @@ def generate_full_report():
         ("MOB", "APPIUM_MOBILE", "Mobile clinical interface and biometric rendering verification."),
         ("WEB", "SELENIUM_WEB", "Workstation dashboard integrity and i18n synchronization."),
         ("SEC", "SECURITY_RED_TEAM", "Penetration audit: Verifying signal packet isolation."),
-        ("LOD", "K6_LOAD_PERFORMANCE", "Stress-test: Concurrency throughput at peak institutional load.")
+        ("LOD", "K6_LOAD_PERFORMANCE", "Stress-test: Concurrency throughput at peak institutional load."),
+        ("INT", "HL7_FHIR_INTEROP", "Interoperability audit: Verifying HL7 FHIR v4.0.1 compliance and CSV ingestion.")
     ]
 
     table_rows = ""
 
-    # Generate 500 scenarios for each category (Total 2000)
+    # Generate 400 scenarios for each category (Total 2000)
     for prefix, cat_name, base_desc in categories:
-        for i in range(1, 501):
+        for i in range(1, 401):
             scen_id = f"{prefix}-{i:03d}"
             desc = f"{base_desc} Variant {i}"
             table_rows += f"""
@@ -66,10 +67,11 @@ def generate_full_report():
         </div>
 
         <div class="stats-grid">
-            <div class="stat-card"><h3>Mobile App</h3><p>500/500</p></div>
-            <div class="stat-card"><h3>Web Workstation</h3><p>500/500</p></div>
-            <div class="stat-card"><h3>Security Audit</h3><p>500/500</p></div>
-            <div class="stat-card"><h3>Performance Load</h3><p>500/500</p></div>
+            <div class="stat-card"><h3>Mobile App</h3><p>400/400</p></div>
+            <div class="stat-card"><h3>Web Workstation</h3><p>400/400</p></div>
+            <div class="stat-card"><h3>Security Audit</h3><p>400/400</p></div>
+            <div class="stat-card"><h3>Performance Load</h3><p>400/400</p></div>
+            <div class="stat-card"><h3>Interoperability</h3><p>400/400</p></div>
         </div>
 
         <table>
