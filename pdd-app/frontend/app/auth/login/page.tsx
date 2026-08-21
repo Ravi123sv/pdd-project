@@ -44,14 +44,27 @@ export default function LoginPage() {
   const [clinicalKey, setClinicalKey] = useState("");
   const [googleUser, setGoogleUser] = useState<FirebaseUser | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [hubStatus, setHubStatus] = useState<'checking' | 'online' | 'offline'>('checking');
 
   const logoPath = "https://ravi123sv.github.io/pdd-project/assets/icon/app_icon.svg";
 
   useEffect(() => {
+    // 1. Session check
     checkSession();
     if (isAuthenticated) {
         router.push("/dashboard");
     }
+
+    // 2. Pro Health-Check for Hub (Prevents "stuck" logins)
+    const checkHub = async () => {
+        try {
+            await api.system.health();
+            setHubStatus('online');
+        } catch (e) {
+            setHubStatus('offline');
+        }
+    };
+    checkHub();
   }, [isAuthenticated, router, checkSession]);
 
   const handleGoogleLogin = async () => {
@@ -150,7 +163,15 @@ export default function LoginPage() {
         <div className="w-full max-w-[440px] space-y-12">
           <div className="space-y-4">
             <h3 className="text-5xl font-black text-[#0F172A] dark:text-white tracking-tight">Login</h3>
-            <p className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.2em]">Clinical Handshake Protocol</p>
+            <div className="flex items-center gap-3">
+                <p className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.2em]">Clinical Handshake Protocol</p>
+                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-border/50 bg-white dark:bg-slate-900">
+                    <div className={cn("h-1 w-1 rounded-full animate-pulse", hubStatus === 'online' ? 'bg-emerald-500' : (hubStatus === 'offline' ? 'bg-red-500' : 'bg-slate-300'))} />
+                    <span className="text-[7px] font-black uppercase text-slate-400">
+                        HUB: {hubStatus.toUpperCase()}
+                    </span>
+                </div>
+            </div>
           </div>
 
           <div className="space-y-8">

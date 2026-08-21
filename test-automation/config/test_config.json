@@ -1,0 +1,20 @@
+{
+  "app_name": "NeuroSignal Enterprise AI",
+  "api_base_url": "https://neurosignal-clinical-hub.onrender.com/api",
+  "web_url": "https://ravi123sv.github.io/pdd-project/",
+  "auth_type": "JWT",
+  "master_key": "NS-884920",
+  "test_user": "auditor@neurosignal.org",
+  "android_capabilities": {
+    "platformName": "Android",
+    "automationName": "UiAutomator2",
+    "deviceName": "Clinical_Tablet",
+    "app": "./apps/neurosignal.apk",
+    "autoGrantPermissions": true
+  },
+  "selenium": {
+    "browser": "chrome",
+    "headless": true,
+    "implicit_wait": 10
+  }
+}
