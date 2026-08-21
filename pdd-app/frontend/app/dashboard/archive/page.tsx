@@ -100,6 +100,16 @@ export default function ArchivePage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-12">
+      <style jsx global>{`
+        @media print {
+          body { background: white !important; color: black !important; }
+          .glass-card { background: white !important; border: 1px solid #e2e8f0 !important; box-shadow: none !important; color: black !important; }
+          .bg-slate-900, .bg-primary, .bg-slate-950, .bg-[#03060c] { background: white !important; color: black !important; border: 1px solid #e2e8f0 !important; }
+          .text-white, .text-white/70, .text-white/40, .text-slate-300, .text-primary { color: black !important; }
+          .print\\:hidden { display: none !important; }
+          canvas { filter: invert(1) hue-rotate(180deg) brightness(0.8) contrast(1.2) !important; }
+        }
+      `}</style>
       {/* Hide on print */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 print:hidden">
         <div className="flex items-center space-x-4">

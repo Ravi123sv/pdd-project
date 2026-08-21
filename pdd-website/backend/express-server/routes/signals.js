@@ -90,10 +90,19 @@ router.post('/ingest-ai', async (req, res) => {
             if (mode === 'optical' && imageData) {
                 result = await model.generateContent([
                     { inlineData: { data: imageData, mimeType } },
-                    { text: "Perform clinical optical digitization of this chart. Prepend with [OPTICAL SCRIBE]." }
+                    { text: `[OPTICAL SCRIBE PROTOCOL]
+                    Perform a high-fidelity morphological extraction of this physiological signal paper strip.
+                    1. Identify modality (ECG/EEG).
+                    2. Locate P-QRS-T complexes or Neural Delta/Alpha spikes.
+                    3. Determine estimated Heart Rate or Spectral Dominance.
+                    4. Provide a technical narrative on signal integrity and morphological consistency against standard clinical baselines.
+                    Format the output as a professional physician-ready report.` }
                 ]);
             } else {
-                result = await model.generateContent(`Perform a retrospective analysis of clinical dataset: ${fileName}. Prepend with [INGEST ANALYTICS].`);
+                result = await model.generateContent(`[INGEST ANALYTICS PROTOCOL]
+                Perform a retrospective clinical analysis of dataset: ${fileName}.
+                Cross-reference with institutional diagnostic norms. Identify any ST-segment deviations or paroxysmal neural transients.
+                Summarize findings for specialist review.`);
             }
             return res.json({ analysis: result.response.text(), engine: "Ingest Uplink v2.5" });
         } catch (e) { console.warn("Ingest Uplink Error."); }
