@@ -1,0 +1,14 @@
+{
+  "name": "neurosignal-titanium-orchestrator",
+  "version": "4.3.0",
+  "private": true,
+  "description": "Unified root orchestrator for the NeuroSignal Enterprise ecosystem.",
+  "scripts": {
+    "install:all": "cd pdd-website/backend/express-server && npm install && cd ../../frontend && npm install",
+    "launch:hub": "concurrently \"cd pdd-website/backend/express-server && npm start\" \"cd pdd-website/frontend && npm run dev\"",
+    "launch:app": "concurrently \"cd pdd-app/backend/express-server && npm start\" \"cd pdd-app/frontend && npm run dev\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

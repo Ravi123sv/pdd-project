@@ -68,6 +68,7 @@ try {
     const sessionRoutes = require('./routes/sessions');
     const paymentRoutes = require('./routes/payments');
     const alertRoutes = require('./routes/alerts');
+    const qaRoutes = require('./routes/qa');
 
     app.use('/api/assets', assetRoutes);
     app.use('/api/patients', patientRoutes);
@@ -78,6 +79,7 @@ try {
     app.use('/api/sessions', sessionRoutes);
     app.use('/api/payments', paymentRoutes);
     app.use('/api/alerts', alertRoutes);
+    app.use('/api/qa', qaRoutes);
     console.log("[BOOT] Clinical Modules Mounted Successfully");
 } catch (e) {
     console.error("[BOOT] CRITICAL: Module Mounting Failed:", e.message);
@@ -100,7 +102,7 @@ app.use((err, req, res, next) => {
 // Port Binding (Render standard)
 const PORT = process.env.PORT || 10000;
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`[BOOT] Clinical Hub Online on port ${PORT}`);
+  console.log(`[BOOT] TITANIUM HUB: Institutional Node Online on port ${PORT}`);
   console.log(`[BOOT] Environment: ${process.env.NODE_ENV || 'production'}`);
   console.log(`[BOOT] Database Status: ${mongoose.connection.readyState === 1 ? 'READY' : 'PENDING'}`);
 });

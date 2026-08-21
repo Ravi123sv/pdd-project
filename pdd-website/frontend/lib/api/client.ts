@@ -101,6 +101,10 @@ export const api = {
     readAll: (hospitalId: string) => apiClient.post(`/alerts/read-all/${hospitalId}`),
     clear: (hospitalId: string) => apiClient.delete(`/alerts/${hospitalId}`),
   },
+  qa: {
+    getSummary: () => apiClient.get('/qa/audit-summary'),
+    getLog: () => apiClient.get('/qa/audit-log'),
+  },
   sessions: {
     getAll: (hospitalId: string) => apiClient.get(`/sessions/${hospitalId}`),
     getActive: (hospitalId: string) => apiClient.get(`/sessions/active/${hospitalId}`),
