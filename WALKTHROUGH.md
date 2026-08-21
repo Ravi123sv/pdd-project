@@ -5,6 +5,7 @@ Welcome to the definitive clinical workstation. This guide outlines the core arc
 ## 🚀 1. The One-Click Launch (Titanium Boot)
 The entire hospital node is orchestrated from the root folder.
 - **Protocol**: Double-click **`START_NEUROSIGNAL_HUB.cmd`**.
+- **Demo Mode**: The script will ask if you want to initialize "Demo Mode." Type `y` to launch the **Hospital Pulse Simulation Engine**, which streams live data for 6 clinical rooms instantly.
 - **Intelligence**: The script performs a real-time health-check. It will not initialize the frontend until the **Clinical Hub (Backend)** confirms it is "Operational" and "Database Ready."
 - **Access**: Once verified, enter the workstation at `http://localhost:3000`.
 

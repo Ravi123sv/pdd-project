@@ -4,6 +4,10 @@ echo ===================================================
 echo   NEUROSIGNAL TITANIUM HUB - ONE-CLICK BOOT
 echo ===================================================
 echo.
+
+set /p demo="Initialize Institutional Simulation (Demo Mode)? [y/n]: "
+
+echo.
 echo [1/3] Checking Root Orchestrator...
 if not exist "node_modules" (
     echo [SYSTEM] First-time setup detected. Installing orchestrator tools...
@@ -31,6 +35,14 @@ if %errorlevel% equ 0 (
     echo.
     echo ✅ CLINICAL HUB ONLINE. Ready for diagnostic signals.
     echo 🌐 Access Workstation at: http://localhost:3000
+
+    if /i "%demo%"=="y" (
+        echo.
+        echo [DEMO] Waking up clinical rooms...
+        start /b cmd /c "cd pdd-website/backend/express-server && node scripts/simulate_traffic.js"
+        echo 🏥 Pulse Simulation Active.
+    )
+
     goto :end
 )
 timeout /t 2 /nobreak >nul
