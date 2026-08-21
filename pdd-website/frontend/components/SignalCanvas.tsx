@@ -30,138 +30,90 @@ export default function SignalCanvas({ label, rawData, filteredData, color = "#1
     const container = containerRef.current;
     if (!canvas || !container) return;
 
-    const ctx = canvas.getContext("2d", { alpha: false }); // Performance optimization
+    const ctx = canvas.getContext("2d", { alpha: false });
     if (!ctx) return;
 
-    const render = () => {
-        const dpr = window.devicePixelRatio || 1;
-        const rect = container.getBoundingClientRect();
+    // v5.6 Optimized: Single-pass draw on prop change (No internal RAF loop)
+    const dpr = window.devicePixelRatio || 1;
+    const rect = container.getBoundingClientRect();
 
-        // High-DPI Scaling Sync
-        if (canvas.width !== Math.floor(rect.width * dpr) || canvas.height !== Math.floor(rect.height * dpr)) {
-            canvas.width = Math.floor(rect.width * dpr);
-            canvas.height = Math.floor(rect.height * dpr);
-            ctx.scale(dpr, dpr);
-        }
+    if (canvas.width !== Math.floor(rect.width * dpr) || canvas.height !== Math.floor(rect.height * dpr)) {
+        canvas.width = Math.floor(rect.width * dpr);
+        canvas.height = Math.floor(rect.height * dpr);
+        ctx.scale(dpr, dpr);
+    }
 
-        const width = rect.width;
-        const height = rect.height;
-        const midY = height / 2;
-        const yScale = (height / 150) * gain;
+    const width = rect.width;
+    const height = rect.height;
+    const midY = height / 2;
+    const yScale = (height / 150) * gain;
 
-        // Draw opaque background (Faster than clearRect with alpha: false)
-        ctx.fillStyle = "#050810";
-        ctx.fillRect(0, 0, width, height);
+    ctx.fillStyle = "#050810";
+    ctx.fillRect(0, 0, width, height);
 
-        // 1. Static Digital Grid
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.04)";
-        ctx.lineWidth = 0.5;
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.04)";
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    for (let i = 0; i < width; i += 20) { ctx.moveTo(i, 0); ctx.lineTo(i, height); }
+    for (let i = 0; i < height; i += 20) { ctx.moveTo(0, i); ctx.lineTo(width, i); }
+    ctx.stroke();
+
+    const dataLen = filteredData.length;
+    if (dataLen < 2) return;
+    const step = width / (dataLen - 1);
+
+    if (baselineData && baselineData.length > 1) {
         ctx.beginPath();
-        for (let i = 0; i < width; i += 20) { ctx.moveTo(i, 0); ctx.lineTo(i, height); }
-        for (let i = 0; i < height; i += 20) { ctx.moveTo(0, i); ctx.lineTo(width, i); }
-        ctx.stroke();
-
-        const dataLen = filteredData.length;
-        if (dataLen < 2) {
-            frameId.current = requestAnimationFrame(render);
-            return;
-        }
-
-        const step = width / (dataLen - 1);
-
-        // 2. BASELINE MORPHOLOGY OVERLAY (Ghost Trace)
-        if (baselineData && baselineData.length > 1) {
-            ctx.beginPath();
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.15)"; // Ghost white
-            ctx.setLineDash([5, 5]); // Dashed for baseline
-            ctx.lineWidth = 1;
-            const bStep = width / (baselineData.length - 1);
-            for (let i = 0; i < baselineData.length; i++) {
-                const x = i * bStep;
-                const y = midY - (baselineData[i] * yScale);
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-            }
-            ctx.stroke();
-            ctx.setLineDash([]); // Reset for main trace
-        }
-
-        // 3. RAW SIGNAL TRACE
-        if (showRaw && rawData && rawData.length > 0) {
-            ctx.beginPath();
-            ctx.strokeStyle = "rgba(244, 63, 94, 0.4)";
-            ctx.lineWidth = 1;
-            for (let i = 0; i < rawData.length; i++) {
-                const x = i * step;
-                const y = midY - (rawData[i] * yScale);
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-            }
-            ctx.stroke();
-        }
-
-        // 3. AI-FILTERED TRACE
-        if (filteredData.length > 0) {
-          ctx.beginPath();
-          ctx.strokeStyle = color;
-          ctx.lineWidth = 2.2;
-          ctx.lineJoin = "round";
-          ctx.lineCap = "round";
-
-          for (let i = 0; i < dataLen; i++) {
-            const x = i * step;
-            const y = midY - (filteredData[i] * yScale);
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
+        ctx.setLineDash([5, 5]);
+        ctx.lineWidth = 1;
+        const bStep = width / (baselineData.length - 1);
+        for (let i = 0; i < baselineData.length; i++) {
+            const x = i * bStep;
+            const y = midY - (baselineData[i] * yScale);
             if (i === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
-          }
-          ctx.stroke();
-
-          // Performance Pulse Cursor
-          if (isLive && !isPaused) {
-              const lastIdx = dataLen - 1;
-              const lastX = lastIdx * step;
-              const lastY = midY - (filteredData[lastIdx] * yScale);
-
-              ctx.beginPath();
-              ctx.arc(lastX, lastY, 4, 0, Math.PI * 2);
-              ctx.fillStyle = color;
-              ctx.fill();
-          }
         }
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
 
-        // 4. NEURAL FORECAST TAIL (3-Second Predictive Projection)
-        if (showForecast && isLive && !isPaused && filteredData.length > 10) {
-            ctx.beginPath();
-            ctx.strokeStyle = "rgba(59, 130, 246, 0.4)"; // Neural Blue
-            ctx.setLineDash([2, 2]);
-            ctx.lineWidth = 1.5;
-
-            const lastIdx = dataLen - 1;
-            const startX = lastIdx * step;
-            const startY = midY - (filteredData[lastIdx] * yScale);
-            ctx.moveTo(startX, startY);
-
-            // Simple Extrapolation Logic (Realistic for demo)
-            for (let i = 1; i <= 30; i++) {
-                const nextX = startX + (i * step);
-                const noise = (Math.random() - 0.5) * 2;
-                // Projected rhythm matching recent pattern
-                const y = midY - (filteredData[lastIdx - (i % 10)] * yScale) + noise;
-                ctx.lineTo(nextX, y);
-            }
-            ctx.stroke();
-            ctx.setLineDash([]);
+    if (showRaw && rawData && rawData.length > 0) {
+        ctx.beginPath();
+        ctx.strokeStyle = "rgba(244, 63, 94, 0.4)";
+        ctx.lineWidth = 1;
+        for (let i = 0; i < rawData.length; i++) {
+            const x = i * (width / (rawData.length - 1));
+            const y = midY - (rawData[i] * yScale);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
         }
+        ctx.stroke();
+    }
 
-        frameId.current = requestAnimationFrame(render);
-    };
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.2;
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+    for (let i = 0; i < dataLen; i++) {
+        const x = i * step;
+        const y = midY - (filteredData[i] * yScale);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
 
-    frameId.current = requestAnimationFrame(render);
-
-    return () => {
-        if (frameId.current) cancelAnimationFrame(frameId.current);
-    };
-  }, [rawData, filteredData, isLive, isPaused, color, showRaw]);
+    if (isLive && !isPaused) {
+        const lastIdx = dataLen - 1;
+        const lastX = lastIdx * step;
+        const lastY = midY - (filteredData[lastIdx] * yScale);
+        ctx.beginPath();
+        ctx.arc(lastX, lastY, 4, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+    }
+  }, [rawData, filteredData, isLive, isPaused, color, showRaw, gain, baselineData, showForecast]);
 
   return (
     <div ref={containerRef} className="relative h-full w-full bg-[#050810] rounded-xl border border-white/5 overflow-hidden transition-all duration-500 hover:border-primary/20">

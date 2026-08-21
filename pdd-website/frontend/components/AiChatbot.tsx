@@ -49,14 +49,16 @@ export default function AiChatbot() {
     setLoading(true);
 
     try {
-      // Inject Clinical Context into the request
+      // Inject Clinical Context into the latest message
       const contextPrompt = activePatient
         ? `[CONTEXT: Currently monitoring ${activePatient.name}, MRN ${activePatient.id}, Modality ${activePatient.modality}] `
-        : "[CONTEXT: No active patient session]";
+        : "[CONTEXT: No active patient session] ";
 
-      const res = await api.signals.chatbot([
-          { role: 'user', content: contextPrompt + input }
-      ]);
+      // Send FULL history to the backend for contextual AI logic
+      const messageWithContext: Message = { role: 'user', content: contextPrompt + input };
+      const apiPayload = [...messages, messageWithContext];
+
+      const res = await api.signals.chatbot(apiPayload);
 
       setMessages([...newMessages, { role: 'assistant', content: res.data.content }]);
     } catch (err) {
