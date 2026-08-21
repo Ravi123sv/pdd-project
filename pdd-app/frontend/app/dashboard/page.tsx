@@ -30,6 +30,7 @@ import { cn } from "../../lib/utils";
 import { useRouter } from "next/navigation";
 import { socketService } from "../../lib/api/socket";
 import { useTranslation } from "../../lib/i18n";
+import { Haptics, ImpactStyle } from "@capacitor/haptics";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -47,6 +48,9 @@ export default function DashboardPage() {
   const isHospital = user?.userType === 'hospital';
 
   const triggerRedAlert = () => {
+    Haptics.vibrate();
+    Haptics.impact({ style: ImpactStyle.Heavy });
+
     socketService.emit('trigger_red_alert', {
       sender: user?.name,
       channel: 'Global-ER',
@@ -127,8 +131,8 @@ export default function DashboardPage() {
           </h1>
           <p className="text-white/70 font-medium max-w-lg">
             {isHospital
-              ? `Managing ${user?.hospitalName} • Active Clinical Environment`
-              : "Standalone Session Mode • Encrypted Local Processing"}
+              ? `Managing ${user?.hospitalName} ï¿½ Active Clinical Environment`
+              : "Standalone Session Mode ï¿½ Encrypted Local Processing"}
           </p>
         </div>
 
@@ -406,7 +410,7 @@ function UnitRow({ name, status, active, onMirror, bpm }: any) {
 function FeedItem({ title, body, category }: any) {
   return (
     <div className="space-y-1">
-      <span className="text-[8px] font-black text-primary uppercase tracking-widest">{category} • {title}</span>
+      <span className="text-[8px] font-black text-primary uppercase tracking-widest">{category} ï¿½ {title}</span>
       <p className="text-xs font-medium text-slate-600 dark:text-slate-400 leading-relaxed truncate">{body}</p>
     </div>
   );

@@ -62,6 +62,23 @@ router.post('/', async (req, res) => {
   }
 });
 
+/**
+ * SQL Sync Proxy - Support for offline-first nodes
+ */
+router.post('/sync-session', async (req, res) => {
+    try {
+        const { patientId, hospitalId, startTime } = req.body;
+        await Session.findOneAndUpdate(
+            { patientId, hospitalId, startTime },
+            { ...req.body, status: 'completed' },
+            { upsert: true, new: true }
+        );
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 // Update session (e.g. adding AI summary later)
 router.put('/:id', async (req, res) => {
     try {

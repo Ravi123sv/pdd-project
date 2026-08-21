@@ -37,6 +37,7 @@ import { queueForSync } from "../../../lib/offlineSync";
 import { useTranslation } from "../../../lib/i18n";
 import { useSearchParams, useRouter } from "next/navigation";
 import { socketService } from "../../../lib/api/socket";
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -122,7 +123,11 @@ export default function MonitorPage() {
           // 1. Live Socket Broadcast
           socketService.sendMessage('clinical_alert', user?.name || 'System', `CRITICAL: Signal Integrity Failure for Patient ${activePatient?.id}. Check lead placement immediately.`);
 
-          // 2. Persistent Backend Log (Auditor Proof)
+          // 2. Mobile Haptic Alert
+          Haptics.vibrate();
+          Haptics.impact({ style: ImpactStyle.Heavy });
+
+          // 3. Persistent Backend Log (Auditor Proof)
           api.alerts.create({
               hospitalId: user?.hospitalId || 'HOSP-DEFAULT',
               type: 'critical',
